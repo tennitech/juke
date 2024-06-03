@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-const Home = () => {
+function Clock() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timerID = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return function cleanup() {
+      clearInterval(timerID);
+    };
+  });
+
   return (
     <div>
-      <h1>Home Page</h1>
-      {/* Add more components and functionality here */}
+      <h2>Current Time:</h2>
+      <p>{time.toLocaleTimeString()}</p>
     </div>
   );
-};
+}
 
-export default Home;
+export default Clock;
