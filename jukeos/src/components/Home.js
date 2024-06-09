@@ -1,56 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { getAuthToken } from '../services/spotify';
+import React, { useEffect, useState } from 'react';
 import SpotifyWebApi from 'spotify-web-api-js';
 
 const spotifyApi = new SpotifyWebApi();
 
 const Home = () => {
-  const [playlists, setPlaylists] = useState(null);
-  const [error, setError] = useState(null);
+  const [playlists, setPlaylists] = useState([]);
+  const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
 
   useEffect(() => {
-    const fetchData = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
 
-      if (code) {
-        try {
-          const token = await getAuthToken(code); // Get the access token using the code
-          console.log('Fetched token:', token);
-          spotifyApi.setAccessToken(token);
-          const data = await spotifyApi.getUserPlaylists();
-          console.log('Fetched playlists:', data);
-          setPlaylists(data);
-        } catch (error) {
-          console.error('Error fetching playlists:', error);
-          setError(new Error(`An error occurred: ${JSON.stringify(error, null, 2)}`));
-        }
-      }
-    };
+    if (accessToken) {
+      localStorage.setItem('spotify_access_token', accessToken);
+      setToken(accessToken);
+      spotifyApi.setAccessToken(accessToken);
+      fetchPlaylists();
+      // Clear the hash from the URL
+      window.location.hash = '';
+    } else if (token) {
+      spotifyApi.setAccessToken(token);
+      fetchPlaylists();
+    }
+  }, [token]);
 
-    fetchData();
-  }, []);
+  const fetchPlaylists = async () => {
+    try {
+      const data = await spotifyApi.getUserPlaylists();
+      console.log('Fetched playlists:', data);
+      setPlaylists(data.items);
+    } catch (error) {
+      console.error('Error fetching playlists:', error);
+    }
+  };
 
   const handleLogin = () => {
     window.location.href = 'http://localhost:3001/login';
   };
 
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  } else if (!playlists) {
-    return <button onClick={handleLogin}>Login with Spotify</button>;
-  } else {
-    return (
-      <div>
-        <h1>Your Playlists</h1>
+  return (
+    <div>
+      <h1>Your Playlists</h1>
+      {playlists.length ? (
         <ul>
-          {playlists.items.map((playlist) => (
+          {playlists.map((playlist) => (
             <li key={playlist.id}>{playlist.name}</li>
           ))}
         </ul>
-      </div>
-    );
-  }
+      ) : (
+        <button onClick={handleLogin}>Login with Spotify</button>
+      )}
+    </div>
+  );
 };
 
 export default Home;
