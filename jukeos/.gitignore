@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+/spotify-auth-server/node_modules
+/spotify-auth-server/.env
 /.pnp
 .pnp.js
 
