@@ -4,7 +4,7 @@ function generateRandomString(length) {
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
     for (let i = 0; i < length; i++) {
-        let index = Math.floor(Math.random() * possible.length);
+        const index = Math.floor(Math.random() * possible.length);
         text += possible.charAt(index);
     }
 
@@ -36,3 +36,11 @@ async function generateCodeChallenge(codeVerifier) {
     return codeChallenge;
 }
 
+
+async function requestAuthorization() {
+    const codeVerifier = generateRandomString(64);
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+}
+
+
+export default requestAuthorization;
