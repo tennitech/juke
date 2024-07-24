@@ -40,7 +40,23 @@ async function generateCodeChallenge(codeVerifier) {
 async function requestAuthorization() {
     const codeVerifier = generateRandomString(64);
     const codeChallenge = await generateCodeChallenge(codeVerifier);
+    
+    require('dotenv').config();
+    
+    const clientID = process.env.SPOTIFY_CLIENT_ID;
+    const redirectURI = 'http://localhost:8080'; // To be changed during the production phase.
+    const scope = 'user-read-private user-read-email';
+    const authUrl = new URL("https://accounts.spotify.com/authorize");
+    const params =  {
+        response_type: 'code',
+        client_id: clientId,
+        scope,
+        code_challenge_method: 'S256',
+        code_challenge: codeChallenge,
+        redirect_uri: redirectUri,
+    }
+    
+    window.localStorage.setItem('code_verifier', codeVerifier);
+    authUrl.search = new URLSearchParams(params).toString();
+    window.location.href = authUrl.toString();
 }
-
-
-export default requestAuthorization;
