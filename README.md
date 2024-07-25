@@ -1,4 +1,4 @@
-# Juke
+# Juke 📻
 
 ## Project Description
 
