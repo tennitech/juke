@@ -49,11 +49,11 @@ async function requestAuthorization() {
     const authUrl = new URL("https://accounts.spotify.com/authorize");
     const params =  {
         response_type: 'code',
-        client_id: clientId,
+        client_id: clientID,
         scope,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
-        redirect_uri: redirectUri,
+        redirect_uri: redirectURI,
     }
     
     window.localStorage.setItem('code_verifier', codeVerifier);
