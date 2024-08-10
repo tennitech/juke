@@ -60,3 +60,6 @@ async function requestAuthorization() {
     authUrl.search = new URLSearchParams(params).toString();
     window.location.href = authUrl.toString();
 }
+
+
+export default requestAuthorization;

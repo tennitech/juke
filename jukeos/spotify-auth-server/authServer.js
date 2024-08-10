@@ -1,4 +1,9 @@
+import requestAuthorization from '.\spotify.js'
+
+
 const getToken = async code => {
+    requestAuthorization();
+    
     let codeVerifier = localStorage.getItem('code_verifier');
     const payload = {
         method: 'POST', 
