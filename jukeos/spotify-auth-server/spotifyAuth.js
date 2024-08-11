@@ -50,7 +50,7 @@ async function requestAuthorization() {
     const params =  {
         response_type: 'code',
         client_id: clientID,
-        scope: 'user-read-private user-read-email',
+        scope: scope,
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
         redirect_uri: redirectURI,
