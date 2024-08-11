@@ -50,7 +50,7 @@ async function requestAuthorization() {
     const params =  {
         response_type: 'code',
         client_id: clientID,
-        scope,
+        scope: 'user-read-private user-read-email',
         code_challenge_method: 'S256',
         code_challenge: codeChallenge,
         redirect_uri: redirectURI,
@@ -81,7 +81,7 @@ const getToken = async code => {
     const body = await fetch(url, payload);
     const response = await body.json();
 
-    localStorage.setItem('access_token', response.access_token);
+    window.localStorage.setItem('access_token', response.access_token);
 }
 
 

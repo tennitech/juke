@@ -16,8 +16,8 @@ const getRefreshToken = async () => {
     const body = await fetch(url, payload);
     const response = await body.json();
 
-    localStorage.setItem('access_token', response.accessToken);
-    localStorage.setItem('refresh_token', response.refreshToken);
+    window.localStorage.setItem('access_token', response.accessToken);
+    window.localStorage.setItem('refresh_token', response.refreshToken);
 }
 
 
