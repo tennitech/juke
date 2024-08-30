@@ -14,6 +14,7 @@ Our sole focus is creating what we wish Spotify looked like. Modern products are
 
 * React/NPM
 * HTML/CSS/JavaScript
+* Spotify API
 * Raspberry Pi
 
 ## To Be Implemented
