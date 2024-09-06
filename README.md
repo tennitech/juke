@@ -12,13 +12,20 @@ Our sole focus is creating what we wish Spotify looked like. Modern products are
 
 ## Stack
 
+### Main API
+* Spotify API
+  
+### Web Application
 * React/NPM
 * HTML/CSS/JavaScript
-* Spotify API
+
+### Distribution
 * Electron
 * Docker
+
+### Hardware
 * Raspberry Pi
-* PCV Designing
+* PCB Designing
 
 ## To Be Implemented
 
