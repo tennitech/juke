@@ -16,6 +16,7 @@ Our sole focus is creating what we wish Spotify looked like. Modern products are
 * HTML/CSS/JavaScript
 * Spotify API
 * Docker
+* Electron
 * Raspberry Pi
 
 ## To Be Implemented
