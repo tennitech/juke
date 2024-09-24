@@ -1,17 +1,36 @@
-import axios from 'axios';
+import SpotifyWebApi from 'spotify-web-api-js';
 
-const SPOTIFY_BASE_URL = 'https://api.spotify.com/v1';
+const spotifyApi = new SpotifyWebApi();
 
-const getAuthToken = async () => {
-  // Implement OAuth2 token retrieval
+export const getAuthToken = async () => {
+  // Extract the access token from the URL
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('access_token');
+
+  if (token) {
+    window.localStorage.setItem('token', token);
+    return token;
+  }
+
+  const storedToken = window.localStorage.getItem('token');
+
+  if (!storedToken) {
+    window.location.href = 'http://localhost:3001/login';
+    return null;
+  }
+
+  return storedToken;
 };
 
 export const fetchUserPlaylists = async () => {
-  const token = await getAuthToken();
-  const response = await axios.get(`${SPOTIFY_BASE_URL}/me/playlists`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  return response.data;
+  try {
+    const token = await getAuthToken();
+    console.log(token);
+    spotifyApi.setAccessToken(token);
+    const data = await spotifyApi.getUserPlaylists();
+    return data;
+  } catch (error) {
+    console.error('Error fetching user playlists:', error);
+    throw error;
+  }
 };
