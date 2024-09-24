@@ -29,13 +29,6 @@ While the convenience of streaming is undeniable, we believe there's a way to co
 * Raspberry Pi
 * PCB Designing
 
-## To Be Implemented
-
-* Authorzation with PKCE.
-    * Connect to main.
-    * Refactor Code.
-* Pulling user playlists using the Spotify API.
-
 # 👨‍💻 Looking to Develop? Start Here.
 
 ## Prerequisites
