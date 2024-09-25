@@ -84,6 +84,9 @@ Ensure you have the following installed:
 
 ## Setup on macOS
 
+### ⚠️ Note: Our macOS Setup Instructions uses Homebrew. You may install the following packages another way, however, you do so at your own risk.
+### Not familiar with Homebrew? [Visit their website.](https://brew.sh)
+
 ### Step 1: Install Git
 1. Open **Terminal**.
 2. Install Git using **Homebrew**:
