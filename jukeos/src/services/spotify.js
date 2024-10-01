@@ -1,36 +1,36 @@
-import SpotifyWebApi from 'spotify-web-api-js';
 
-const spotifyApi = new SpotifyWebApi();
+const generateRandomString = (length) => {
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-export const getAuthToken = async () => {
-  // Extract the access token from the URL
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('access_token');
+  const values = crypto.getRandomValues(new Uint8Array(length));
 
-  if (token) {
-    window.localStorage.setItem('token', token);
-    return token;
-  }
-
-  const storedToken = window.localStorage.getItem('token');
-
-  if (!storedToken) {
-    window.location.href = 'http://localhost:3001/login';
-    return null;
-  }
-
-  return storedToken;
+  return values.reduce((acc, x) => acc + possible[x % possible.length], "");
 };
 
-export const fetchUserPlaylists = async () => {
-  try {
-    const token = await getAuthToken();
-    console.log(token);
-    spotifyApi.setAccessToken(token);
-    const data = await spotifyApi.getUserPlaylists();
-    return data;
-  } catch (error) {
-    console.error('Error fetching user playlists:', error);
-    throw error;
-  }
+const sha256 = async (plain) => {
+  const encoder = new TextEncoder();
+
+  const data = encoder.encode(plain);
+
+  return await window.crypto.subtle.digest('SHA-256', data);
+};
+
+const base64encode = (input) => {
+  return btoa(String.fromCharCode(...new Uint8Array(input)))
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+};
+
+export const requestUserAuthorization = async () => {
+  const codeVerifier = generateRandomString(64);
+  const codeChallenge = base64encode(await sha256(codeVerifier));
+
+  window.localStorage.setItem("spotify_code_verifier", codeVerifier);
+
+  const redirectParams = new URLSearchParams({ challenge: codeChallenge });
+  const redirectUrl = new URL("http://localhost:3001/login/spotify");
+  redirectUrl.search = redirectParams.toString();
+
+  window.location.href = redirectUrl.toString();
 };
