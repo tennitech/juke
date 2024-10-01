@@ -14,12 +14,15 @@
     "react-router-dom": "^6.23.1",
     "react-scripts": "^5.0.1",
     "spotify-web-api-js": "^1.5.2",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "querystring": "^0.2.1"
   },
   "scripts": {
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
     "start:frontend": "react-scripts start",
-    "start:backend": "cd ./spotify-auth-server && node server.js",
+    "start:backend": "cd ./src/auth-server && node server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
