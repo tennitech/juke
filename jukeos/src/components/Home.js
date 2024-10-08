@@ -63,14 +63,6 @@ const Home = () => {
       minHeight: '100vh',
       padding: '20px'
     }}>
-      <nav className="navbar">
-        <div className="navbar-content" ref={navbarContentRef}>
-          <NavLink to="/harmony" activeClassName="active">Harmony</NavLink>
-          <NavLink to="/" exact activeClassName="active">Home</NavLink>
-          <NavLink to="/library" activeClassName="active">Library</NavLink>
-          <NavLink to="/settings" activeClassName="active">Settings</NavLink>
-        </div>
-      </nav>
       <div>
         <h1>Your Playlists</h1>
         {playlists.length ? (
