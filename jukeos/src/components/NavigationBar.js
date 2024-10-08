@@ -1,20 +1,31 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 
 const NavigationBar = () => {
+  const navbarContentRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (navbarContentRef.current) {
+      const activeLink = navbarContentRef.current.querySelector('.active');
+      if (activeLink) {
+        const navbarWidth = navbarContentRef.current.offsetWidth;
+        const activeLinkCenter = activeLink.offsetLeft + activeLink.offsetWidth / 2;
+        const offset = navbarWidth / 2 - activeLinkCenter;
+        navbarContentRef.current.style.transform = `translateX(${offset}px)`;
+      }
+    }
+  }, [location]);
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="navigation-bar"
-    >
-      <Link to="/home">Home</Link>
-      <Link to="/library">Library</Link>
-      <Link to="/settings">Settings</Link>
-      <Link to="/harmony">Harmony</Link>
-    </motion.div>
+    <nav className="navbar">
+      <div className="navbar-content" ref={navbarContentRef}>
+        <NavLink to="/harmony">Harmony</NavLink>
+        <NavLink to="/" end>Home</NavLink>
+        <NavLink to="/library">Library</NavLink>
+        <NavLink to="/settings">Settings</NavLink>
+      </div>
+    </nav>
   );
 };
 
