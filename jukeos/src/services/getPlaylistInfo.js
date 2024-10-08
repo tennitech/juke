@@ -21,7 +21,7 @@ const getPlaylistInfo = async () => {
       Authorization: 'Bearer ' + token
     }
   })
-  const data = response.data
+  const data = await response.json();
   // This is for testing only. This should be removed in the distributing version.
   console.log(data)
 
