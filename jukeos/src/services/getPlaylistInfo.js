@@ -16,16 +16,15 @@ const [playlists, setPlaylists] = useState([]);
 
 const getPlaylistInfo = async () => {
   // This makes an Axios get request to obtain the information of the playlist with playListID.
-  const { data } = await axios.get('https://api.spotify.com/v1/me/playlists/' + playlistID, {
+  const response = await axios.get('https://api.spotify.com/v1/me/playlists/' + playlistID, {
     headers: {
       Authorization: 'Bearer ' + token
     }
-  }).then((response) => {
-    // This is for testing only. This should be removed in the distributing version.
-    response.json().then((json) => {
-      console.log(json);
-    })
-  });
+  })
+  // This is for testing only. This should be removed in the distributing version.
+  console.log(response.data)
+
+  // Data parsing starts here.
 
   return;
 };
