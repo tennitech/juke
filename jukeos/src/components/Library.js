@@ -34,8 +34,8 @@ const Library = () => {
       minHeight: '100vh',
       padding: '20px'
     }}>
+      <h1 className="glow">PLAYLISTS</h1>
       <div>
-        <h1>Your Library</h1>
         {savedTracks.length ? (
           <ul>
             {savedTracks.map((item) => (
