@@ -7,6 +7,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.2",
+    "color-thief-browser": "^2.0.2",
     "dotenv": "^16.4.5",
     "framer-motion": "^11.2.10",
     "react": "^18.3.1",

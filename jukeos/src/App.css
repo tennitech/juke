@@ -39,31 +39,40 @@
 
 .navbar {
   position: fixed;
-  top: 20px;
+  top: 40px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(51, 51, 51, 0.7);
-  border-radius: 25px;
-  padding: 10px;
+  border-radius: 45px;
+  padding: 20px;
   overflow: hidden;
   z-index: 1000;
+}
+
+.navbar-blur-container {
+  position: relative;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
 }
 
 .navbar-content {
   display: flex;
   position: relative;
-  transition: transform 0.3s ease;
+  transition: transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  padding: 0 30px;
 }
 
 .navbar a {
   font-family: 'Notable', sans-serif;
   color: white;
   text-decoration: none;
-  padding: 10px 20px;
+  padding: 20px 40px;
   opacity: 0.7;
-  transition: opacity 0.3s ease, color 0.3s ease;
+  transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease, filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
   white-space: nowrap;
-  letter-spacing: 3px;
+  letter-spacing: 5px;
+  font-size: 1.4rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .navbar a:hover {
@@ -72,5 +81,66 @@
 
 .navbar a.active {
   opacity: 1;
-  color: #61dafb;
+  color: #ECE0C4;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3), 3px 3px 5px rgba(0, 0, 0, 0.7);
+}
+
+.spotlight {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 950px;
+  height: auto;
+  pointer-events: none;
+  z-index: 999;
+  transition: opacity 0.1s ease-in-out;
+}
+
+@keyframes flicker {
+  0% { opacity: 1; }
+  25% { opacity: 0.5; }
+  50% { opacity: 0.7; }
+  75% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+.spotlight.flicker {
+  animation: flicker 0.5s ease-in-out;
+}
+
+.user-profile-container {
+  position: fixed;
+  top: 76px;
+  right: 40px;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+}
+
+.user-profile-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-aspect-ratio: 16/9) {
+  .user-profile-container {
+    right: 20px;
+  }
+
+  .user-profile-image {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (min-aspect-ratio: 16/9) {
+  .user-profile-container {
+    right: calc(5% + 20px);
+  }
 }
