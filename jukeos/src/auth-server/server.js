@@ -2,9 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const querystring = require('querystring');
 const cors = require('cors');
-
-// NOTE: This is a hack because node is evoked in src/auth-server
-require('dotenv').config({ path: `${__dirname}/../../.env` });
+require('dotenv').config();
 
 const app = express();
 const port = 3001;
