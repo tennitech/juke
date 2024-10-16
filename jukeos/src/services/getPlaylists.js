@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+//import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 
@@ -11,23 +11,32 @@ import axios from 'axios';
   real authentication token obtained from Spotify after logging in.
 */
 const token = "";
-const playlistID = "";
-const [playlists, setPlaylists] = useState([]);
 
 const getPlaylistInfo = async () => {
   // This makes an Axios get request to obtain the information of the playlist with playListID.
-  const response = await axios.get('https://api.spotify.com/v1/me/playlists/' + playlistID, {
+  const response = await axios.get('https://api.spotify.com/v1/me/playlists?limit=10', {
     headers: {
       Authorization: 'Bearer ' + token
     }
   })
-  const data = await response.json();
+  const data = response.data;
   // This is for testing only. This should be removed in the distributing version.
   console.log(data)
 
   // Data parsing starts here.
 
-  return;
+  const total = data.total;
+  const names = data.items.map(item => item.name);
+
+  let returnStr = "";
+  for (let i = 0; i < total; i++) {
+    returnStr += names[i] + "\n";
+  }
+
+  // This is for testing only. This should be removed in the distributing version.
+  console.log(returnStr)
+
+  return returnStr;
 };
 
 
