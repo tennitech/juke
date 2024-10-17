@@ -14,6 +14,7 @@ const token = "";
 
 const getPlaylistInfo = async () => {
   // This makes an Axios get request to obtain the information of the playlist with playListID.
+  
   const response = await axios.get('https://api.spotify.com/v1/me/playlists?limit=50', {
     headers: {
       Authorization: 'Bearer ' + token
