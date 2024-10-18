@@ -13,9 +13,11 @@ import axios from 'axios';
 const token = "";
 
 const getPlaylistInfo = async () => {
+  const limit = 50;
+
   // This makes an Axios get request to obtain the information of the playlist with playListID.
   
-  const response = await axios.get('https://api.spotify.com/v1/me/playlists?limit=50', {
+  const response = await axios.get('https://api.spotify.com/v1/me/playlists?' + `limit=${limit}`, {
     headers: {
       Authorization: 'Bearer ' + token
     }
