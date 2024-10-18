@@ -31,13 +31,13 @@ const getPlaylistInfo = async () => {
 
   let returnStr = "";
   for (let i = 0; i < total; i++) {
-    returnStr += names[i] + "\n";
+    returnStr += '・' + names[i] + "\n";
   }
 
   // This is for testing only. This should be removed in the distributing version.
   console.log(returnStr)
 
-  return returnStr;
+  return names.map(name => `<li>${name}</li>`).join('');
 };
 
 
