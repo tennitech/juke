@@ -1,8 +1,9 @@
 const express = require('express');
 const axios = require('axios');
-const querystring = require('querystring');
 const cors = require('cors');
-require('dotenv').config();
+
+// NOTE: This is a hack because node is evoked in src/auth-server
+require('dotenv').config({ path: `${__dirname}/../../.env` });
 
 const app = express();
 const port = 3001;
@@ -13,17 +14,12 @@ const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 app.use(cors());
 
 app.get('/login/spotify', async (req, res) => {
-  if (!req.query.challenge) {
-    res.status(400).send('Parameter challenge required');
-  }
-
   const params = new URLSearchParams();
   params.append("client_id", ClientId);
   params.append("response_type", "code");
   params.append("redirect_uri", "http://localhost:3001/callback/spotify");
-  params.append("scope", "user-read-email");
-  params.append("code_challenge_method", "S256");
-  params.append("code_challenge", req.query.challenge);
+  params.append("scope", req.query.scope || "user-read-email");
+  params.append("show_dialog", false);
 
   const authUrl = new URL("https://accounts.spotify.com/authorize");
   authUrl.search = params.toString();
@@ -31,14 +27,37 @@ app.get('/login/spotify', async (req, res) => {
   res.redirect(authUrl.toString());
 });
 
-app.get('/callback/spotify', async (req, res) => {
+app.get('/callback/spotify', (req, res) => {
   if (!req.query.code) {
-    res.status(400).send('Expected code parameter');
+    res.status(400).send(req.query.error || "juke_unknown_error");
+  } else {
+    const body = new URLSearchParams();
+    body.append("grant_type", "authorization_code");
+    body.append("code", req.query.code);
+    body.append("redirect_uri", "http://localhost:3001/callback/spotify");
+  
+    axios.post("https://accounts.spotify.com/api/token", body.toString(), {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + (new Buffer.from(ClientId + ":" + ClientSecret)).toString("base64")
+        }
+    }).then((response) => {
+      const { access_token, scope, expires_in, refresh_token } = response.data;
+
+      const params = new URLSearchParams();
+      params.append("access_token", access_token);
+      params.append("scope", scope);
+      params.append("expires_in", expires_in);
+      params.append("refresh_token", refresh_token);
+
+      const url = new URL("http://localhost:3000");
+      url.search = params.toString();
+
+      res.redirect(url.toString());
+    }).catch((err) => {
+      res.status(400).send("Failed to get auth token");
+    });
   }
-
-  console.log("Code", req.query.code);
-
-  res.redirect(atob("aHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g/dj1kUXc0dzlXZ1hjUQ=="));
 });
 
 app.listen(port, () => {
