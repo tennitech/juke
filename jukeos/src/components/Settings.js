@@ -1,35 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import SpotifyWebApi from 'spotify-web-api-js';
+import React, { useState } from 'react';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
 
-const spotifyApi = new SpotifyWebApi();
-
 const Settings = () => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
 
-  useEffect(() => {
-    if (token) {
-      spotifyApi.setAccessToken(token);
-      fetchUserProfile();
-    }
-  }, [token]);
-
-  const fetchUserProfile = async () => {
-    try {
-      const data = await spotifyApi.getMe();
-      console.log('Fetched user profile:', data);
-      setUser(data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  };
+  // TODO: Fetch user profile
 
   const handleLogout = () => {
-    localStorage.removeItem('spotify_access_token');
-    setToken(null);
-    setUser(null);
+    // TODO
   };
 
   return (

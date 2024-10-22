@@ -59,7 +59,7 @@ const NavigationBar = () => {
         });
       }
     }
-  }, [location]);
+  }, [location, animationInProgress]);
 
   return (
     <>
