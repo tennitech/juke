@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
+import { ProvideSpotifyAuthContext, SpotifyAuthContext } from './contexts/spotify';
 
 function requestUserAuthorization() {  
   const redirectParams = new URLSearchParams({
-    scope: "user-read-email playlist-read-private playlist-read-collaborative"
+    scope: [
+      "user-read-email",
+      "playlist-read-private",
+      "playlist-read-collaborative"
+    ].join(" ")
   });
   const redirectUrl = new URL("http://localhost:3001/login/spotify");
   redirectUrl.search = redirectParams.toString();
@@ -12,22 +17,7 @@ function requestUserAuthorization() {
   window.location.href = redirectUrl;
 }
 
-function loadSpotifyTokens(setAccessToken, setRefreshToken) {
-  const accessToken = localStorage.getItem("spotify_access_token");
-  const refreshToken = localStorage.getItem("spotify_refresh_token");
-
-  if (accessToken && refreshToken) {
-    setAccessToken(accessToken);
-    setRefreshToken(refreshToken);
-  }
-}
-
-function saveSpotifyTokens(accessToken, refreshToken) {
-  localStorage.setItem("spotify_access_token", accessToken);
-  localStorage.setItem("spotify_refresh_token", refreshToken);
-}
-
-function fetchPlaylists(accessToken, onError) {
+function fetchPlaylists(accessToken) {
   return new Promise((resolve, reject) => {
     axios.get("https://api.spotify.com/v1/me/playlists", {
       headers: {
@@ -36,73 +26,59 @@ function fetchPlaylists(accessToken, onError) {
     }).then((response) => {
       resolve(response.data);
     }).catch((error) => {
-      onError(error);
+      reject(error);
     });
   });
 }
 
-function App() {
-  const [accessToken, setAccessToken] = useState(0);
-  const [refreshToken, setRefreshToken] = useState(0);
+function PlaylistList() {
+  const { accessToken } = useContext(SpotifyAuthContext);
+
   const [playlists, setPlaylists] = useState([]);
-
-  if (!accessToken && !refreshToken) {
-    loadSpotifyTokens(setAccessToken, setRefreshToken);
-  }
-
-  console.log("Rerender", accessToken, refreshToken);
-
-  if (window.location.search) {
-    const params = new URLSearchParams(window.location.search);
-
-    if (params.get("access_token")) {
-      const accessToken = params.get("access_token");
-      const scope = params.get("scope");
-      const expiresIn = params.get("expires_in");
-      const refreshToken = params.get("refresh_token");
-
-      setAccessToken(accessToken);
-      setRefreshToken(refreshToken);
-
-      saveSpotifyTokens(accessToken, refreshToken);
-
-      console.log("Access Token:", accessToken);
-      console.log("Refresh Token:", refreshToken);
-      console.log("Scope:", scope);
-
-      window.history.pushState("Search Params", "", "/"+window.location.href.substring(window.location.href.lastIndexOf('/') + 1).split("?")[0]);
-    }
-  }
 
   useEffect(() => {
     if (accessToken) {
-      fetchPlaylists(
-        accessToken,
-        () => {
-          // TODO: Attempt to refresh
-          setAccessToken(null);
-        }
-      ).then((response) => {
-        setPlaylists(response.items);
-      })
+      fetchPlaylists(accessToken).then(
+        (response) => setPlaylists(response.items)
+      ).catch((error) => {
+        // TODO: Handle this
+
+        console.log(error);
+      });
     }
   }, [accessToken]);
 
   return (
-    <div>
-      {
-        !!accessToken
-          ? <ul>{
-              playlists.map(
-                (playlist, i) => <li key={i}>
-                  <img height="64px" width="64px" src={playlist.images[0].url}></img>
-                  {playlist.name}
-                </li>
-              )
-            }</ul>
-          : <button onClick={() => requestUserAuthorization()}>Login Spotify</button>
-      }
-    </div>
+    <ul>{
+      playlists.map(
+        (playlist, i) => <li key={i}>
+          <img
+            height="64px" width="64px"
+            src={playlist.images[0].url}
+            alt={playlist.name}
+          ></img>
+          {playlist.name}
+        </li>
+      )
+    }</ul>
+  );
+}
+
+function SpotifyView() {
+  const { accessToken } = useContext(SpotifyAuthContext);
+
+  return (
+    accessToken
+      ? <PlaylistList></PlaylistList>
+      : <button onClick={() => requestUserAuthorization()}>Login to Spotify</button>
+  );
+}
+
+function App() {
+  return (
+    <ProvideSpotifyAuthContext>
+      <SpotifyView></SpotifyView>
+    </ProvideSpotifyAuthContext>
   );
 }
 
