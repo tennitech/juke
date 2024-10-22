@@ -56,11 +56,18 @@ export function ProvideSpotifyAuthContext({ children }) {
         loadFromUrl(setAccessToken, setRefreshToken);
     }
 
+    const invalidateAccess = () => {
+        // TODO: Attempt to refresh and (failing that) set to 0
+
+        setAccessToken(0);
+    };
+
     return (
         <SpotifyAuthContext.Provider value={
             {
                 accessToken,
-                refreshToken
+                refreshToken,
+                invalidateAccess
             }
         }>
             { children }
