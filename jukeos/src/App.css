@@ -1,3 +1,10 @@
+@font-face {
+  font-family: 'Loubag';
+  src: url('./fonts/Loubag-Regular.ttf') format('truetype'); /* Adjust the path as necessary */
+  font-weight: normal;
+  font-style: normal;
+}
+
 .App {
   text-align: center;
 }
@@ -143,4 +150,14 @@
   .user-profile-container {
     right: calc(5% + 20px);
   }
+}
+
+.glow {
+  font-family: 'Loubag', sans-serif; /* Ensure Loubag font is loaded */
+  color: #ECE0C4; /* Adjust color as needed */
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7), 
+               0 0 30px rgba(255, 215, 0, 0.5), 
+               0 0 40px rgba(255, 215, 0, 0.3);
+  text-align: center;
+  margin: 20px 0; /* Adjust margin as needed */
 }
