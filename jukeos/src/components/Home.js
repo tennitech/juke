@@ -1,56 +1,100 @@
-import React, { useEffect, useState } from 'react';
-import SpotifyWebApi from 'spotify-web-api-js';
+import React, { useContext, useEffect, useState, useRef } from 'react';
+import backgroundPng from '../assets/background.png';
+import { useLocation } from 'react-router-dom';
+import '../App.css';
 
-const spotifyApi = new SpotifyWebApi();
+import axios from 'axios';
 
-const Home = () => {
+import { SpotifyAuthContext } from '../contexts/spotify';
+
+function requestUserAuthorization() {  
+  const redirectParams = new URLSearchParams({
+    scope: [
+      "user-read-email",
+      "playlist-read-private",
+      "playlist-read-collaborative"
+    ].join(" ")
+  });
+  const redirectUrl = new URL("http://localhost:3001/login/spotify");
+  redirectUrl.search = redirectParams.toString();
+  
+  window.location.href = redirectUrl;
+}
+
+async function fetchPlaylists(accessToken) {
+  const response = await axios.get(
+    "https://api.spotify.com/v1/me/playlists",
+    {
+      headers: {
+        "Authorization": "Bearer " + accessToken
+      }
+    }
+  );
+
+  return response?.data?.items;
+}
+
+function PlaylistList() {
+  const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
+
   const [playlists, setPlaylists] = useState([]);
-  const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get('access_token');
-
     if (accessToken) {
-      localStorage.setItem('spotify_access_token', accessToken);
-      setToken(accessToken);
-      spotifyApi.setAccessToken(accessToken);
-      fetchPlaylists();
-      // Clear the hash from the URL
-      window.location.hash = '';
-    } else if (token) {
-      spotifyApi.setAccessToken(token);
-      fetchPlaylists();
-    }
-  }, [token]);
+      fetchPlaylists(accessToken)
+        .then((playlists) => {
+          setPlaylists(playlists);
+        })
+        .catch((error) => {
+          console.log("Error", error);
 
-  const fetchPlaylists = async () => {
-    try {
-      const data = await spotifyApi.getUserPlaylists();
-      console.log('Fetched playlists:', data);
-      setPlaylists(data.items);
-    } catch (error) {
-      console.error('Error fetching playlists:', error);
+          invalidateAccess();
+        });
     }
-  };
+  }, [accessToken]);
 
-  const handleLogin = () => {
-    window.location.href = 'http://localhost:3001/login';
-  };
+  return <>
+    <h1>Your Playlists</h1>
+    <ul>
+      {
+        playlists.map((playlist) =>
+          <li key={playlist.id}>{playlist.name}</li>
+        )
+      }
+    </ul>
+  </>;
+}
+
+const Home = () => {
+  const { accessToken } = useContext(SpotifyAuthContext);
+  const navbarContentRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (navbarContentRef.current) {
+      const activeLink = navbarContentRef.current.querySelector('.active');
+      if (activeLink) {
+        const navbarWidth = navbarContentRef.current.offsetWidth;
+        const activeLinkCenter = activeLink.offsetLeft + activeLink.offsetWidth / 2;
+        const offset = navbarWidth / 2 - activeLinkCenter;
+        navbarContentRef.current.style.transform = `translateX(${offset}px)`;
+      }
+    }
+  }, [location]);
 
   return (
-    <div>
-      <h1>Your Playlists</h1>
-      {playlists.length ? (
-        <ul>
-          {playlists.map((playlist) => (
-            <li key={playlist.id}>{playlist.name}</li>
-          ))}
-        </ul>
-      ) : (
-        <button onClick={handleLogin}>Login with Spotify</button>
-      )}
+    <div style={{
+      backgroundImage: `url(${backgroundPng})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      minHeight: '100vh',
+      padding: '20px'
+    }}>
+      {
+        !accessToken
+          ? <button onClick={() => requestUserAuthorization()}>Login to Spotify</button>
+          : <PlaylistList></PlaylistList>
+      }
     </div>
   );
 };
