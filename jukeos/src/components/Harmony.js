@@ -1,30 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import SpotifyWebApi from 'spotify-web-api-js';
+import React, { useState } from 'react';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
 
-const spotifyApi = new SpotifyWebApi();
-
 const Harmony = () => {
   const [recommendations, setRecommendations] = useState([]);
-  const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
 
-  useEffect(() => {
-    if (token) {
-      spotifyApi.setAccessToken(token);
-      fetchRecommendations();
-    }
-  }, [token]);
-
-  const fetchRecommendations = async () => {
-    try {
-      const data = await spotifyApi.getRecommendations({ seed_genres: ['pop', 'rock'] });
-      console.log('Fetched recommendations:', data);
-      setRecommendations(data.tracks);
-    } catch (error) {
-      console.error('Error fetching recommendations:', error);
-    }
-  };
+  // TODO: Load recommendations from Spotify API
 
   return (
     <div style={{
