@@ -9,6 +9,8 @@ import Harmony from './components/Harmony';
 import StartupScreen from './components/StartupScreen';
 import FadeTransition from './components/FadeTransition';
 
+import { ProvideSpotifyAuthContext } from './contexts/spotify';
+
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -32,7 +34,7 @@ function AppContent({ isLoading }) {
   const location = useLocation();
 
   return (
-    <>
+    <ProvideSpotifyAuthContext>
       <StartupScreen isLoading={isLoading} />
       <NavigationBar />
       <AnimatePresence mode="wait">
@@ -43,7 +45,7 @@ function AppContent({ isLoading }) {
           <Route path="/harmony" element={<FadeTransition><Harmony /></FadeTransition>} />
         </Routes>
       </AnimatePresence>
-    </>
+    </ProvideSpotifyAuthContext>
   );
 }
 
