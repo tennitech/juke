@@ -7,6 +7,7 @@
 
 .App {
   text-align: center;
+  position: relative;
 }
 
 .App-logo {
@@ -210,4 +211,25 @@
 .slick-track {
   display: flex;
   align-items: center;
+}
+
+.page-content {
+  position: relative;
+  min-height: 100vh;
+}
+
+.page-content::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background-color: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: 998;
+  mask-image: linear-gradient(to top, black, transparent);
+  -webkit-mask-image: linear-gradient(to top, black, transparent);
 }

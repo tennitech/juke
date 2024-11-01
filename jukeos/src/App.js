@@ -38,14 +38,16 @@ function AppContent({ isLoading }) {
     <ProvideSpotifyAuthContext>
       <StartupScreen isLoading={isLoading} />
       <NavigationBar />
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<FadeTransition><Home /></FadeTransition>} />
-          <Route path="/library" element={<FadeTransition><LibraryTesting /></FadeTransition>} />
-          <Route path="/settings" element={<FadeTransition><Settings /></FadeTransition>} />
-          <Route path="/harmony" element={<FadeTransition><Harmony /></FadeTransition>} />
-        </Routes>
-      </AnimatePresence>
+      <div className="page-content">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<FadeTransition><Home /></FadeTransition>} />
+            <Route path="/library" element={<FadeTransition><LibraryTesting /></FadeTransition>} />
+            <Route path="/settings" element={<FadeTransition><Settings /></FadeTransition>} />
+            <Route path="/harmony" element={<FadeTransition><Harmony /></FadeTransition>} />
+          </Routes>
+        </AnimatePresence>
+      </div>
     </ProvideSpotifyAuthContext>
   );
 }
