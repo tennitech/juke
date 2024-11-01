@@ -1,8 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import SpotifyAuthContext from '../contexts/spotify';
 import spotlightPng from '../assets/spotlight.png';
 import AnimatedBlob from './AnimatedBlob';
 import ColorThief from 'color-thief-browser';
+
 
 const NavigationBar = () => {
   const navbarContentRef = useRef(null);
@@ -10,6 +13,8 @@ const NavigationBar = () => {
   const [animationInProgress, setAnimationInProgress] = useState(false);
   const [isFlickering, setIsFlickering] = useState(false);
   const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
+  const {accessToken} = useContext(SpotifyAuthContext);
+  const [profilePicture, setProfilePicture] = useState(require("../assets/default-user-profile-image.svg").default);
 
   const extractDominantColors = (imageSrc) => {
     const img = new Image();
@@ -61,6 +66,29 @@ const NavigationBar = () => {
     }
   }, [location]);
 
+  useEffect(() => {
+    if (accessToken) {
+      loadProfilePicture();
+    }
+  }, [accessToken]);
+
+  const loadProfilePicture = (accessToken) => {
+    axios.get(
+      "https://api.spotify.com/v1/users/me", {
+        headers: {
+          "Authorization:": "Bearer " + accessToken
+        }
+      }
+    ).then((response) => {
+      if (response?.data?.images?.length > 0) {
+        setProfilePicture(response.data.images[0].url);
+        console.log(profilePicture);
+      }
+    }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js", err));
+  };
+
+  console.log("Profile Picture", profilePicture);
+
   return (
     <>
       <nav className="navbar">
@@ -82,7 +110,7 @@ const NavigationBar = () => {
         <div style={{ position: 'relative' }}>
           <AnimatedBlob colors={dominantColors} />
           <img
-            src={require('../assets/default-user-profile-image.svg').default}
+            src={profilePicture}
             alt="User Profile"
             className="user-profile-image"
             onLoad={(e) => extractDominantColors(e.target.src)}
