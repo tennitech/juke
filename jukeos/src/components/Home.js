@@ -5,7 +5,7 @@ import '../App.css';
 
 import axios from 'axios';
 
-import { SpotifyAuthContext } from '../contexts/spotify';
+import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 
 function requestUserAuthorization() {  
   const redirectParams = new URLSearchParams({
@@ -21,17 +21,11 @@ function requestUserAuthorization() {
   window.location.href = redirectUrl;
 }
 
-async function fetchPlaylists(accessToken) {
-  const response = await axios.get(
-    "https://api.spotify.com/v1/me/playlists",
-    {
-      headers: {
-        "Authorization": "Bearer " + accessToken
-      }
-    }
+async function fetchPlaylists(accessToken, invalidateAccess) {
+  return await performFetch(
+    "https://api.spotify.com/v1/me/playlists", {},
+    accessToken, invalidateAccess
   );
-
-  return response?.data?.items;
 }
 
 function PlaylistList() {
@@ -41,20 +35,21 @@ function PlaylistList() {
 
   useEffect(() => {
     if (accessToken) {
-      fetchPlaylists(accessToken)
+      fetchPlaylists(accessToken, invalidateAccess)
         .then((playlists) => {
-          setPlaylists(playlists);
+          setPlaylists(playlists?.items || []);
         })
         .catch((error) => {
           console.log("Error", error);
 
-          invalidateAccess();
+          setPlaylists([]);
         });
     }
   }, [accessToken]);
 
   return <>
     <h1>Your Playlists</h1>
+    <button onClick={() => invalidateAccess()}>Invalidate</button>
     <ul>
       {
         playlists.map((playlist) =>

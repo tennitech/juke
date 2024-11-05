@@ -27,6 +27,32 @@ app.get('/login/spotify', async (req, res) => {
   res.redirect(authUrl.toString());
 });
 
+app.post('/refresh/spotify', (req, res) => {
+  if (!req.query.refresh_token) {
+    res.status(400).send(req.query.error || 'juke_unknown_error');
+  } else {
+    const body = new URLSearchParams();
+    body.append("grant_type", "refresh_token");
+    body.append("refresh_token", req.query.refresh_token);
+    body.append("client_id", ClientId);
+
+    axios.post("https://accounts.spotify.com/api/token", body.toString(), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      }
+    }).then((response) => {
+      const { access_token, expires_in, refresh_token, scope } = response.data;
+
+      console.log("access token", access_token);
+      console.log("expires in", expires_in);
+      console.log("refresh token", refresh_token);
+      console.log("scope", scope);
+
+      res.status(200).json({ access_token, expires_in, refresh_token, scope });
+    })
+  }
+});
+
 app.get('/callback/spotify', (req, res) => {
   if (!req.query.code) {
     res.status(400).send(req.query.error || "juke_unknown_error");

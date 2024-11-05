@@ -1,10 +1,10 @@
 import { useState, createContext } from "react";
+import axios from "axios";
 
 export const SpotifyAuthContext = createContext({
     accessToken: null,
-    setAccessToken: null,
     refreshToken: null,
-    setRefreshToken: null
+    invalidateAccess: () => null
 });
 
 function loadFromStorage(setAccessToken, setRefreshToken) {
@@ -17,16 +17,18 @@ function loadFromStorage(setAccessToken, setRefreshToken) {
     }
 }
 
-function loadFromUrl(setAccessToken, setRefreshToken) {
+function loadFromUrl(setAccessToken, setRefreshToken, setExpires) {
     const params = new URLSearchParams(window.location.search);
     
     if (params.get("access_token")) {
         const accessToken = params.get("access_token");
-        const scope = params.get("scope");
         const refreshToken = params.get("refresh_token");
+        const scope = params.get("scope");
+        const expiresIn = params.get("expires_in");
             
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
+        setExpires((new Date()).getTime() / 1000 + expiresIn);
             
         saveSpotifyTokens(accessToken, refreshToken);
     
@@ -40,26 +42,100 @@ function loadFromUrl(setAccessToken, setRefreshToken) {
 }
 
 function saveSpotifyTokens(accessToken, refreshToken) {
-    localStorage.setItem("spotify_access_token", accessToken);
-    localStorage.setItem("spotify_refresh_token", refreshToken);
+    if (accessToken && refreshToken) {
+        localStorage.setItem("spotify_access_token", accessToken);
+        localStorage.setItem("spotify_refresh_token", refreshToken);
+    } else {
+        localStorage.removeItem("spotify_access_token");
+        localStorage.removeItem("spotify_refresh_token");
+    }
+}
+
+export async function performFetch(
+    url, params,
+    accessToken, invalidateAccess
+) {
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                "Authorization": "Bearer " + accessToken
+            },
+            params
+        });
+
+        return response?.data;
+    } catch (err) {
+        if (err.response) {
+            if (err.response.status === 401) {
+                return await performFetch(
+                    url, params, accessToken, await invalidateAccess()
+                );
+            }
+        }
+
+        throw err;
+    }
 }
 
 export function ProvideSpotifyAuthContext({ children }) {
     const [accessToken, setAccessToken] = useState(0);
     const [refreshToken, setRefreshToken] = useState(0);
+    const [expires, setExpires] = useState(-1);
 
     if (!accessToken && !refreshToken) {
         loadFromStorage(setAccessToken, setRefreshToken);
     }
 
     if (window.location.search) {
-        loadFromUrl(setAccessToken, setRefreshToken);
+        loadFromUrl(setAccessToken, setRefreshToken, setExpires);
     }
 
     const invalidateAccess = () => {
-        // TODO: Attempt to refresh and (failing that) set to 0
+        if (!accessToken || !refreshToken) {
+            return;
+        }
 
-        setAccessToken(0);
+        console.log("Invalidating Access Token", accessToken, refreshToken);
+
+        if ((new Date()).getTime() / 1000 < expires) {
+            console.warn("Invalidating access token before expires");
+        }
+
+        return new Promise((resolve, reject) => {
+            if (accessToken && refreshToken) {
+                console.log("Fetching");
+
+                const params = new URLSearchParams({
+                    "refresh_token": refreshToken
+                });
+
+                axios.post(
+                    "http://localhost:3001/refresh/spotify",
+                    params.toString()
+                ).then((res) => {
+                    const { access_token, expires_in, refresh_token } = res.data;
+
+                    setAccessToken(access_token);
+                    setRefreshToken(refresh_token);
+                    setExpires((new Date()).getTime() / 1000 + expires_in);
+
+                    saveSpotifyTokens(access_token, refresh_token);
+
+                    resolve(accessToken);
+                }).catch((err) => {
+                    setAccessToken(0);
+                    setRefreshToken(0);
+
+                    saveSpotifyTokens(0, 0);
+
+                    reject(err);
+                });
+
+                setAccessToken(0);
+            } else {
+                resolve(0);
+            }
+        });
     };
 
     return (
