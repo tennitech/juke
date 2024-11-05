@@ -10,6 +10,7 @@ import { SpotifyAuthContext } from '../contexts/spotify';
 function requestUserAuthorization() {  
   const redirectParams = new URLSearchParams({
     scope: [
+      "user-read-private",
       "user-read-email",
       "playlist-read-private",
       "playlist-read-collaborative"

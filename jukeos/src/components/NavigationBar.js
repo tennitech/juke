@@ -68,13 +68,19 @@ const NavigationBar = () => {
 
   useEffect(() => {
     if (accessToken) {
-      loadProfilePicture();
+      loadProfilePicture(accessToken);
     }
   }, [accessToken]);
 
   const loadProfilePicture = (accessToken) => {
+    if (!accessToken) {
+      console.log("Access Token not defined");
+
+      return;
+    }
+
     axios.get(
-      "https://api.spotify.com/v1/users/me", {
+      "https://api.spotify.com/v1/me", {
         headers: {
           "Authorization": "Bearer " + accessToken
         }
