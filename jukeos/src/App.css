@@ -233,3 +233,36 @@
   mask-image: linear-gradient(to top, black, transparent);
   -webkit-mask-image: linear-gradient(to top, black, transparent);
 }
+
+.scroll-wheel-container {
+  width: 100%;
+  overflow-x: scroll;
+  cursor: grab;
+  position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-wheel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-wheel-container:active {
+  cursor: grabbing;
+}
+
+.scroll-wheel-track {
+  display: flex;
+  padding: 20px 40px;
+  gap: 20px;
+  transform-style: preserve-3d;
+}
+
+.scroll-wheel-item {
+  flex: 0 0 auto;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.scroll-wheel-item:hover {
+  transform: scale(1.1) translateY(-10px);
+}
