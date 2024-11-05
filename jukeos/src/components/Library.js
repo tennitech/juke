@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import Slider from 'react-slick';
 import backgroundPng from '../assets/background.png';
-import albumArtPlaceholder from '../assets/default-album-art.png'; // Import the placeholder image
 import '../App.css';
+import 'slick-carousel/slick/slick.css'; 
+import 'slick-carousel/slick/slick-theme.css';
 
 const Library = () => {
   const [savedTracks, setSavedTracks] = useState([]);
@@ -47,6 +49,16 @@ const Library = () => {
     }
   };
 
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 2000,
+  };
+
   return (
     <div style={{
       backgroundImage: `url(${backgroundPng})`,
@@ -61,7 +73,7 @@ const Library = () => {
       alignItems: 'center',
       justifyContent: 'flex-start',
     }}>
-      <div style={{ marginTop: '100px', position: 'relative', width: '800px', height: '800px' }}>
+      <div style={{ marginTop: '20px', position: 'relative', width: '800px', height: '800px' }}>
         <svg width="800" height="800" style={{ position: 'absolute', top: 0, left: 0 }}>
           <defs>
             <path id="circlePath" d="M 400,400 m 0,300 a 300,300 0 1,1 0,-600 a 300,300 0 1,1 0,600" />
@@ -73,15 +85,18 @@ const Library = () => {
           </text>
         </svg>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'rotate(-5deg)' }}>
-          <img src={albumArtPlaceholder} alt="Album Art" style={{ width: '500px', height: '275px', margin: '10px' }} />
-          <img src={albumArtPlaceholder} alt="Album Art" style={{ width: '500px', height: '275px', margin: '10px' }} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', transform: 'rotate(5deg)' }}>
-          <img src={albumArtPlaceholder} alt="Album Art" style={{ width: '500px', height: '275px', margin: '10px' }} />
-          <img src={albumArtPlaceholder} alt="Album Art" style={{ width: '500px', height: '275px', margin: '10px' }} />
-        </div>
+      <div style={{ marginTop: '10px', width: '800px' }}>
+        <Slider {...settings}>
+          {savedTracks.length > 0 ? (
+            savedTracks.map((item, index) => (
+              <div key={index}>
+                <img src={item.track.album.images[0].url} alt={`Album Art ${index}`} style={{ width: '100%', height: 'auto' }} />
+              </div>
+            ))
+          ) : (
+            <div>No album art available</div>
+          )}
+        </Slider>
       </div>
       <div>
         {savedTracks.length ? (
