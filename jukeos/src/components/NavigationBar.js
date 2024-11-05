@@ -76,7 +76,7 @@ const NavigationBar = () => {
     axios.get(
       "https://api.spotify.com/v1/users/me", {
         headers: {
-          "Authorization:": "Bearer " + accessToken
+          "Authorization": "Bearer " + accessToken
         }
       }
     ).then((response) => {

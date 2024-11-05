@@ -70,6 +70,8 @@ const Home = () => {
   const navbarContentRef = useRef(null);
   const location = useLocation();
 
+  console.log("Really Cool Access Token:", accessToken);
+
   useEffect(() => {
     if (navbarContentRef.current) {
       const activeLink = navbarContentRef.current.querySelector('.active');
