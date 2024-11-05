@@ -75,7 +75,6 @@ const NavigationBar = () => {
   const loadProfilePicture = (accessToken) => {
     if (!accessToken) {
       console.log("Access Token not defined");
-
       return;
     }
 
@@ -90,10 +89,8 @@ const NavigationBar = () => {
         setProfilePicture(response.data.images[0].url);
         console.log(profilePicture);
       }
-    }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js", err));
+    }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js: ", err));
   };
-
-  console.log("Profile Picture", profilePicture);
 
   return (
     <>
