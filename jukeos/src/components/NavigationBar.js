@@ -72,9 +72,15 @@ const NavigationBar = () => {
     }
   }, [accessToken]);
 
+  /* 
+    This pulls the current user's profile picture from Spotify. If it cannot pull any profile 
+    pictures, it will use the default profile picture asset, that is saved in `../assets`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
+  */
   const loadProfilePicture = (accessToken) => {
     if (!accessToken) {
-      console.log("Access Token not defined");
+      console.log("Access Token not defined!");
       return;
     }
 
@@ -89,7 +95,7 @@ const NavigationBar = () => {
         setProfilePicture(response.data.images[0].url);
         console.log(profilePicture);
       }
-    }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js: ", err));
+    }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js", err));
   };
 
   return (
