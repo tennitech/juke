@@ -1,98 +1,71 @@
-import React, { useState } from 'react';
-import Slider from 'react-slick';
+import React, { useState, useRef } from 'react';
 import backgroundPng from '../assets/background.png';
 import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-album-art.png';
 import '../App.css';
-import 'slick-carousel/slick/slick.css'; 
-import 'slick-carousel/slick/slick-theme.css';
 
-const LibrarySection = ({ title, items, index }) => {
-  // TODO: Backend - These settings should adapt based on the number of items returned from Spotify API
-  // Consider adding loading states and error handling for API responses
-  const settings = {
-    dots: false,
-    infinite: items.length > 7,
-    speed: 500,
-    slidesToShow: Math.min(7, items.length),
-    slidesToScroll: 1,
-    centerMode: items.length > 7,
-    centerPadding: '0px',
-    cssEase: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    swipeToSlide: true,
-    draggable: true,
-    responsive: [
-      {
-        breakpoint: 1024,
-        settings: {
-          slidesToShow: Math.min(5, items.length),
-          infinite: items.length > 5
-        }
-      },
-      {
-        breakpoint: 600,
-        settings: {
-          slidesToShow: Math.min(3, items.length),
-          infinite: items.length > 3
-        }
-      }
-    ]
+const ScrollWheel = ({ items }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const wheelRef = useRef(null);
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - wheelRef.current.offsetLeft);
+    setScrollLeft(wheelRef.current.scrollLeft);
   };
 
-  const sectionStyle = {
-    transform: `perspective(1000px) rotateX(20deg) translateY(${index * 50}px)`,
-    marginBottom: '150px',
-    overflow: 'hidden'
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
-  // TODO: Backend - When integrating with Spotify:
-  // - Handle cases where items array is empty or undefined
-  // - Add loading states while fetching data
-  // - Handle API errors gracefully
-  if (!items || items.length === 0) {
-    return (
-      <div className="library-section" style={sectionStyle}>
-        <div className="section-title glow">
-          <h2>{title}</h2>
-        </div>
-        <div className="carousel-container">
-          <div style={{ textAlign: 'center', color: '#ECE0C4' }}>
-            No items available
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - wheelRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    wheelRef.current.scrollLeft = scrollLeft - walk;
+  };
 
   return (
-    <div className="library-section" style={sectionStyle}>
+    <div 
+      className="scroll-wheel-container"
+      ref={wheelRef}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onMouseMove={handleMouseMove}
+    >
+      <div className="scroll-wheel-track">
+        {items.map((item, index) => (
+          <div key={index} className="scroll-wheel-item">
+            <img 
+              src={item.imageUrl || defaultAlbumArt}
+              alt={item.title}
+              style={{
+                width: '150px',
+                height: '150px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const LibrarySection = ({ title, items }) => {
+  return (
+    <div className="library-section">
       <div className="section-title glow">
         <h2>{title}</h2>
       </div>
       <div className="carousel-container">
-        <Slider {...settings}>
-          {/* TODO: Backend - Map over actual Spotify data here
-              Expected item structure from Spotify API:
-              - item.imageUrl: URL to album/playlist/podcast artwork
-              - item.title: Name of the album/playlist/podcast
-              - Consider adding onClick handlers for each item to play/view details
-          */}
-          {items.map((item, index) => (
-            <div key={index} className="carousel-item">
-              <img 
-                src={item.imageUrl || defaultAlbumArt}
-                alt={item.title} 
-                style={{
-                  width: '150px',
-                  height: '150px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}
-              />
-            </div>
-          ))}
-        </Slider>
+        <ScrollWheel items={items} />
       </div>
     </div>
   );
@@ -172,10 +145,9 @@ const LibraryTesting = () => {
         }}>
           {sections.map((section, index) => (
             <LibrarySection 
-              key={index}
-              title={section.title}
+              key={section.title}
+              title={section.title} 
               items={section.items}
-              index={index}
             />
           ))}
         </div>
