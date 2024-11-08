@@ -95,7 +95,7 @@ const NavigationBar = () => {
         setProfilePicture(response.data.images[0].url);
         console.log(profilePicture);
       }
-    }).catch((error) => console.log("Error in loadProfilePicture in NavigationBar.js", error));
+    }).catch((error) => console.log("Error in fetchProfilePicture in NavigationBar.js", error));
   };
 
   return (

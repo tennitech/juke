@@ -6,6 +6,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 const Library = () => {
+  const [savedArtists, setArtists] = useState([]);
   const [savedTracks, setSavedTracks] = useState([]);
   const [savedPodcasts, setSavedPodcasts] = useState([]);
   const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
@@ -16,6 +17,18 @@ const Library = () => {
       fetchSavedPodcasts();
     }
   }, [token]);
+
+  const fetchArtists = async() => {
+    axios.get(
+      "https://api.spotify.com/v1/me/albums", {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      }
+    ).then((response) => {
+      setArtists(response.items);
+    }).catch((error) => console.log("Error in fetchArtists in Library.js", error));
+  }
 
   const fetchSavedTracks = async () => {
     try {
