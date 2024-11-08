@@ -59,7 +59,9 @@ export function ProvideSpotifyAuthContext({ children }) {
     const invalidateAccess = () => {
         // TODO: Attempt to refresh and (failing that) set to 0
 
-        setAccessToken(0);
+        console.log("Invalidate");
+
+        // setAccessToken(0);
     };
 
     return (

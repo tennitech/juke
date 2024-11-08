@@ -3,6 +3,66 @@ import backgroundPng from '../assets/background.png';
 import '../App.css';
 import { SpotifyAuthContext } from '../contexts/spotify';
 
+
+function requestUserAuthorization() {  
+  const redirectParams = new URLSearchParams({
+    scope: [
+      "user-read-private",
+      "user-read-email",
+      "playlist-read-private",
+      "playlist-read-collaborative"
+    ].join(" ")
+  });
+  const redirectUrl = new URL("http://localhost:3001/login/spotify");
+  redirectUrl.search = redirectParams.toString();
+  
+  window.location.href = redirectUrl;
+}
+
+async function fetchPlaylists(accessToken) {
+  const response = await axios.get(
+    "https://api.spotify.com/v1/me/playlists",
+    {
+      headers: {
+        "Authorization": "Bearer " + accessToken
+      }
+    }
+  );
+
+  return response?.data?.items;0
+}
+
+function PlaylistList() {
+  const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
+
+  const [playlists, setPlaylists] = useState([]);
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchPlaylists(accessToken)
+        .then((playlists) => {
+          setPlaylists(playlists);
+        })
+        .catch((error) => {
+          console.log("Error", error);
+
+          invalidateAccess();
+        });
+    }
+  }, [accessToken]);
+
+  return <>
+    <h1>Your Playlists</h1>
+    <ul>
+      {
+        playlists.map((playlist) =>
+          <li key={playlist.id}>{playlist.name}</li>
+        )
+      }
+    </ul>
+  </>;
+}
+
 const Home = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
   const [currentTrack, setCurrentTrack] = useState({
