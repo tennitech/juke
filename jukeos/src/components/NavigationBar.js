@@ -78,7 +78,7 @@ const NavigationBar = () => {
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
   */
-  const loadProfilePicture = (accessToken) => {
+  const fetchProfilePicture = (accessToken) => {
     if (!accessToken) {
       console.log("Access Token not defined!");
       return;
