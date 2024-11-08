@@ -13,7 +13,7 @@
 /build
 
 # Environment Variables
-/spotify-auth-server/.env
+.env
 
 # Miscellaneous
 .DS_Store

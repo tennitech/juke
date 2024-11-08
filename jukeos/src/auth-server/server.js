@@ -3,13 +3,15 @@ const axios = require('axios');
 const cors = require('cors');
 
 // NOTE: This is a hack because node is evoked in src/auth-server
-require('dotenv').config({ path: `${__dirname}/../../.env` });
+require('dotenv').config({ path: `${__dirname}/../.env` });
 
 const app = express();
 const port = 3001;
 
 const ClientId = process.env.SPOTIFY_CLIENT_ID;
 const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+
+console.log(ClientId)
 
 app.use(cors());
 
