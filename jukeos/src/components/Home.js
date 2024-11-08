@@ -29,7 +29,7 @@ async function fetchPlaylists(accessToken) {
     }
   );
 
-  return response?.data?.items;0
+  return response?.data?.items;
 }
 
 function PlaylistList() {
