@@ -68,7 +68,7 @@ const NavigationBar = () => {
 
   useEffect(() => {
     if (accessToken) {
-      loadProfilePicture(accessToken);
+      fetchProfilePicture(accessToken);
     }
   }, [accessToken]);
 
