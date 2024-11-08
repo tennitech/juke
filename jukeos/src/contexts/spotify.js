@@ -116,7 +116,9 @@ export function ProvideSpotifyAuthContext({ children }) {
                     const { access_token, expires_in, refresh_token } = res.data;
 
                     setAccessToken(access_token);
-                    setRefreshToken(refresh_token);
+                    if (refreshToken) {
+                        setRefreshToken(refresh_token);
+                    }
                     setExpires((new Date()).getTime() / 1000 + expires_in);
 
                     saveSpotifyTokens(access_token, refresh_token);

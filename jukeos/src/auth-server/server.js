@@ -1,4 +1,5 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const axios = require('axios');
 const cors = require('cors');
 
@@ -7,6 +8,9 @@ require('dotenv').config({ path: `${__dirname}/../../.env` });
 
 const app = express();
 const port = 3001;
+
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 
 const ClientId = process.env.SPOTIFY_CLIENT_ID;
 const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -28,28 +32,31 @@ app.get('/login/spotify', async (req, res) => {
 });
 
 app.post('/refresh/spotify', (req, res) => {
-  if (!req.query.refresh_token) {
-    res.status(400).send(req.query.error || 'juke_unknown_error');
+  if (!req.body.refresh_token) {
+    res.status(400).send('juke_refresh_token_not_defined');
   } else {
     const body = new URLSearchParams();
     body.append("grant_type", "refresh_token");
-    body.append("refresh_token", req.query.refresh_token);
+    body.append("refresh_token", req.body.refresh_token);
     body.append("client_id", ClientId);
 
     axios.post("https://accounts.spotify.com/api/token", body.toString(), {
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + btoa(ClientId + ":" + ClientSecret)
       }
     }).then((response) => {
       const { access_token, expires_in, refresh_token, scope } = response.data;
 
-      console.log("access token", access_token);
-      console.log("expires in", expires_in);
-      console.log("refresh token", refresh_token);
-      console.log("scope", scope);
-
-      res.status(200).json({ access_token, expires_in, refresh_token, scope });
-    })
+      res.status(200).json({
+        access_token,
+        expires_in,
+        refresh_token,
+        scope
+      });
+    }).catch((error) => {
+      res.status(400).send("juke_invalid_request");
+    });
   }
 });
 
