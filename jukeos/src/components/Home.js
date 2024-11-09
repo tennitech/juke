@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
 import { SpotifyAuthContext } from '../contexts/spotify';
+import axios from 'axios';
 
 
 function requestUserAuthorization() {  
