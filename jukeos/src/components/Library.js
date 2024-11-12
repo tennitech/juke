@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Slider from 'react-slick';
 import backgroundPng from '../assets/background.png';
+import axios from 'axios';
 import '../App.css';
 import 'slick-carousel/slick/slick.css'; 
 import 'slick-carousel/slick/slick-theme.css';
@@ -46,19 +47,16 @@ const Library = () => {
   }
 
   const fetchSavedTracks = async () => {
-    try {
-      const response = await fetch('https://api.spotify.com/v1/me/tracks', {
-        method: 'GET',
+    axios.get(
+      "https://api.spotify.com/v1/me/tracks", {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      console.log('Fetched saved tracks:', data);
-      setSavedTracks(data.items);
-    } catch (error) {
-      console.error('Error fetching saved tracks:', error);
-    }
+          "Authorization": "Bearer " + token
+        }
+      }
+    ).then((response) => {
+      setSavedTracks(response?.items);
+      console.log(response?.items);
+    }).catch((error) => console.log("Error in fetchSavedTracks in Library.js", error));
   };
 
   const fetchSavedPodcasts = async () => {
