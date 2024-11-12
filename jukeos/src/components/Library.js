@@ -6,6 +6,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 const Library = () => {
+  const [savedAlbums, setAlbums] = useState([]);
   const [savedArtists, setArtists] = useState([]);
   const [savedTracks, setSavedTracks] = useState([]);
   const [savedPodcasts, setSavedPodcasts] = useState([]);
@@ -13,12 +14,14 @@ const Library = () => {
 
   useEffect(() => {
     if (token) {
+      fetchAlbums();
+      fetchArtists();
       fetchSavedTracks();
       fetchSavedPodcasts();
     }
   }, [token]);
 
-  const fetchArtists = async() => {
+  const fetchAlbums = async() => {
     axios.get(
       "https://api.spotify.com/v1/me/albums", {
         headers: {
@@ -26,7 +29,19 @@ const Library = () => {
         }
       }
     ).then((response) => {
-      setArtists(response.items);
+      setAlbums(response?.items);
+    }).catch((error) => console.log("Error in fetchAlbums in Library.js", error));
+  }
+
+  const fetchArtists = async() => {
+    axios.get(
+      "https://https://api.spotify.com/v1/me/following?type=artist", {
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      }
+    ).then((response) => {
+      setArtists(response?.items);
     }).catch((error) => console.log("Error in fetchArtists in Library.js", error));
   }
 
