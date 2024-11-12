@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
 
-import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+import { SpotifyAuthContext } from '../contexts/spotify';
 
 function requestUserAuthorization() {  
   const redirectParams = new URLSearchParams({
@@ -10,48 +10,15 @@ function requestUserAuthorization() {
       "user-read-private",
       "user-read-email",
       "playlist-read-private",
-      "playlist-read-collaborative"
+      "playlist-read-collaborative",
+      "user-library-read",
+      "user-follow-read"
     ].join(" ")
   });
   const redirectUrl = new URL("http://localhost:3001/login/spotify");
   redirectUrl.search = redirectParams.toString();
   
   window.location.href = redirectUrl;
-}
-
-function PlaylistList() {
-  const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
-
-  const [playlists, setPlaylists] = useState([]);
-
-  useEffect(() => {
-    if (accessToken) {
-      performFetch(
-        "https://api.spotify.com/v1/me/playlists", {},
-        accessToken, invalidateAccess
-      )
-        .then((playlists) => {
-          setPlaylists(playlists?.items || []);
-        })
-        .catch((error) => {
-          console.log("Error", error);
-
-          setPlaylists([]);
-        });
-    }
-  }, [accessToken]);
-
-  return <>
-    <h1>Your Playlists</h1>
-    <button onClick={() => invalidateAccess()}>Invalidate</button>
-    <ul>
-      {
-        playlists.map((playlist) =>
-          <li key={playlist.id}>{playlist.name}</li>
-        )
-      }
-    </ul>
-  </>;
 }
 
 const Home = () => {
@@ -97,6 +64,9 @@ const Home = () => {
           marginTop: '20px'
         }} />
       </div>
+
+      <button onClick={() => requestUserAuthorization()}>Login</button>
+
       <div style={{ marginTop: '50px' }}>
         <h3 style={{ fontSize: '2rem', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}>
           RECENTLY PLAYED

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext, useMemo, useEffect } from 'react';
 import backgroundPng from '../assets/background.png';
 import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-album-art.png';
 import '../App.css';
+import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 
 const ScrollWheel = ({ items }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -72,26 +73,119 @@ const LibrarySection = ({ title, items }) => {
 };
 
 const LibraryTesting = () => {
+  const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
+
+  const [ playlists, setPlaylists ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Playlist' }));
+  const [ podcasts, setPodcasts ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Podcast' }));
+  const [ albums, setAlbums ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Album' }));
+  const [ artists, setArtists ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Artist' }));
+
   // TODO: Backend - Replace this mock data with actual Spotify API integration
   // Required Spotify API endpoints:
-  // - GET /v1/me/playlists (for playlists)
   // - GET /v1/me/shows (for podcasts)
-  // - GET /v1/me/albums (for albums)
   // Consider implementing pagination if needed
-  const [sections] = useState([
+  const sections = useMemo(() => [
+    {
+      title: "MADE FOR YOU",
+      items: [{
+        title: "Thing 1",
+        imageUrl: defaultAlbumArt
+      }]
+    },
     {
       title: 'PLAYLISTS',
-      items: Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Playlist' })
+      items: playlists
     },
     {
       title: 'PODCASTS',
-      items: Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Podcast' })
+      items: podcasts
     },
     {
       title: 'ALBUMS',
-      items: Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Album' })
+      items: albums
+    },
+    {
+      title: 'ARTISTS',
+      items: artists
     }
-  ]);
+  ], [playlists, podcasts, albums, artists]);
+
+  const fetchPlaylists = () => {
+    if (accessToken) {
+      performFetch("https://api.spotify.com/v1/me/playlists", {}, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched playlists:", response);
+
+          setPlaylists(
+            (response && response.items || [])
+              .map((playlist, index) => (playlist && playlist.name && playlist.images && {
+                title: playlist.name,
+                imageUrl: playlist.images[0].url
+              }) || {
+                title: `Playlist ${index}`,
+                imageUrl: defaultAlbumArt
+              })
+          );
+        })
+        .catch((error) => {
+          console.log("Failed to fetch playlists:", error);
+        });
+    }
+  };
+
+  const fetchAlbums = () => {
+    if (accessToken) {
+      performFetch("https://api.spotify.com/v1/me/albums", {}, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched albums:", response);
+
+          setAlbums(
+            (response && response.items || [])
+              .map((album, index) => (album && album.album && album.album.name && album.album.images && {
+                title: album.album.name,
+                imageUrl: album.album.images[0].url
+              }) || {
+                title: `Album ${index}`,
+                imageUrl: defaultAlbumArt
+              })
+          );
+        })
+        .catch((error) => {
+          console.log("Failed to fetch albums:", error);
+        });
+    }
+  };
+
+  const fetchArtists = () => {
+    if (accessToken) {
+      performFetch("https://api.spotify.com/v1/me/following", { type: "artist" }, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched artists:", response);
+
+          setArtists(
+            (response && response.artists && response.artists.items || [])
+              .map((artist, index) => (artist && artist.name && artist.images && {
+                title: artist.name,
+                imageUrl: artist.images[0].url
+              }) || {
+                title: `Artist ${index}`,
+                imageUrl: defaultAlbumArt
+              })
+          );
+        })
+        .catch((error) => {
+          console.log("Failed to fetch artists:", error);
+        });
+    }
+  };
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchPlaylists();
+      fetchAlbums();
+      fetchArtists();
+    }
+  }, [accessToken]);
 
   // TODO: Backend - Add these states and effects for API integration:
   // const [loading, setLoading] = useState(true);
