@@ -135,7 +135,7 @@ export function ProvideSpotifyAuthContext({ children }) {
 
                 setAccessToken(0);
             } else {
-                resolve(0);
+                resolve(0); // TODO: I don't know how we should handle this
             }
         });
     };
