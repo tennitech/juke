@@ -1,139 +1,159 @@
-import React, { useEffect, useState } from 'react';
-import Slider from 'react-slick';
+import React, { useState, useRef } from 'react';
 import backgroundPng from '../assets/background.png';
+import mainGradient from '../assets/main-gradient.svg';
+import defaultAlbumArt from '../assets/default-album-art.png';
 import '../App.css';
-import 'slick-carousel/slick/slick.css'; 
-import 'slick-carousel/slick/slick-theme.css';
 
-const Library = () => {
-  const [savedTracks, setSavedTracks] = useState([]);
-  const [savedPodcasts, setSavedPodcasts] = useState([]);
-  const [token, setToken] = useState(localStorage.getItem('spotify_access_token'));
+const ScrollWheel = ({ items }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const wheelRef = useRef(null);
 
-  useEffect(() => {
-    if (token) {
-      fetchSavedTracks();
-      fetchSavedPodcasts();
-    }
-  }, [token]);
-
-  const fetchSavedTracks = async () => {
-    try {
-      const response = await fetch('https://api.spotify.com/v1/me/tracks', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      console.log('Fetched saved tracks:', data);
-      setSavedTracks(data.items);
-    } catch (error) {
-      console.error('Error fetching saved tracks:', error);
-    }
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - wheelRef.current.offsetLeft);
+    setScrollLeft(wheelRef.current.scrollLeft);
   };
 
-  const fetchSavedPodcasts = async () => {
-    try {
-      const response = await fetch('https://api.spotify.com/v1/me/shows', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      console.log('Fetched saved podcasts:', data);
-      setSavedPodcasts(data.items);
-    } catch (error) {
-      console.error('Error fetching saved podcasts:', error);
-    }
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 3,
-    slidesToScroll: 1,
-    autoplay: true,
-    autoplaySpeed: 2000,
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - wheelRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    wheelRef.current.scrollLeft = scrollLeft - walk;
   };
 
   return (
-    <div style={{
-      backgroundImage: `url(${backgroundPng})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      backgroundAttachment: 'fixed',
-      minHeight: '100vh',
-      padding: '20px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-    }}>
-      <div style={{ marginTop: '20px', position: 'relative', width: '800px', height: '800px' }}>
-        <svg width="800" height="800" style={{ position: 'absolute', top: 0, left: 0 }}>
-          <defs>
-            <path id="circlePath" d="M 400,400 m 0,300 a 300,300 0 1,1 0,-600 a 300,300 0 1,1 0,600" />
-          </defs>
-          <text fill="#ECE0C4" fontFamily="Loubag" fontSize="50">
-            <textPath href="#circlePath" startOffset="50%" textAnchor="middle">
-              <tspan dy="10" dx="0" transform="rotate(90 400 400)">PLAYLISTS</tspan>
-            </textPath>
-          </text>
-        </svg>
-      </div>
-      <div style={{ marginTop: '10px', width: '800px' }}>
-        <Slider {...settings}>
-          {savedTracks.length > 0 ? (
-            savedTracks.map((item, index) => (
-              <div key={index}>
-                <img src={item.track.album.images[0].url} alt={`Album Art ${index}`} style={{ width: '100%', height: 'auto' }} />
-              </div>
-            ))
-          ) : (
-            <div>No album art available</div>
-          )}
-        </Slider>
-      </div>
-      <div>
-        {savedTracks.length ? (
-          <ul>
-            {savedTracks.map((item) => (
-              <li key={item.track.id}>{item.track.name} - {item.track.artists[0].name}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>Loading your saved tracks...</p>
-        )}
-      </div>
-      <div style={{ marginTop: '50px', position: 'relative', width: '800px', height: '800px' }}>
-        <svg width="800" height="800" style={{ position: 'absolute', top: 0, left: 0 }}>
-          <defs>
-            <path id="podcastPath" d="M 400,400 m 0,300 a 300,300 0 1,1 0,-600 a 300,300 0 1,1 0,600" />
-          </defs>
-          <text fill="#ECE0C4" fontFamily="Loubag" fontSize="50">
-            <textPath href="#podcastPath" startOffset="50%" textAnchor="middle">
-              <tspan dy="10" dx="0" transform="rotate(90 400 400)">PODCASTS</tspan>
-            </textPath>
-          </text>
-        </svg>
-      </div>
-      <div>
-        {savedPodcasts.length ? (
-          <ul>
-            {savedPodcasts.map((item) => (
-              <li key={item.show.id}>{item.show.name}</li>
-            ))}
-          </ul>
-        ) : (
-          <p>Loading your saved podcasts...</p>
-        )}
+    <div 
+      className="scroll-wheel-container"
+      ref={wheelRef}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onMouseMove={handleMouseMove}
+    >
+      <div className="scroll-wheel-track">
+        {items.map((item, index) => (
+          <div key={index} className="scroll-wheel-item">
+            <img 
+              src={item.imageUrl || defaultAlbumArt}
+              alt={item.title}
+              style={{
+                width: '150px',
+                height: '150px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+              }}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
-export default Library;
+const LibrarySection = ({ title, items }) => {
+  return (
+    <div className="library-section">
+      <div className="section-title glow">
+        <h2>{title}</h2>
+      </div>
+      <div className="carousel-container">
+        <ScrollWheel items={items} />
+      </div>
+    </div>
+  );
+};
+
+const LibraryTesting = () => {
+  // TODO: Backend - Replace this mock data with actual Spotify API integration
+  // Required Spotify API endpoints:
+  // - GET /v1/me/playlists (for playlists)
+  // - GET /v1/me/shows (for podcasts)
+  // - GET /v1/me/albums (for albums)
+  // Consider implementing pagination if needed
+  const [sections] = useState([
+    {
+      title: 'PLAYLISTS',
+      items: Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Playlist' })
+    },
+    {
+      title: 'PODCASTS',
+      items: Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Podcast' })
+    },
+    {
+      title: 'ALBUMS',
+      items: Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Album' })
+    }
+  ]);
+
+  // TODO: Backend - Add these states and effects for API integration:
+  // const [loading, setLoading] = useState(true);
+  // const { accessToken } = useContext(SpotifyAuthContext);
+  // useEffect(() => { fetch Spotify data here }, [accessToken]);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* TODO: Backend - Consider adding loading spinner/state here */}
+      <div style={{
+        backgroundImage: `url(${backgroundPng})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        minHeight: '100vh',
+        padding: '20px',
+        perspective: '1000px',
+        overflow: 'hidden',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '200vw',
+          height: 'auto',
+          zIndex: 2,
+          pointerEvents: 'none'
+        }}>
+          <img 
+            src={mainGradient} 
+            alt="gradient" 
+            style={{
+              width: '62%',
+              height: 'auto',
+              display: 'block',
+              margin: '0 auto'
+            }}
+          />
+        </div>
+        <div style={{
+          paddingTop: '120px',
+          paddingBottom: '40px',
+          overflowY: 'auto',
+          height: '100vh',
+          position: 'relative',
+          zIndex: 3
+        }}>
+          {sections.map((section, index) => (
+            <LibrarySection 
+              key={section.title}
+              title={section.title} 
+              items={section.items}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LibraryTesting;
