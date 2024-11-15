@@ -125,14 +125,16 @@ const LibraryTesting = () => {
         .then((response) => {
           console.log("Successfully fetched top items:", response);
 
-          setMadeForYou(
-            (response && response.items || [])
-              .filter((item) => item && item.album && item.album.name && item.album.images)
-              .map((item) => ({
-                title: item.album.name,
-                imageUrl: selectBestImage(item.album.images).url
-              }))
-          );
+          if (response && response.items) {
+            setMadeForYou(
+              response.items
+                .filter((item) => item && item.album && item.album.name && item.album.images)
+                .map((item) => ({
+                  title: item.album.name,
+                  imageUrl: selectBestImage(item.album.images).url
+                }))
+            );
+          }
         })
         .catch((error) => {
           console.log("Failed to fetch top items:", error);
@@ -146,14 +148,16 @@ const LibraryTesting = () => {
         .then((response) => {
           console.log("Successfully fetched playlists:", response);
 
-          setPlaylists(
-            (response && response.items || [])
-              .filter((playlist) => playlist && playlist.name && playlist.images)
-              .map((playlist) => ({
-                title: playlist.name,
-                imageUrl: selectBestImage(playlist.images).url
-              }))
-          );
+          if (response && response.items) {
+            setPlaylists(
+              response.items
+                .filter((playlist) => playlist && playlist.name && playlist.images)
+                .map((playlist) => ({
+                  title: playlist.name,
+                  imageUrl: selectBestImage(playlist.images).url
+                }))
+            );
+          }
         })
         .catch((error) => {
           console.log("Failed to fetch playlists:", error);
@@ -167,14 +171,16 @@ const LibraryTesting = () => {
         .then((response) => {
           console.log("Successfully fetched podcasts:", response);
 
-          setPodcasts(
-            (response && response.items || [])
-              .filter((podcast) => podcast && podcast.show && podcast.show.name && podcast.show.images)
-              .map((podcast) => ({
-                title: podcast.show.name,
-                imageUrl: selectBestImage(podcast.show.images).url
-              }))
-          );
+          if (response && response.items) {
+            setPodcasts(
+              response.items
+                .filter((podcast) => podcast && podcast.show && podcast.show.name && podcast.show.images)
+                .map((podcast) => ({
+                  title: podcast.show.name,
+                  imageUrl: selectBestImage(podcast.show.images).url
+                }))
+            );
+          }
         })
         .catch((error) => {
           console.log("Failed to fetch podcasts:", error);
@@ -188,14 +194,16 @@ const LibraryTesting = () => {
         .then((response) => {
           console.log("Successfully fetched albums:", response);
 
-          setAlbums(
-            (response && response.items || [])
-              .filter((album) => album && album.album && album.album.name && album.album.images)
-              .map((album) => ({
-                title: album.album.name,
-                imageUrl: selectBestImage(album.album.images).url
-              }))
-          );
+          if (response && response.items) {
+            setAlbums(
+              response.items
+                .filter((album) => album && album.album && album.album.name && album.album.images)
+                .map((album) => ({
+                  title: album.album.name,
+                  imageUrl: selectBestImage(album.album.images).url
+                }))
+            );
+          }
         })
         .catch((error) => {
           console.log("Failed to fetch albums:", error);
@@ -209,14 +217,16 @@ const LibraryTesting = () => {
         .then((response) => {
           console.log("Successfully fetched artists:", response);
 
-          setArtists(
-            (response && response.artists && response.artists.items || [])
-              .filter((artist) => artist && artist.name && artist.images)
-              .map((artist, index) => ({
-                title: artist.name,
-                imageUrl: selectBestImage(artist.images).url
-              }))
-          );
+          if (response && response.artists && response.artists.items) {
+            setArtists(
+              response.artists.items
+                .filter((artist) => artist && artist.name && artist.images)
+                .map((artist, index) => ({
+                  title: artist.name,
+                  imageUrl: selectBestImage(artist.images).url
+                }))
+            );
+          }
         })
         .catch((error) => {
           console.log("Failed to fetch artists:", error);
