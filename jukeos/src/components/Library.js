@@ -75,6 +75,7 @@ const LibrarySection = ({ title, items }) => {
 const LibraryTesting = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
 
+  const [ madeForYou, setMadeForYou ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Made For You' }));
   const [ playlists, setPlaylists ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Playlist' }));
   const [ podcasts, setPodcasts ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Podcast' }));
   const [ albums, setAlbums ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Album' }));
@@ -87,10 +88,7 @@ const LibraryTesting = () => {
   const sections = useMemo(() => [
     {
       title: "MADE FOR YOU",
-      items: [{
-        title: "Thing 1",
-        imageUrl: defaultAlbumArt
-      }]
+      items: madeForYou,
     },
     {
       title: 'PLAYLISTS',
@@ -109,6 +107,29 @@ const LibraryTesting = () => {
       items: artists
     }
   ], [playlists, podcasts, albums, artists]);
+
+  const fetchTopItems = (type) => {
+    if (accessToken) {
+      performFetch("https://api.spotify.com/v1/me/top/" + type, {}, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched top items:", response);
+
+          setMadeForYou(
+            (response && response.items || [])
+              .map((item, index) => (item && item.album && item.album.name && item.album.images && {
+                title: item.album.name,
+                imageUrl: item.album.images[0].url
+              }) || {
+                title: `Made For You ${index}`,
+                imageUrl: defaultAlbumArt
+              })
+          );
+        })
+        .catch((error) => {
+          console.log("Failed to fetch top items:", error);
+        });
+    }
+  };
 
   const fetchPlaylists = () => {
     if (accessToken) {
@@ -129,6 +150,29 @@ const LibraryTesting = () => {
         })
         .catch((error) => {
           console.log("Failed to fetch playlists:", error);
+        });
+    }
+  };
+
+  const fetchPodcasts = () => {
+    if (accessToken) {
+      performFetch("https://api.spotify.com/v1/me/shows", {}, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched podcasts:", response);
+
+          setPodcasts(
+            (response && response.items || [])
+              .map((podcast, index) => (podcast && podcast.show && podcast.show.name && podcast.show.images && {
+                title: podcast.show.name,
+                imageUrl: podcast.show.images[podcast.show.images.length - 1].url
+              }) || {
+                title: `Podcast ${index}`,
+                imageUrl: defaultAlbumArt
+              })
+          );
+        })
+        .catch((error) => {
+          console.log("Failed to fetch podcasts:", error);
         });
     }
   };
@@ -181,7 +225,9 @@ const LibraryTesting = () => {
 
   useEffect(() => {
     if (accessToken) {
+      fetchTopItems("tracks");
       fetchPlaylists();
+      fetchPodcasts();
       fetchAlbums();
       fetchArtists();
     }
