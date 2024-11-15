@@ -72,18 +72,29 @@ const LibrarySection = ({ title, items }) => {
   );
 };
 
+function selectBestImage(images) {
+  const minWidth = 150, minHeight = 150;
+
+  return images.reduce((previous, current) => {
+    const validImage
+      = current.width >= minWidth && current.height >= minHeight;
+    const betterThanPrevious
+      = !previous || (current.width < previous.width && current.height < previous.height);
+
+    return (validImage && betterThanPrevious)
+      ? current : previous;
+  }, null) || images[0];
+}
+
 const LibraryTesting = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
 
-  const [ madeForYou, setMadeForYou ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Made For You' }));
-  const [ playlists, setPlaylists ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Playlist' }));
-  const [ podcasts, setPodcasts ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Podcast' }));
-  const [ albums, setAlbums ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Album' }));
-  const [ artists, setArtists ] = useState(Array(10).fill({ imageUrl: defaultAlbumArt, title: 'Artist' }));
+  const [ madeForYou, setMadeForYou ] = useState([]);
+  const [ playlists, setPlaylists ] = useState([]);
+  const [ podcasts, setPodcasts ] = useState([]);
+  const [ albums, setAlbums ] = useState([]);
+  const [ artists, setArtists ] = useState([]);
 
-  // TODO: Backend - Replace this mock data with actual Spotify API integration
-  // Required Spotify API endpoints:
-  // - GET /v1/me/shows (for podcasts)
   // Consider implementing pagination if needed
   const sections = useMemo(() => [
     {
@@ -106,7 +117,7 @@ const LibraryTesting = () => {
       title: 'ARTISTS',
       items: artists
     }
-  ], [playlists, podcasts, albums, artists]);
+  ], [madeForYou, playlists, podcasts, albums, artists]);
 
   const fetchTopItems = (type) => {
     if (accessToken) {
@@ -116,13 +127,11 @@ const LibraryTesting = () => {
 
           setMadeForYou(
             (response && response.items || [])
-              .map((item, index) => (item && item.album && item.album.name && item.album.images && {
+              .filter((item) => item && item.album && item.album.name && item.album.images)
+              .map((item) => ({
                 title: item.album.name,
-                imageUrl: item.album.images[0].url
-              }) || {
-                title: `Made For You ${index}`,
-                imageUrl: defaultAlbumArt
-              })
+                imageUrl: selectBestImage(item.album.images).url
+              }))
           );
         })
         .catch((error) => {
@@ -139,13 +148,11 @@ const LibraryTesting = () => {
 
           setPlaylists(
             (response && response.items || [])
-              .map((playlist, index) => (playlist && playlist.name && playlist.images && {
+              .filter((playlist) => playlist && playlist.name && playlist.images)
+              .map((playlist) => ({
                 title: playlist.name,
-                imageUrl: playlist.images[0].url
-              }) || {
-                title: `Playlist ${index}`,
-                imageUrl: defaultAlbumArt
-              })
+                imageUrl: selectBestImage(playlist.images).url
+              }))
           );
         })
         .catch((error) => {
@@ -162,13 +169,11 @@ const LibraryTesting = () => {
 
           setPodcasts(
             (response && response.items || [])
-              .map((podcast, index) => (podcast && podcast.show && podcast.show.name && podcast.show.images && {
+              .filter((podcast) => podcast && podcast.show && podcast.show.name && podcast.show.images)
+              .map((podcast) => ({
                 title: podcast.show.name,
-                imageUrl: podcast.show.images[podcast.show.images.length - 1].url
-              }) || {
-                title: `Podcast ${index}`,
-                imageUrl: defaultAlbumArt
-              })
+                imageUrl: selectBestImage(podcast.show.images).url
+              }))
           );
         })
         .catch((error) => {
@@ -185,13 +190,11 @@ const LibraryTesting = () => {
 
           setAlbums(
             (response && response.items || [])
-              .map((album, index) => (album && album.album && album.album.name && album.album.images && {
+              .filter((album) => album && album.album && album.album.name && album.album.images)
+              .map((album) => ({
                 title: album.album.name,
-                imageUrl: album.album.images[0].url
-              }) || {
-                title: `Album ${index}`,
-                imageUrl: defaultAlbumArt
-              })
+                imageUrl: selectBestImage(album.album.images).url
+              }))
           );
         })
         .catch((error) => {
@@ -208,13 +211,11 @@ const LibraryTesting = () => {
 
           setArtists(
             (response && response.artists && response.artists.items || [])
-              .map((artist, index) => (artist && artist.name && artist.images && {
+              .filter((artist) => artist && artist.name && artist.images)
+              .map((artist, index) => ({
                 title: artist.name,
-                imageUrl: artist.images[0].url
-              }) || {
-                title: `Artist ${index}`,
-                imageUrl: defaultAlbumArt
-              })
+                imageUrl: selectBestImage(artist.images).url
+              }))
           );
         })
         .catch((error) => {
