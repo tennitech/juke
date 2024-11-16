@@ -51,17 +51,28 @@ const NavigationBar = () => {
           setIsFlickering(false);
         }, 800);
 
-        // Apply blur effect with transition
-        const links = navbarContentRef.current.querySelectorAll('a');
+        // Get all links and find the leftmost and rightmost positions
+        const links = Array.from(navbarContentRef.current.querySelectorAll('a'));
+        const leftmostLink = links[0];
+        const rightmostLink = links[links.length - 1];
+        const leftEdge = leftmostLink.offsetLeft;
+        const rightEdge = rightmostLink.offsetLeft + rightmostLink.offsetWidth;
+        const totalWidth = rightEdge - leftEdge;
+
+        // Apply progressive blur effect
         links.forEach((link) => {
           const linkCenter = link.offsetLeft + link.offsetWidth / 2;
           const distance = Math.abs(activeLinkCenter - linkCenter);
-          link.style.transition = 'filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1)';
-          if (distance > navbarWidth / 4) {
-            link.style.filter = 'blur(2px)';
-          } else {
-            link.style.filter = 'blur(0px)';
-          }
+          const normalizedDistance = distance / (totalWidth / 2); // Value between 0 and 1
+          
+          link.style.transition = 'filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 800ms cubic-bezier(0.34, 1.56, 0.64, 1)';
+          
+          // More subtle blur calculation
+          const blurAmount = Math.pow(normalizedDistance, 2) * 2; // Reduced max blur and made more gradual
+          const opacity = Math.max(0.4, 1 - Math.pow(normalizedDistance, 1.5)); // Minimum opacity of 0.4
+          
+          link.style.filter = `blur(${blurAmount}px)`;
+          link.style.opacity = opacity;
         });
       }
     }

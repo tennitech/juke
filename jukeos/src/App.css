@@ -52,35 +52,44 @@
   transform: translateX(-50%);
   border-radius: 45px;
   padding: 20px;
-  overflow: hidden;
+  overflow: visible;
   z-index: 1000;
+  width: 90%;
+  max-width: none;
 }
 
 .navbar-blur-container {
   position: relative;
-  overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  overflow: visible;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  width: 150%;
+  left: -25%;
+  position: relative;
 }
 
 .navbar-content {
   display: flex;
   position: relative;
   transition: transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  padding: 0 30px;
+  padding: 0;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
 }
 
 .navbar a {
   font-family: 'Notable', sans-serif;
   color: white;
   text-decoration: none;
-  padding: 20px 40px;
+  padding: 20px 8px;
   opacity: 0.7;
   transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease, filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
   white-space: nowrap;
-  letter-spacing: 5px;
-  font-size: 1.4rem;
+  letter-spacing: 2px;
+  font-size: 1.2rem;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  transform: none !important;
 }
 
 .navbar a:hover {
