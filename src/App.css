@@ -1,0 +1,39 @@
+/* Add the following styles at the end of your App.css */
+
+/* Overlay to create fade and blur effect beneath the navbar */
+.content-overlay {
+  position: fixed;
+  top: 80px; /* Adjust based on navbar's total height (e.g., top offset + height) */
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 60px); /* Adjust based on navbar's horizontal padding (30px each side) */
+  height: 60px; /* Height of the overlay area */
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
+  backdrop-filter: blur(8px);
+  z-index: 999; /* Ensure it's below the navbar which has z-index: 1000 */
+  
+  /* Temporary background for debugging */
+  /* Comment out once positioning is confirmed */
+  /* background-color: rgba(255, 0, 0, 0.2); */
+}
+
+@media (max-width: 768px) {
+  .content-overlay {
+    height: 40px; /* Reduced height for smaller screens */
+    top: 80px; /* Adjust if navbar height changes on smaller screens */
+  }
+}
+
+.navbar {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 45px;
+  padding: 20px;
+  overflow: hidden;
+  z-index: 1000; /* Higher than the overlay's z-index: 999 */
+  background-color: rgba(40, 44, 52, 0.5);
+  /* Remove any backdrop-filter if previously added */
+}

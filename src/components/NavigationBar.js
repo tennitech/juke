@@ -1,11 +1,10 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { SpotifyAuthContext } from '../contexts/spotify';
 import spotlightPng from '../assets/spotlight.png';
 import AnimatedBlob from './AnimatedBlob';
 import ColorThief from 'color-thief-browser';
 import axios from 'axios';
-
 
 const NavigationBar = () => {
   const navbarContentRef = useRef(null);
@@ -13,9 +12,8 @@ const NavigationBar = () => {
   const [animationInProgress, setAnimationInProgress] = useState(false);
   const [isFlickering, setIsFlickering] = useState(false);
   const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
-  const {accessToken} = useContext(SpotifyAuthContext);
+  const { accessToken } = useContext(SpotifyAuthContext);
   const [profilePicture, setProfilePicture] = useState(require("../assets/default-user-profile-image.svg").default);
-  const navigate = useNavigate();
 
   const extractDominantColors = (imageSrc) => {
     const img = new Image();
@@ -69,17 +67,17 @@ const NavigationBar = () => {
 
   useEffect(() => {
     if (accessToken) {
-      fetchProfilePicture(accessToken);
+      loadProfilePicture(accessToken);
     }
   }, [accessToken]);
 
   /* 
     This pulls the current user's profile picture from Spotify. If it cannot pull any profile 
     pictures, it will use the default profile picture asset, that is saved in `../assets`.
-
+    
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
   */
-  const fetchProfilePicture = (accessToken) => {
+  const loadProfilePicture = (accessToken) => {
     if (!accessToken) {
       console.log("Access Token not defined!");
       return;
@@ -96,7 +94,7 @@ const NavigationBar = () => {
         setProfilePicture(response.data.images[0].url);
         console.log(profilePicture);
       }
-    }).catch((error) => console.log("Error in fetchProfilePicture in NavigationBar.js", error));
+    }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js", err));
   };
 
   return (
@@ -124,8 +122,6 @@ const NavigationBar = () => {
             alt="User Profile"
             className="user-profile-image"
             onLoad={(e) => extractDominantColors(e.target.src)}
-            onClick={() => navigate('/profile')}
-            style={{ cursor: 'pointer' }}
           />
         </div>
       </div>
@@ -133,5 +129,4 @@ const NavigationBar = () => {
   );
 };
 
-
-export default NavigationBar;
+export default NavigationBar; 
