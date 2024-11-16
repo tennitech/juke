@@ -2,25 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { SpotifyAuthContext } from '../contexts/spotify';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
-import { SpotifyAuthContext } from '../contexts/spotify';
-
-function requestUserAuthorization() {  
-  const redirectParams = new URLSearchParams({
-    scope: [
-      "user-read-private",
-      "user-read-email",
-      "playlist-read-private",
-      "playlist-read-collaborative",
-      "user-library-read",
-      "user-follow-read",
-      "user-top-read"
-    ].join(" ")
-  });
-  const redirectUrl = new URL("http://localhost:3001/login/spotify");
-  redirectUrl.search = redirectParams.toString();
-  
-  window.location.href = redirectUrl;
-}
 
 const Home = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
@@ -97,33 +78,22 @@ const Home = () => {
         }}>
           {currentTrack.artist}
         </h2>
-        
-        <div>
-          <button style={{ margin: '0 10px' }}>⏮️</button>
-          <button style={{ margin: '0 10px' }}>⏯️</button>
-          <button style={{ margin: '0 10px' }}>⏭️</button>
-        </div>
-        <img src={currentTrack.albumArt} alt="Album Art" style={{
-          width: '200px',
-          height: '200px',
-          borderRadius: '10px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-          marginTop: '20px'
-        }} />
-      </div>
 
-      <button onClick={() => requestUserAuthorization()}>Login</button>
-
-      <div style={{ marginTop: '50px' }}>
-        <h3 style={{ fontSize: '2rem', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)' }}>
-          RECENTLY PLAYED
-        </h3>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-          {/* Map over recently played tracks */}
-          <img src="path/to/recent1.png" alt="Recent 1" style={{ width: '100px', height: '100px' }} />
-          <img src="path/to/recent2.png" alt="Recent 2" style={{ width: '100px', height: '100px' }} />
-          <img src="path/to/recent3.png" alt="Recent 3" style={{ width: '100px', height: '100px' }} />
-          <img src="path/to/recent4.png" alt="Recent 4" style={{ width: '100px', height: '100px' }} />
+        {/* Playback Controls */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '40px',
+          margin: '20px 0'
+        }}>
+          <button className="control-button" style={controlButtonStyle}>⏮️</button>
+          <button className="control-button" style={{
+            ...controlButtonStyle,
+            fontSize: '4rem',
+            width: '80px',
+            height: '80px'
+          }}>⏯️</button>
+          <button className="control-button" style={controlButtonStyle}>⏭️</button>
         </div>
 
         {/* Album Art */}

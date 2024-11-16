@@ -4,11 +4,11 @@ import { AnimatePresence } from 'framer-motion';
 import NavigationBar from './components/NavigationBar';
 import Home from './components/Home';
 import Library from './components/Library';
+import LibraryTesting from './components/LibraryTesting';
 import Settings from './components/Settings';
 import Harmony from './components/Harmony';
 import StartupScreen from './components/StartupScreen';
 import FadeTransition from './components/FadeTransition';
-import Profile from './components/Profile';
 
 import { ProvideSpotifyAuthContext } from './contexts/spotify';
 
@@ -38,14 +38,14 @@ function AppContent({ isLoading }) {
     <ProvideSpotifyAuthContext>
       <StartupScreen isLoading={isLoading} />
       <NavigationBar />
+      <div className="content-overlay"></div> {/* Overlay added here */}
       <div className="page-content">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<FadeTransition><Home /></FadeTransition>} />
-            <Route path="/library" element={<FadeTransition><Library /></FadeTransition>} />
+            <Route path="/library" element={<FadeTransition><LibraryTesting /></FadeTransition>} />
             <Route path="/settings" element={<FadeTransition><Settings /></FadeTransition>} />
             <Route path="/harmony" element={<FadeTransition><Harmony /></FadeTransition>} />
-            <Route path="/profile" element={<FadeTransition><Profile /></FadeTransition>} />
           </Routes>
         </AnimatePresence>
       </div>
@@ -53,4 +53,4 @@ function AppContent({ isLoading }) {
   );
 }
 
-export default App;
+export default App; 
