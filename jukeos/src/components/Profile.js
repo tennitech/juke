@@ -118,7 +118,7 @@ const Profile = () => {
             onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
             onMouseOut={e => e.target.style.transform = 'scale(1)'}
           >
-            Open in Spotify
+            Login in Spotify
           </a>
         </div>
       </div>
