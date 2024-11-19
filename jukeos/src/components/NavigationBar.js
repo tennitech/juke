@@ -51,6 +51,16 @@ const NavigationBar = () => {
           setIsFlickering(false);
         }, 800);
 
+        // Update profile container position
+        const profileContainer = document.querySelector('.user-profile-container');
+        if (profileContainer) {
+          if (location.pathname === '/profile') {
+            profileContainer.classList.add('profile-active');
+          } else {
+            profileContainer.classList.remove('profile-active');
+          }
+        }
+
         // Get all links and find the leftmost and rightmost positions
         const links = Array.from(navbarContentRef.current.querySelectorAll('a'));
         const leftmostLink = links[0];
@@ -119,6 +129,7 @@ const NavigationBar = () => {
             <NavLink to="/" end>Home</NavLink>
             <NavLink to="/library">Library</NavLink>
             <NavLink to="/settings">Settings</NavLink>
+            <NavLink to="/profile" className="profile-link">Profile</NavLink>
           </div>
         </div>
       </nav>
@@ -136,7 +147,6 @@ const NavigationBar = () => {
             className="user-profile-image"
             onLoad={(e) => extractDominantColors(e.target.src)}
             onClick={() => navigate('/profile')}
-            style={{ cursor: 'pointer' }}
           />
         </div>
       </div>

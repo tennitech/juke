@@ -84,7 +84,9 @@
   text-decoration: none;
   padding: 20px 8px;
   opacity: 0.7;
-  transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease, filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1), text-shadow 0.3s ease;
+  transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease, 
+              filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1), 
+              transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
   white-space: nowrap;
   letter-spacing: 2px;
   font-size: 1.2rem;
@@ -133,6 +135,20 @@
   display: flex;
   align-items: center;
   z-index: 1000;
+  transition: all 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.user-profile-container.profile-active {
+  right: 50%;
+  transform: translateX(50%);
+}
+
+.profile-link {
+  opacity: 0 !important;
+  pointer-events: none;
+  position: relative;
+  width: 50px;
+  margin: 0 10px;
 }
 
 .user-profile-image {
