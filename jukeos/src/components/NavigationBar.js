@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { SpotifyAuthContext } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import spotlightPng from '../assets/spotlight.png';
 import AnimatedBlob from './AnimatedBlob';
 import ColorThief from 'color-thief-browser';
@@ -13,7 +13,7 @@ const NavigationBar = () => {
   const [animationInProgress, setAnimationInProgress] = useState(false);
   const [isFlickering, setIsFlickering] = useState(false);
   const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
-  const {accessToken} = useContext(SpotifyAuthContext);
+  const {accessToken, invalidateAccess} = useContext(SpotifyAuthContext);
   const [profilePicture, setProfilePicture] = useState(require("../assets/default-user-profile-image.svg").default);
   const navigate = useNavigate();
 
@@ -90,7 +90,7 @@ const NavigationBar = () => {
 
   useEffect(() => {
     if (accessToken) {
-      loadProfilePicture(accessToken);
+      loadProfilePicture(accessToken, invalidateAccess);
     }
   }, [accessToken]);
 
@@ -100,21 +100,15 @@ const NavigationBar = () => {
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
   */
-  const loadProfilePicture = (accessToken) => {
+  const loadProfilePicture = (accessToken, invalidateAccess) => {
     if (!accessToken) {
       console.log("Access Token not defined!");
       return;
     }
 
-    axios.get(
-      "https://api.spotify.com/v1/me", {
-        headers: {
-          "Authorization": "Bearer " + accessToken
-        }
-      }
-    ).then((response) => {
-      if (response?.data?.images?.length > 0) {
-        setProfilePicture(response.data.images[0].url);
+    performFetch("https://api.spotify.com/v1/me", {}, accessToken, invalidateAccess).then((response) => {
+      if (response?.images?.length > 0) {
+        setProfilePicture(response.images[0].url);
         console.log(profilePicture);
       }
     }).catch((err) => console.log("Error in loadProfilePicture in NavigationBar.js", err));
