@@ -6,10 +6,70 @@ import '../App.css';
 import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 
 const ScrollWheel = ({ items }) => {
+  const wheelRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const wheelRef = useRef(null);
+  const [centerIndex, setCenterIndex] = useState(0);
+  const scrollTimeout = useRef(null);
+
+  const calculatePadding = () => {
+    if (!wheelRef.current) return;
+    const containerWidth = wheelRef.current.offsetWidth;
+    const itemWidth = 190; // Width + gap
+    const paddingRequired = Math.floor(containerWidth / 2);
+    return paddingRequired;
+  };
+
+  const handleScroll = () => {
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    scrollTimeout.current = setTimeout(() => {
+      if (wheelRef.current) {
+        const itemWidth = 190;
+        const scrollPosition = wheelRef.current.scrollLeft;
+        const newIndex = Math.round(scrollPosition / itemWidth);
+        const targetScroll = newIndex * itemWidth;
+        
+        // Add bungee effect
+        const distance = targetScroll - scrollPosition;
+        const overshoot = distance * 0.2; // Overshoot by 20%
+        
+        // First, overshoot
+        wheelRef.current.scrollTo({
+          left: targetScroll + overshoot,
+          behavior: 'smooth'
+        });
+
+        // Then snap back to target position
+        setTimeout(() => {
+          wheelRef.current.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth'
+          });
+          setCenterIndex(newIndex);
+        }, 150);
+      }
+    }, 100);
+  };
+
+  useEffect(() => {
+    const wheel = wheelRef.current;
+    if (wheel) {
+      const padding = calculatePadding();
+      wheel.style.setProperty('--wheel-padding', `${padding}px`);
+    }
+    
+    const handleResize = () => {
+      const padding = calculatePadding();
+      wheel.style.setProperty('--wheel-padding', `${padding}px`);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleMouseDown = (e) => {
     setIsDragging(true);
@@ -19,6 +79,7 @@ const ScrollWheel = ({ items }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    handleScroll();
   };
 
   const handleMouseMove = (e) => {
@@ -27,6 +88,35 @@ const ScrollWheel = ({ items }) => {
     const x = e.pageX - wheelRef.current.offsetLeft;
     const walk = (x - startX) * 2;
     wheelRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleItemClick = (index) => {
+    if (index === centerIndex) return; // Already centered
+    
+    const itemWidth = 190;
+    const targetScroll = index * itemWidth;
+    
+    // Calculate the number of positions to move
+    const positions = Math.abs(index - centerIndex);
+    
+    // Adjust animation duration based on distance
+    const baseDuration = 300; // Base duration for single position move
+    const duration = Math.min(baseDuration * positions, 800); // Cap at 800ms
+    
+    // First, overshoot
+    wheelRef.current.scrollTo({
+      left: targetScroll + (20 * Math.sign(index - centerIndex)), // Overshoot by 20px in the direction of movement
+      behavior: 'smooth'
+    });
+
+    // Then snap back to target position
+    setTimeout(() => {
+      wheelRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+      setCenterIndex(index);
+    }, duration * 0.6); // Snap back after 60% of the animation
   };
 
   return (
@@ -39,21 +129,37 @@ const ScrollWheel = ({ items }) => {
       onMouseMove={handleMouseMove}
     >
       <div className="scroll-wheel-track">
-        {items.map((item, index) => (
-          <div key={index} className="scroll-wheel-item">
-            <img 
-              src={item.imageUrl || defaultAlbumArt}
-              alt={item.title}
+        {items.map((item, index) => {
+          const distance = Math.abs(index - centerIndex);
+          const scale = Math.max(0.6, 1 - (distance * 0.2));
+          const opacity = Math.max(0.3, 1 - (distance * 0.3));
+          
+          return (
+            <div 
+              key={index} 
+              className="scroll-wheel-item"
+              onClick={() => handleItemClick(index)}
               style={{
-                width: '150px',
-                height: '150px',
-                objectFit: 'cover',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                transform: `scale(${scale})`,
+                opacity: opacity,
+                transition: isDragging ? 'none' : 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                cursor: 'pointer'
               }}
-            />
-          </div>
-        ))}
+            >
+              <img 
+                src={item.imageUrl || defaultAlbumArt}
+                alt={item.title}
+                style={{
+                  width: '150px',
+                  height: '150px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -213,7 +319,7 @@ const LibraryTesting = () => {
 
   const fetchArtists = () => {
     if (accessToken) {
-      performFetch("https://api.spotify.com/v1/me/following", { type: "artist" }, accessToken, invalidateAccess)
+      performFetch("https://api.spotify.com/v1/me/following?limit=20", { type: "artist" }, accessToken, invalidateAccess)
         .then((response) => {
           console.log("Successfully fetched artists:", response);
 
