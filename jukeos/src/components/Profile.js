@@ -4,6 +4,26 @@ import axios from 'axios';
 import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';
 
+// TODO: Probably a better spot
+// But I want to get this working
+function requestUserAuthorization() {  
+  const redirectParams = new URLSearchParams({
+    scope: [
+      "user-read-private",
+      "user-read-email",
+      "playlist-read-private",
+      "playlist-read-collaborative",
+      "user-library-read",
+      "user-follow-read",
+      "user-top-read"
+    ].join(" ")
+  });
+  const redirectUrl = new URL("http://localhost:3001/login/spotify");
+  redirectUrl.search = redirectParams.toString();
+  
+  window.location.href = redirectUrl;
+}
+
 const Profile = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
   const [profileData, setProfileData] = useState({
@@ -101,9 +121,7 @@ const Profile = () => {
             <p style={{ margin: 0, opacity: 0.8 }}>{profileData.country}</p>
           </div>
 
-          <a 
-            href={profileData.spotifyUrl}
-            target="_blank"
+          <button
             rel="noopener noreferrer"
             style={{
               display: 'inline-block',
@@ -115,11 +133,12 @@ const Profile = () => {
               borderRadius: '20px',
               transition: 'transform 0.2s ease',
             }}
+            onClick={() => requestUserAuthorization()}
             onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
             onMouseOut={e => e.target.style.transform = 'scale(1)'}
           >
             Login in Spotify
-          </a>
+          </button>
         </div>
       </div>
     </div>
