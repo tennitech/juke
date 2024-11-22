@@ -74,7 +74,7 @@ const NavigationBar = () => {
   }, [accessToken]);
 
   /* 
-    This pulls the current user's profile picture from Spotify. If it cannot pull any profile 
+    This gets the current user's profile picture from Spotify. If it cannot pull any profile 
     pictures, it will use the default profile picture asset, that is saved in `../assets`.
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile

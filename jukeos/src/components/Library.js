@@ -119,6 +119,10 @@ const LibraryTesting = () => {
     }
   ], [madeForYou, playlists, podcasts, albums, artists]);
 
+
+  /*
+    
+  */
   const fetchTopItems = (type) => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/top/" + type, {}, accessToken, invalidateAccess)
