@@ -391,7 +391,7 @@ html, body, #root {
 .clouds-main {
   position: fixed;
   left: -300px;
-  top: 2%;
+  top: 10%;
   transform: translateY(-50%);
   width: 800px;
   height: auto;

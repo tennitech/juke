@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext } from '../contexts/spotify';
 import backgroundPng from '../assets/background.png';
 import cloudsSvg from '../assets/clouds.svg';
@@ -7,6 +7,87 @@ import pauseIcon from '../assets/pause-icon.svg';
 import AnimatedBlob from './AnimatedBlob';
 import '../App.css';
 import axios from 'axios';
+import defaultAlbumArt from '../assets/default-album-art.png';
+
+const ScrollWheel = ({ items }) => {
+  const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
+  const wheelRef = useRef(null);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+
+  const handleMouseDown = (e) => {
+    isDragging.current = true;
+    startX.current = e.pageX - wheelRef.current.offsetLeft;
+    scrollLeft.current = wheelRef.current.scrollLeft;
+  };
+
+  const handleMouseUp = () => {
+    isDragging.current = false;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging.current) return;
+    e.preventDefault();
+    const x = e.pageX - wheelRef.current.offsetLeft;
+    const walk = (x - startX.current) * 2;
+    wheelRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  return (
+    <div 
+      className="scroll-wheel-container"
+      ref={wheelRef}
+      style={{ 
+        width: '100%',
+        maxWidth: '800px',
+        height: '100px',  // Reduced from 120px
+        overflow: 'hidden',
+        marginTop: '-10px'  // Added negative margin
+      }}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onMouseMove={handleMouseMove}
+    >
+      <div className="scroll-wheel-track" style={{
+        display: 'flex',
+        gap: '20px',
+        padding: '0 20px'
+      }}>
+        {items.map((item, index) => {
+          const distance = Math.abs(index - centerIndex);
+          const scale = Math.max(0.6, 1 - (distance * 0.2));
+          const opacity = Math.max(0.3, 1 - (distance * 0.3));
+          
+          return (
+            <div 
+              key={index} 
+              className="scroll-wheel-item"
+              style={{
+                transform: `scale(${scale})`,
+                opacity: opacity,
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <img 
+                src={item.imageUrl || defaultAlbumArt}
+                alt={item.title}
+                style={{
+                  width: '100px',  // Reduced size
+                  height: '100px',  // Reduced size
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const Home = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
@@ -225,6 +306,61 @@ const Home = () => {
                 zIndex: 1
               }} 
             />
+          </div>
+        </div>
+        <div style={{
+          width: '500px',  
+          marginTop: '-240px',
+          alignSelf: 'flex-start',
+          paddingLeft: '0'
+        }}>
+          <h3 style={{
+            fontFamily: 'Loubag, sans-serif',
+            fontSize: '1.5rem',
+            color: '#FFC764',
+            letterSpacing: '3px',
+            marginBottom: '5px',
+            marginTop: '140px',
+            textAlign: 'left'
+          }}>
+            RECENTLY PLAYED
+          </h3>
+          <div style={{
+            width: '100%',
+            height: '200px',
+            overflow: 'hidden',
+            marginTop: '-40px'
+          }}>
+            <div className="scroll-wheel-container">
+              <div className="scroll-wheel-track" style={{
+                minHeight: '180px',
+                paddingLeft: '0',  // Remove default padding to start from left
+                paddingRight: '40px'
+              }}>
+                {[...Array(5)].map((_, index) => (
+                  <div 
+                    key={index} 
+                    className="scroll-wheel-item"
+                    style={{
+                      transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
+                      opacity: index === 0 ? 1 : 1 - index * 0.2
+                    }}
+                  >
+                    <img 
+                      src={defaultAlbumArt}
+                      alt={`Recently Played ${index + 1}`}
+                      style={{
+                        width: '100px',
+                        height: '100px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
