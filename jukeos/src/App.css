@@ -328,3 +328,73 @@ html, body, #root {
   transform: scale(1.1) translateY(-10px);
   opacity: 1 !important;
 }
+
+@keyframes textGlitch {
+  0%, 89%, 100% {
+    transform: none;
+    opacity: 1;
+  }
+  90% {
+    transform: skew(0.5deg, 0.5deg);
+    opacity: 0.95;
+  }
+  91% {
+    transform: skew(-0.5deg, -0.5deg);
+    opacity: 0.97;
+  }
+  92% {
+    transform: skew(0.3deg, 0.3deg);
+    opacity: 0.96;
+  }
+  93% {
+    transform: skew(-0.3deg, -0.3deg);
+    opacity: 0.98;
+  }
+}
+
+@keyframes slideInClouds {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 0.8;
+  }
+}
+
+@keyframes floatClouds {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(10px, -10px);
+  }
+}
+
+.clouds-main {
+  position: fixed;
+  left: -300px;
+  top: 2%;
+  transform: translateY(-50%);
+  width: 800px;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  animation: slideInClouds 2s ease-out forwards,
+             floatClouds 15s ease-in-out infinite;
+}
+
+.clouds-small {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  width: 500px;
+  height: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: rotateY(180deg);
+  animation: slideInClouds 2.5s ease-out forwards,
+             floatClouds 20s ease-in-out infinite;
+  filter: blur(1px);
+}
