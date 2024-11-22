@@ -9,6 +9,7 @@ const ScrollWheel = ({ items }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [centerIndex, setCenterIndex] = useState(0);
   const wheelRef = useRef(null);
 
   const handleMouseDown = (e) => {
@@ -19,6 +20,17 @@ const ScrollWheel = ({ items }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    // Snap to nearest item
+    if (wheelRef.current) {
+      const itemWidth = 190; // Width + gap
+      const scrollPosition = wheelRef.current.scrollLeft;
+      const newIndex = Math.round(scrollPosition / itemWidth);
+      setCenterIndex(newIndex);
+      wheelRef.current.scrollTo({
+        left: newIndex * itemWidth,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -27,6 +39,11 @@ const ScrollWheel = ({ items }) => {
     const x = e.pageX - wheelRef.current.offsetLeft;
     const walk = (x - startX) * 2;
     wheelRef.current.scrollLeft = scrollLeft - walk;
+    
+    // Update center index while dragging
+    const itemWidth = 190;
+    const currentIndex = Math.round(wheelRef.current.scrollLeft / itemWidth);
+    setCenterIndex(currentIndex);
   };
 
   return (
@@ -39,21 +56,35 @@ const ScrollWheel = ({ items }) => {
       onMouseMove={handleMouseMove}
     >
       <div className="scroll-wheel-track">
-        {items.map((item, index) => (
-          <div key={index} className="scroll-wheel-item">
-            <img 
-              src={item.imageUrl || defaultAlbumArt}
-              alt={item.title}
+        {items.map((item, index) => {
+          const distance = Math.abs(index - centerIndex);
+          const scale = Math.max(0.6, 1 - (distance * 0.2));
+          const opacity = Math.max(0.3, 1 - (distance * 0.3));
+          
+          return (
+            <div 
+              key={index} 
+              className="scroll-wheel-item"
               style={{
-                width: '150px',
-                height: '150px',
-                objectFit: 'cover',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                transform: `scale(${scale})`,
+                opacity: opacity,
+                transition: 'all 0.3s ease'
               }}
-            />
-          </div>
-        ))}
+            >
+              <img 
+                src={item.imageUrl || defaultAlbumArt}
+                alt={item.title}
+                style={{
+                  width: '150px',
+                  height: '150px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -213,7 +244,7 @@ const LibraryTesting = () => {
 
   const fetchArtists = () => {
     if (accessToken) {
-      performFetch("https://api.spotify.com/v1/me/following", { type: "artist" }, accessToken, invalidateAccess)
+      performFetch("https://api.spotify.com/v1/me/following?limit=20", { type: "artist" }, accessToken, invalidateAccess)
         .then((response) => {
           console.log("Successfully fetched artists:", response);
 
