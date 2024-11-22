@@ -60,9 +60,9 @@ const Profile = () => {
       setProfileData({
         displayName: data.display_name || 'Spotify User',
         email: data.email || 'No email provided',
-        followers: data.followers?.total || 0,
+        followers: data.followers?.total || '?',
         profileImage: data.images?.[0]?.url || require("../assets/default-user-profile-image.svg").default,
-        spotifyUrl: data.external_urls?.spotify || '#',
+        spotifyUrl: data.external_urls?.spotify || 'N/A',
         country: data.country || 'Unknown'
       });
     }).catch((err) => console.log("Error loading profile data:", err));
