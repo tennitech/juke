@@ -201,10 +201,26 @@
 .section-title h2 {
   font-family: 'Loubag', sans-serif;
   font-size: 3rem;
-  color: #ECE0C4;
-  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7),
-               0 0 30px rgba(255, 215, 0, 0.5),
-               0 0 40px rgba(255, 215, 0, 0.3);
+  color: #FFC764;
+  text-shadow: 0 0 5px rgba(255, 199, 100, 0.3),
+               0 0 10px rgba(255, 199, 100, 0.2),
+               0 0 15px rgba(255, 199, 100, 0.1);
+  position: relative;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  padding-left: 15px;
+}
+
+.section-title h2::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #FFC764;
+  filter: blur(8px);
+  opacity: 0.3;
+  letter-spacing: 15px;
+  padding-left: 15px;
 }
 
 .carousel-container {
