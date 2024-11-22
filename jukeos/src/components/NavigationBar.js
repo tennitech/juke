@@ -6,7 +6,6 @@ import AnimatedBlob from './AnimatedBlob';
 import ColorThief from 'color-thief-browser';
 import axios from 'axios';
 
-
 const NavigationBar = () => {
   const navbarContentRef = useRef(null);
   const location = useLocation();
@@ -74,7 +73,7 @@ const NavigationBar = () => {
   }, [accessToken]);
 
   /* 
-    This gets the current user's profile picture from Spotify. If it cannot pull any profile 
+    This pulls the current user's profile picture from Spotify. If it cannot pull any profile 
     pictures, it will use the default profile picture asset, that is saved in `../assets`.
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
@@ -90,7 +89,9 @@ const NavigationBar = () => {
         setProfilePicture(response.images[0].url);
         console.log(profilePicture);
       }
-    }).catch((error) => console.log("Error in fetchProfilePicture in NavigationBar.js", error));
+    }).catch((error) => {
+      console.log("Error in fetchProfilePicture in NavigationBar.js", error)
+    });
   };
 
   return (
