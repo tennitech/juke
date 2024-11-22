@@ -7,6 +7,7 @@
 
 .App {
   text-align: center;
+  position: relative;
 }
 
 .App-logo {
@@ -160,4 +161,108 @@
                0 0 40px rgba(255, 215, 0, 0.3);
   text-align: center;
   margin: 20px 0; /* Adjust margin as needed */
+}
+
+.library-section {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.section-title {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section-title h2 {
+  font-family: 'Loubag', sans-serif;
+  font-size: 3rem;
+  color: #ECE0C4;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.7),
+               0 0 30px rgba(255, 215, 0, 0.5),
+               0 0 40px rgba(255, 215, 0, 0.3);
+}
+
+.carousel-container {
+  overflow: hidden;
+  padding: 20px 40px;
+  transform-style: preserve-3d;
+}
+
+.carousel-item {
+  padding: 10px;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.slick-center .carousel-item {
+  transform: scale(1.2) translateY(-20px);
+}
+
+.slick-slide:not(.slick-center) .carousel-item {
+  filter: brightness(0.7);
+  transform: scale(0.8) translateY(0);
+}
+
+.slick-list {
+  overflow: visible !important;
+  overflow-x: clip !important;
+}
+
+.slick-track {
+  display: flex;
+  align-items: center;
+}
+
+.page-content {
+  position: relative;
+  min-height: 100vh;
+}
+
+.page-content::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background-color: rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+  z-index: 998;
+  mask-image: linear-gradient(to top, black, transparent);
+  -webkit-mask-image: linear-gradient(to top, black, transparent);
+}
+
+.scroll-wheel-container {
+  width: 100%;
+  overflow-x: scroll;
+  cursor: grab;
+  position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-wheel-container::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-wheel-container:active {
+  cursor: grabbing;
+}
+
+.scroll-wheel-track {
+  display: flex;
+  padding: 20px 40px;
+  gap: 20px;
+  transform-style: preserve-3d;
+}
+
+.scroll-wheel-item {
+  flex: 0 0 auto;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.scroll-wheel-item:hover {
+  transform: scale(1.1) translateY(-10px);
 }

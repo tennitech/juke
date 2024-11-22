@@ -8,6 +8,7 @@ import Settings from './components/Settings';
 import Harmony from './components/Harmony';
 import StartupScreen from './components/StartupScreen';
 import FadeTransition from './components/FadeTransition';
+import Profile from './components/Profile';
 
 import { ProvideSpotifyAuthContext } from './contexts/spotify';
 
@@ -37,14 +38,17 @@ function AppContent({ isLoading }) {
     <ProvideSpotifyAuthContext>
       <StartupScreen isLoading={isLoading} />
       <NavigationBar />
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<FadeTransition><Home /></FadeTransition>} />
-          <Route path="/library" element={<FadeTransition><Library /></FadeTransition>} />
-          <Route path="/settings" element={<FadeTransition><Settings /></FadeTransition>} />
-          <Route path="/harmony" element={<FadeTransition><Harmony /></FadeTransition>} />
-        </Routes>
-      </AnimatePresence>
+      <div className="page-content">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<FadeTransition><Home /></FadeTransition>} />
+            <Route path="/library" element={<FadeTransition><Library /></FadeTransition>} />
+            <Route path="/settings" element={<FadeTransition><Settings /></FadeTransition>} />
+            <Route path="/harmony" element={<FadeTransition><Harmony /></FadeTransition>} />
+            <Route path="/profile" element={<FadeTransition><Profile /></FadeTransition>} />
+          </Routes>
+        </AnimatePresence>
+      </div>
     </ProvideSpotifyAuthContext>
   );
 }

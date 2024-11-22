@@ -1,12 +1,16 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const axios = require('axios');
 const cors = require('cors');
 
 // NOTE: This is a hack because node is evoked in src/auth-server
-require('dotenv').config({ path: `${__dirname}/../../.env` });
+require('dotenv').config({ path: `${__dirname}/../.env` });
 
 const app = express();
 const port = 3001;
+
+app.use(bodyParser.json());
+app.use(express.urlencoded({ extended: true }));
 
 const ClientId = process.env.SPOTIFY_CLIENT_ID;
 const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -25,6 +29,35 @@ app.get('/login/spotify', async (req, res) => {
   authUrl.search = params.toString();
 
   res.redirect(authUrl.toString());
+});
+
+app.post('/refresh/spotify', (req, res) => {
+  if (!req.body.refresh_token) {
+    res.status(400).send('juke_refresh_token_not_defined');
+  } else {
+    const body = new URLSearchParams();
+    body.append("grant_type", "refresh_token");
+    body.append("refresh_token", req.body.refresh_token);
+    body.append("client_id", ClientId);
+
+    axios.post("https://accounts.spotify.com/api/token", body.toString(), {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + btoa(ClientId + ":" + ClientSecret)
+      }
+    }).then((response) => {
+      const { access_token, expires_in, refresh_token, scope } = response.data;
+
+      res.status(200).json({
+        access_token,
+        expires_in,
+        refresh_token,
+        scope
+      });
+    }).catch((error) => {
+      res.status(400).send("juke_invalid_request");
+    });
+  }
 });
 
 app.get('/callback/spotify', (req, res) => {
