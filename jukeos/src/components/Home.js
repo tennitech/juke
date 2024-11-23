@@ -1,14 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { SpotifyAuthContext } from '../contexts/spotify';
+import { PlayerContext } from './Player';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
 
 const Home = () => {
-  const { accessToken } = useContext(SpotifyAuthContext);
+  const { track } = useContext(PlayerContext);
+
+  useEffect(() => {
+    console.log("Track Updated", track);
+  }, [track]);
+
   const [currentTrack, setCurrentTrack] = useState({
-    title: 'NEW LIGHT',
-    artist: 'JOHN MAYER',
-    albumArt: '../assets/default-album-art.png',
     progress: 35,
     duration: 100
   });
@@ -65,7 +67,7 @@ const Home = () => {
           margin: '10px 0 0 0',
           textAlign: 'center'
         }}>
-          {currentTrack.title}
+          {track?.name|| "Unknown"}
         </h1>
 
         {/* Artist Name */}
@@ -76,7 +78,7 @@ const Home = () => {
           opacity: 0.9,
           letterSpacing: '3px'
         }}>
-          {currentTrack.artist}
+          {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
         </h2>
 
         {/* Playback Controls */}
@@ -98,7 +100,7 @@ const Home = () => {
 
         {/* Album Art */}
         <img 
-          src={currentTrack.albumArt} 
+          src={track?.album?.images?.[0]?.url || '../assets/default-album-art.png'} 
           alt="Album Art" 
           style={{
             width: '300px',

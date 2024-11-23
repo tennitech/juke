@@ -1,4 +1,4 @@
-import { useState, createContext } from "react";
+import { useState, createContext, useEffect } from "react";
 import axios from "axios";
 
 export const SpotifyAuthContext = createContext({
@@ -78,6 +78,7 @@ export async function performFetch(
 }
 
 export function ProvideSpotifyAuthContext({ children }) {
+    const [playbackReady, setPlaybackReady] = useState(false);
     const [accessToken, setAccessToken] = useState(0);
     const [refreshToken, setRefreshToken] = useState(0);
     const [expires, setExpires] = useState(-1);
@@ -89,6 +90,12 @@ export function ProvideSpotifyAuthContext({ children }) {
     if (window.location.search) {
         loadFromUrl(setAccessToken, setRefreshToken, setExpires);
     }
+
+    useEffect(() => {
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        setPlaybackReady(true);
+      };
+    }, []);
 
     const invalidateAccess = () => {
         if (!accessToken || !refreshToken) {
@@ -143,6 +150,7 @@ export function ProvideSpotifyAuthContext({ children }) {
     return (
         <SpotifyAuthContext.Provider value={
             {
+                playbackReady,
                 accessToken,
                 refreshToken,
                 invalidateAccess

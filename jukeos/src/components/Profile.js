@@ -15,7 +15,11 @@ function requestUserAuthorization() {
       "playlist-read-collaborative",
       "user-library-read",
       "user-follow-read",
-      "user-top-read"
+      "user-top-read",
+      "user-read-playback-state",
+      "user-modify-playback-state",
+      "user-read-currently-playing",
+      "streaming"
     ].join(" ")
   });
   const redirectUrl = new URL("http://localhost:3001/login/spotify");
