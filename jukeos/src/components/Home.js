@@ -1,14 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { PlayerContext } from './Player';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
 
 const Home = () => {
-  const { track } = useContext(PlayerContext);
-
-  useEffect(() => {
-    console.log("Track Updated", track);
-  }, [track]);
+  const { track, paused, togglePlay } = useContext(PlayerContext);
 
   const [currentTrack, setCurrentTrack] = useState({
     progress: 35,
@@ -89,12 +85,18 @@ const Home = () => {
           margin: '20px 0'
         }}>
           <button className="control-button" style={controlButtonStyle}>⏮️</button>
-          <button className="control-button" style={{
-            ...controlButtonStyle,
-            fontSize: '4rem',
-            width: '80px',
-            height: '80px'
-          }}>⏯️</button>
+          <button
+            className="control-button"
+            style={{
+              ...controlButtonStyle,
+              fontSize: '4rem',
+              width: '80px',
+              height: '80px'
+            }}
+            onClick={() => togglePlay()}
+          >{
+            paused ? "▶️" : "⏸️"
+          }</button>
           <button className="control-button" style={controlButtonStyle}>⏭️</button>
         </div>
 

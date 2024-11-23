@@ -46,11 +46,7 @@ const Player = ({ children }) => {
       });
 
       p.addListener("player_state_changed", (state) => {
-        console.log("State Changed", state);
-
         if (state) {
-          console.log("State", state);
-
           setTrack(state.track_window.current_track);
           setPaused(state.paused);
 
@@ -76,9 +72,11 @@ const Player = ({ children }) => {
     }
   }, [accessToken, playbackReady, player]);
 
-  useEffect(() => {
-    console.log("Update Track", track);
-  }, [track]);
+  const togglePlay = () => {
+    player.togglePlay().then(() => {
+      console.log("Toggle Play");
+    });
+  };
 
   return (
     <PlayerContext.Provider value={
@@ -86,7 +84,8 @@ const Player = ({ children }) => {
         online,
         active,
         paused,
-        track
+        track,
+        togglePlay
       }
     }>
       { children }
