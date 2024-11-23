@@ -77,6 +77,32 @@ export async function performFetch(
     }
 }
 
+export async function performPut(
+    url, params, body,
+    accessToken, invalidateAccess
+) {
+    try {
+        const response = await axios.put(url, body, {
+            headers: {
+                "Authorization": "Bearer " + accessToken
+            },
+            params
+        });
+
+        return response?.data;
+    } catch (err) {
+        if (err.response) {
+            if (err.response.status === 401) {
+                return await performPut(
+                    url, params, body, accessToken, await invalidateAccess()
+                );
+            }
+        }
+
+        throw err;
+    }
+}
+
 export function ProvideSpotifyAuthContext({ children }) {
     const [playbackReady, setPlaybackReady] = useState(false);
     const [accessToken, setAccessToken] = useState(0);
