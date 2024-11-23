@@ -2,10 +2,11 @@ import React, { useState, useRef, useContext, useMemo, useEffect } from 'react';
 import backgroundPng from '../assets/background.png';
 import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-album-art.png';
-import '../App.css';
 import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
+import { PlayerContext } from './Player';
+import '../App.css';
 
-const ScrollWheel = ({ items }) => {
+const ScrollWheel = ({ items, playUri }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
@@ -51,6 +52,7 @@ const ScrollWheel = ({ items }) => {
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
               }}
+              onClick={() => playUri(item.uri)}
             />
           </div>
         ))}
@@ -59,14 +61,14 @@ const ScrollWheel = ({ items }) => {
   );
 };
 
-const LibrarySection = ({ title, items }) => {
+const LibrarySection = ({ title, items, playUri }) => {
   return (
     <div className="library-section">
       <div className="section-title glow">
         <h2>{title}</h2>
       </div>
       <div className="carousel-container">
-        <ScrollWheel items={items} />
+        <ScrollWheel items={items} playUri={playUri} />
       </div>
     </div>
   );
@@ -88,6 +90,7 @@ function selectBestImage(images) {
 
 const LibraryTesting = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
+  const { playUri } = useContext(PlayerContext);
 
   const [ madeForYou, setMadeForYou ] = useState([]);
   const [ playlists, setPlaylists ] = useState([]);
@@ -128,9 +131,10 @@ const LibraryTesting = () => {
           if (response && response.items) {
             setMadeForYou(
               response.items
-                .filter((item) => item && item.album && item.album.name && item.album.images)
+                .filter((item) => item && item.uri && item.album && item.album.name && item.album.images)
                 .map((item) => ({
                   title: item.album.name,
+                  uri: item.uri,
                   imageUrl: selectBestImage(item.album.images).url
                 }))
             );
@@ -151,9 +155,10 @@ const LibraryTesting = () => {
           if (response && response.items) {
             setPlaylists(
               response.items
-                .filter((playlist) => playlist && playlist.name && playlist.images)
+                .filter((playlist) => playlist && playlist.uri && playlist.name && playlist.images)
                 .map((playlist) => ({
                   title: playlist.name,
+                  uri: playlist.uri,
                   imageUrl: selectBestImage(playlist.images).url
                 }))
             );
@@ -174,9 +179,10 @@ const LibraryTesting = () => {
           if (response && response.items) {
             setPodcasts(
               response.items
-                .filter((podcast) => podcast && podcast.show && podcast.show.name && podcast.show.images)
+                .filter((podcast) => podcast && podcast.show && podcast.show.name && podcast.show.uri && podcast.show.images)
                 .map((podcast) => ({
                   title: podcast.show.name,
+                  uri: podcast.show.uri,
                   imageUrl: selectBestImage(podcast.show.images).url
                 }))
             );
@@ -197,9 +203,10 @@ const LibraryTesting = () => {
           if (response && response.items) {
             setAlbums(
               response.items
-                .filter((album) => album && album.album && album.album.name && album.album.images)
+                .filter((album) => album && album.album && album.album.name && album.album.uri && album.album.images)
                 .map((album) => ({
                   title: album.album.name,
+                  uri: album.album.uri,
                   imageUrl: selectBestImage(album.album.images).url
                 }))
             );
@@ -220,9 +227,10 @@ const LibraryTesting = () => {
           if (response && response.artists && response.artists.items) {
             setArtists(
               response.artists.items
-                .filter((artist) => artist && artist.name && artist.images)
+                .filter((artist) => artist && artist.name && artist.uri && artist.images)
                 .map((artist, index) => ({
                   title: artist.name,
+                  uri: artist.uri,
                   imageUrl: selectBestImage(artist.images).url
                 }))
             );
@@ -295,10 +303,11 @@ const LibraryTesting = () => {
           zIndex: 3
         }}>
           {sections.map((section, index) => (
-            <LibrarySection 
+            <LibrarySection
               key={section.title}
               title={section.title} 
               items={section.items}
+              playUri={playUri}
             />
           ))}
         </div>

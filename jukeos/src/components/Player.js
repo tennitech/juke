@@ -1,17 +1,20 @@
 import { useState, createContext, useContext, useEffect } from "react";
-import { SpotifyAuthContext } from "../contexts/spotify";
+import { SpotifyAuthContext, performPut } from "../contexts/spotify";
 
 export const PlayerContext = createContext({
   online: false,
   active: false,
   paused: true,
-  track: null
+  track: null,
+  togglePlay: () => {},
+  playUri: () => {}
 });
 
 const Player = ({ children }) => {
-  const { playbackReady, accessToken } = useContext(SpotifyAuthContext);
+  const { playbackReady, accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
 
   const [player, setPlayer] = useState(null);
+  const [deviceId, setDeviceId] = useState(false);
   const [online, setOnline] = useState(false);
   const [active, setActive] = useState(false);
   const [track, setTrack] = useState(null);
@@ -30,7 +33,7 @@ const Player = ({ children }) => {
       setPlayer(p);
 
       p.addListener("ready", ({ device_id }) => {
-        console.log("Device Id:", device_id);
+        setDeviceId(device_id);
 
         p.getCurrentState().then((state) => {
           console.log("Id State", state);
@@ -40,7 +43,7 @@ const Player = ({ children }) => {
       });
 
       p.addListener("not_ready", ({ device_id }) => {
-        console.log("Device Offline ", device_id);
+        setDeviceId(device_id);
 
         setOnline(false);
       });
@@ -78,6 +81,29 @@ const Player = ({ children }) => {
     });
   };
 
+  const playUri = (uri) => {
+    console.log("Play", uri, uri.split(":")[1]);
+
+    // context_uri: albums, artists, playlists
+    // uris: track uri
+
+    const body =
+      uri.startsWith("spotify:track:")
+        ? { "uris": [uri] }
+        : { "context_uri": uri }
+
+    performPut(
+      `https://api.spotify.com/v1/me/player/play`, // TODO: Device id
+      {
+        "device_id": deviceId
+      },
+      body,
+      accessToken, invalidateAccess
+    ).then(() => {
+      console.log("Playing");
+    });
+  };
+
   return (
     <PlayerContext.Provider value={
       {
@@ -85,7 +111,8 @@ const Player = ({ children }) => {
         active,
         paused,
         track,
-        togglePlay
+        togglePlay,
+        playUri
       }
     }>
       { children }
