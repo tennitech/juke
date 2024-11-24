@@ -2,9 +2,11 @@ import React, { useContext, useEffect, useState } from 'react';
 import { SpotifyAuthContext } from '../contexts/spotify';
 import backgroundPng from '../assets/background.png';
 import '../App.css';
+import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 
 const Home = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
+
   const [currentTrack, setCurrentTrack] = useState({
     title: 'NEW LIGHT',
     artist: 'JOHN MAYER',
@@ -12,6 +14,29 @@ const Home = () => {
     progress: 35,
     duration: 100
   });
+  const [ recentlyPlayed, setRecentlyPlayed ] = useState([]);
+
+  const fetchRecentlyPlayed = () => {
+    if (accessToken) {
+      performFetch("https://api.spotify.com/v1/me/player/recently-played", {}, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched recently played tracks:", response);
+
+          if (response && response.items) {
+            setRecentlyPlayed(
+              response.items
+                .filter((track) => track && track.track && track.track.album && track.track.album.name && track.track.album.images)
+                .map((track) => ({
+                  title: track.track.album.name, 
+                  imageUrl: selectBestImage(track.track.album.images).url
+                }))
+            );
+          }
+        }).catch((error) => {
+          console.log("Failed to fetch recently played tracks:", error);
+      });
+    }
+  }
 
   return (
     <div style={{
