@@ -148,7 +148,7 @@ const LibraryTesting = () => {
   };
 
   /*
-    This pulls the list of the playlists that are owned or followed by the current user. It gets the names and the pictures of 
+    This pulls the list of the playlists that are owned or followed by the current user. It gets the names and the images of 
     the playlists from the response and put them into `setPlayLists`.
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-a-list-of-current-users-playlists
@@ -171,12 +171,12 @@ const LibraryTesting = () => {
           }
         }).catch((error) => {
           console.log("Failed to fetch playlists:", error);
-        });
+      });
     }
   };
 
   /*
-    This pulls the list of the podcasts that are saved by the current user. It gets the names and the pictures 
+    This pulls the list of the podcasts that are saved by the current user. It gets the names and the images 
     of the podcasts from the response and put them into `setPodcasts`. 
     
     PLEASE NOTE: it is correct that this requests to pull the shows, but this is the actual way to obtain 
@@ -202,12 +202,12 @@ const LibraryTesting = () => {
           }
         }).catch((error) => {
           console.log("Failed to fetch podcasts:", error);
-        });
+      });
     }
   };
 
   /*
-    This pulls the list of the albums that were saved by the current user. It gets the names and the pictures of 
+    This pulls the list of the albums that were saved by the current user. It gets the names and the images of 
     the albums from the response and put them into `setAlbums`.
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
@@ -230,13 +230,13 @@ const LibraryTesting = () => {
           }
         }).catch((error) => {
           console.log("Failed to fetch albums:", error);
-        });
+      });
     }
   };
 
   /*
     This pulls the list of the artists that are followed by the current user. It gets the names and 
-    the pictures of the artiss from the response and put them into `setArtists`.
+    the images of the artiss from the response and put them into `setArtists`.
 
     Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-followed
   */
@@ -258,7 +258,7 @@ const LibraryTesting = () => {
           }
         }).catch((error) => {
           console.log("Failed to fetch artists:", error);
-        });
+      });
     }
   };
 
