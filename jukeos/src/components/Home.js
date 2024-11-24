@@ -16,6 +16,12 @@ const Home = () => {
   });
   const [ recentlyPlayed, setRecentlyPlayed ] = useState([]);
 
+  /*
+    This pulls the list of recently played tracks by the current user. If gets the name and the images of the 
+    recently played tracks and put them into `setRecentlyPlayed`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+  */
   const fetchRecentlyPlayed = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/player/recently-played", {}, accessToken, invalidateAccess)
