@@ -150,6 +150,12 @@ const LibraryTesting = () => {
     }
   ], [madeForYou, playlists, podcasts, albums, artists]);
 
+  /*
+    This pulls the list of current user's top items. It gets the names and images of the albums from the response and put 
+    them into `setMadeForYou`. 
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+  */
   const fetchTopItems = (type) => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/top/" + type, {}, accessToken, invalidateAccess)
@@ -166,13 +172,18 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch top items:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the playlists that are owned or followed by the current user. It gets the names and the pictures of 
+    the playlists from the response and put them into `setPlayLists`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-a-list-of-current-users-playlists
+  */
   const fetchPlaylists = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/playlists", {}, accessToken, invalidateAccess)
@@ -189,13 +200,21 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch playlists:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the podcasts that are saved by the current user. It gets the names and the pictures 
+    of the podcasts from the response and put them into `setPodcasts`. 
+    
+    PLEASE NOTE: it is correct that this requests to pull the shows, but this is the actual way to obtain 
+    information of the current user's saved podcasts from Spotify.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-saved-shows
+  */
   const fetchPodcasts = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/shows", {}, accessToken, invalidateAccess)
@@ -212,13 +231,18 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch podcasts:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the albums that were saved by the current user. It gets the names and the pictures of 
+    the albums from the response and put them into `setAlbums`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
+  */
   const fetchAlbums = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/albums", {}, accessToken, invalidateAccess)
@@ -235,13 +259,18 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch albums:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the artists that are followed by the current user. It gets the names and 
+    the pictures of the artiss from the response and put them into `setArtists`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-followed
+  */
   const fetchArtists = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/following?limit=20", { type: "artist" }, accessToken, invalidateAccess)
@@ -258,8 +287,7 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch artists:", error);
         });
     }
