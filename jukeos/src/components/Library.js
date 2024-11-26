@@ -9,6 +9,7 @@ const ScrollWheel = ({ items }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [centerIndex, setCenterIndex] = useState(0);
   const wheelRef = useRef(null);
 
   const handleMouseDown = (e) => {
@@ -19,6 +20,17 @@ const ScrollWheel = ({ items }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
+    // Snap to nearest item
+    if (wheelRef.current) {
+      const itemWidth = 190; // Width + gap
+      const scrollPosition = wheelRef.current.scrollLeft;
+      const newIndex = Math.round(scrollPosition / itemWidth);
+      setCenterIndex(newIndex);
+      wheelRef.current.scrollTo({
+        left: newIndex * itemWidth,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -27,6 +39,11 @@ const ScrollWheel = ({ items }) => {
     const x = e.pageX - wheelRef.current.offsetLeft;
     const walk = (x - startX) * 2;
     wheelRef.current.scrollLeft = scrollLeft - walk;
+    
+    // Update center index while dragging
+    const itemWidth = 190;
+    const currentIndex = Math.round(wheelRef.current.scrollLeft / itemWidth);
+    setCenterIndex(currentIndex);
   };
 
   return (
@@ -39,21 +56,35 @@ const ScrollWheel = ({ items }) => {
       onMouseMove={handleMouseMove}
     >
       <div className="scroll-wheel-track">
-        {items.map((item, index) => (
-          <div key={index} className="scroll-wheel-item">
-            <img 
-              src={item.imageUrl || defaultAlbumArt}
-              alt={item.title}
+        {items.map((item, index) => {
+          const distance = Math.abs(index - centerIndex);
+          const scale = Math.max(0.6, 1 - (distance * 0.2));
+          const opacity = Math.max(0.3, 1 - (distance * 0.3));
+          
+          return (
+            <div 
+              key={index} 
+              className="scroll-wheel-item"
               style={{
-                width: '150px',
-                height: '150px',
-                objectFit: 'cover',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                transform: `scale(${scale})`,
+                opacity: opacity,
+                transition: 'all 0.3s ease'
               }}
-            />
-          </div>
-        ))}
+            >
+              <img 
+                src={item.imageUrl || defaultAlbumArt}
+                alt={item.title}
+                style={{
+                  width: '150px',
+                  height: '150px',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -119,6 +150,12 @@ const LibraryTesting = () => {
     }
   ], [madeForYou, playlists, podcasts, albums, artists]);
 
+  /*
+    This pulls the list of current user's top items. It gets the names and images of the albums from the response and put 
+    them into `setMadeForYou`. 
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
+  */
   const fetchTopItems = (type) => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/top/" + type, {}, accessToken, invalidateAccess)
@@ -135,13 +172,18 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch top items:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the playlists that are owned or followed by the current user. It gets the names and the pictures of 
+    the playlists from the response and put them into `setPlayLists`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-a-list-of-current-users-playlists
+  */
   const fetchPlaylists = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/playlists", {}, accessToken, invalidateAccess)
@@ -158,13 +200,21 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch playlists:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the podcasts that are saved by the current user. It gets the names and the pictures 
+    of the podcasts from the response and put them into `setPodcasts`. 
+    
+    PLEASE NOTE: it is correct that this requests to pull the shows, but this is the actual way to obtain 
+    information of the current user's saved podcasts from Spotify.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-saved-shows
+  */
   const fetchPodcasts = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/shows", {}, accessToken, invalidateAccess)
@@ -181,13 +231,18 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch podcasts:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the albums that were saved by the current user. It gets the names and the pictures of 
+    the albums from the response and put them into `setAlbums`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
+  */
   const fetchAlbums = () => {
     if (accessToken) {
       performFetch("https://api.spotify.com/v1/me/albums", {}, accessToken, invalidateAccess)
@@ -204,16 +259,21 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch albums:", error);
         });
     }
   };
 
+  /*
+    This pulls the list of the artists that are followed by the current user. It gets the names and 
+    the pictures of the artiss from the response and put them into `setArtists`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-followed
+  */
   const fetchArtists = () => {
     if (accessToken) {
-      performFetch("https://api.spotify.com/v1/me/following", { type: "artist" }, accessToken, invalidateAccess)
+      performFetch("https://api.spotify.com/v1/me/following?limit=20", { type: "artist" }, accessToken, invalidateAccess)
         .then((response) => {
           console.log("Successfully fetched artists:", response);
 
@@ -227,8 +287,7 @@ const LibraryTesting = () => {
                 }))
             );
           }
-        })
-        .catch((error) => {
+        }).catch((error) => {
           console.log("Failed to fetch artists:", error);
         });
     }
