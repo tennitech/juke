@@ -9,6 +9,22 @@ import '../App.css';
 import axios from 'axios';
 import defaultAlbumArt from '../assets/default-album-art.png';
 
+
+function selectBestImage(images) {
+  const minWidth = 150, minHeight = 150;
+
+  return images.reduce((previous, current) => {
+    const validImage
+      = current.width >= minWidth && current.height >= minHeight;
+    const betterThanPrevious
+      = !previous || (current.width < previous.width && current.height < previous.height);
+
+    return (validImage && betterThanPrevious)
+      ? current : previous;
+  }, null) || images[0];
+}
+
+
 const ScrollWheel = ({ items }) => {
   const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
   const wheelRef = useRef(null);
@@ -90,7 +106,8 @@ const ScrollWheel = ({ items }) => {
 };
 
 const Home = () => {
-  const { accessToken } = useContext(SpotifyAuthContext);
+  const {accessToken, invalidateAccess} = useContext(SpotifyAuthContext);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState({
     title: 'NEW LIGHT',
@@ -148,23 +165,17 @@ const Home = () => {
    * - Implement error handling for expired/invalid tokens
    * - Consider implementing a proxy endpoint to hide Spotify credentials
    *   Example: /api/recently-played instead of calling Spotify directly
+   * 
+   * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
    */
   const fetchRecentlyPlayed = () => {
     if (!accessToken) return;
-
     setIsLoadingRecent(true);
-    
-    // Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-    axios.get(
-      "https://api.spotify.com/v1/me/player/recently-played",
-      {
-        params: { limit: 20 }, // Adjust limit as needed
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      }
-    )
-      .then((response) => {
-        console.log("Successfully fetched recently played:", response);
 
+    performFetch("https://api.spotify.com/v1/me/player/recently-played?limit=20", {}, accessToken, invalidateAccess)
+      .then((response) => {
+        console.log("Successfully fetched recently played tracks:", response);
+        
         if (response && response.items) {
           // Transform the data to match our UI needs
           const transformedTracks = response.items
@@ -173,24 +184,23 @@ const Home = () => {
               id: item.track.id,
               title: item.track.name,
               artist: item.track.artists[0].name,
-              imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
+              imageUrl: selectBestImage(item.track.album.images).url || defaultAlbumArt,
               playedAt: item.played_at,
-              // Add any additional track data you need
               albumName: item.track.album.name,
               duration: item.track.duration_ms,
               uri: item.track.uri
-            }));
+              // Add any additional track data you need
+            }));  
 
           setRecentlyPlayed(transformedTracks);
         }
-      })
-      .catch((error) => {
+      }).catch((error) => {
         console.error("Failed to fetch recently played:", error);
         setRecentlyPlayedError(error);
-      })
-      .finally(() => {
+      }).finally(() => {
         setIsLoadingRecent(false);
-      });
+      }
+    );
   };
 
   useEffect(() => {
