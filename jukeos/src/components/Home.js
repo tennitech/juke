@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { SpotifyAuthContext } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import backgroundPng from '../assets/background.png';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
@@ -99,6 +99,9 @@ const Home = () => {
     progress: 35,
     duration: 100
   });
+  const [recentlyPlayed, setRecentlyPlayed] = useState([]);
+  const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -130,6 +133,76 @@ const Home = () => {
       console.error('Failed to seek:', error);
     }
   };
+
+  /**
+   * Backend Requirements for Recently Played Tracks:
+   * 
+   * This frontend code calls Spotify's /me/player/recently-played endpoint which requires:
+   * 1. A valid Spotify access token in the Authorization header
+   * 2. Returns up to 20 most recently played tracks
+   * 
+   * Backend Team Needs to:
+   * - Implement token refresh mechanism to ensure valid access tokens
+   * - Consider caching recently played tracks to reduce API calls
+   * - Handle rate limiting (Spotify allows 1 request/sec)
+   * - Implement error handling for expired/invalid tokens
+   * - Consider implementing a proxy endpoint to hide Spotify credentials
+   *   Example: /api/recently-played instead of calling Spotify directly
+   */
+  const fetchRecentlyPlayed = () => {
+    if (!accessToken) return;
+
+    setIsLoadingRecent(true);
+    
+    // Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+    axios.get(
+      "https://api.spotify.com/v1/me/player/recently-played",
+      {
+        params: { limit: 20 }, // Adjust limit as needed
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      }
+    )
+      .then((response) => {
+        console.log("Successfully fetched recently played:", response);
+
+        if (response && response.items) {
+          // Transform the data to match our UI needs
+          const transformedTracks = response.items
+            .filter((item) => item && item.track && item.track.album)
+            .map((item) => ({
+              id: item.track.id,
+              title: item.track.name,
+              artist: item.track.artists[0].name,
+              imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
+              playedAt: item.played_at,
+              // Add any additional track data you need
+              albumName: item.track.album.name,
+              duration: item.track.duration_ms,
+              uri: item.track.uri
+            }));
+
+          setRecentlyPlayed(transformedTracks);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch recently played:", error);
+        setRecentlyPlayedError(error);
+      })
+      .finally(() => {
+        setIsLoadingRecent(false);
+      });
+  };
+
+  useEffect(() => {
+    if (accessToken) {
+      fetchRecentlyPlayed();
+
+      // Optional: Set up polling to keep recently played list updated
+      const pollInterval = setInterval(fetchRecentlyPlayed, 30000); // 30 seconds
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [accessToken]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -337,28 +410,40 @@ const Home = () => {
                 paddingLeft: '0',  // Remove default padding to start from left
                 paddingRight: '40px'
               }}>
-                {[...Array(5)].map((_, index) => (
-                  <div 
-                    key={index} 
-                    className="scroll-wheel-item"
-                    style={{
-                      transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
-                      opacity: index === 0 ? 1 : 1 - index * 0.2
-                    }}
-                  >
-                    <img 
-                      src={defaultAlbumArt}
-                      alt={`Recently Played ${index + 1}`}
+                {isLoadingRecent ? (
+                  // TODO: Add loading spinner/skeleton
+                  <div>Loading recently played...</div>
+                ) : recentlyPlayedError ? (
+                  // TODO: Add error state UI
+                  <div>Error loading recently played tracks</div>
+                ) : (
+                  recentlyPlayed.map((track, index) => (
+                    <div 
+                      key={track.id} 
+                      className="scroll-wheel-item"
                       style={{
-                        width: '100px',
-                        height: '100px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                        transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
+                        opacity: index === 0 ? 1 : 1 - index * 0.2
                       }}
-                    />
-                  </div>
-                ))}
+                      onClick={() => {
+                        // TODO: Implement track selection/playback
+                        console.log('Track selected:', track);
+                      }}
+                    >
+                      <img 
+                        src={track.imageUrl}
+                        alt={`${track.title} by ${track.artist}`}
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                        }}
+                      />
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
