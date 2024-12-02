@@ -46,6 +46,12 @@ const Profile = () => {
     }
   }, [accessToken]);
 
+  /*
+    This pulls the information of the current user. The information incldue: display name, email, number of 
+    followers, profile image, Spotify URL, and country. The obtained information is stored in `setProfileData`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
+  */
   const loadProfileData = (accessToken) => {
     if (!accessToken) return;
 
