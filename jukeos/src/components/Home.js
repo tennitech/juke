@@ -409,7 +409,7 @@ const Home = () => {
                 ) : (
                   recentlyPlayed.map((track, index) => (
                     <div 
-                      key={track.id} 
+                      key={index} 
                       className="scroll-wheel-item"
                       style={{
                         transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
