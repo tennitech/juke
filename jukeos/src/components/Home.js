@@ -163,12 +163,13 @@ const Home = () => {
                 title: item.track.name,
                 artist: item.track.artists[0].name,
                 imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
-                playedAt: item.played_at,
+                playedAt: new Date(item.played_at),
                 // Add any additional track data you need
                 albumName: item.track.album.name,
                 duration: item.track.duration_ms,
                 uri: item.track.uri
-              }));
+              }))
+              .sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime())
 
             setRecentlyPlayed(transformedTracks);
           }
