@@ -6,6 +6,7 @@ import AnimatedBlob from './AnimatedBlob';
 import ColorThief from 'color-thief-browser';
 import axios from 'axios';
 
+
 const NavigationBar = () => {
   const navbarContentRef = useRef(null);
   const location = useLocation();

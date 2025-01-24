@@ -4,9 +4,10 @@ import axios from 'axios';
 import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';
 
+
 // TODO: Probably a better spot
 // But I want to get this working
-function requestUserAuthorization() {  
+function requestUserAuthorization() {
   const redirectParams = new URLSearchParams({
     scope: [
       "user-read-private",
@@ -28,6 +29,7 @@ function requestUserAuthorization() {
   
   window.location.href = redirectUrl;
 }
+
 
 const Profile = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
@@ -158,5 +160,6 @@ const Profile = () => {
     </div>
   );
 };
+
 
 export default Profile;

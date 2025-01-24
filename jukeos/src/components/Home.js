@@ -105,6 +105,7 @@ const ScrollWheel = ({ items }) => {
   );
 };
 
+
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
   const { track, paused, playUri, togglePlay } = useContext(PlayerContext);
@@ -458,5 +459,6 @@ const Home = () => {
     </>
   );
 };
+
 
 export default Home;
