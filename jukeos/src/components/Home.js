@@ -34,17 +34,27 @@ const ScrollWheel = ({ items }) => {
     wheelRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
+  const scrollWheelStyles = {
+    container: {
+      width: '100%',
+      maxWidth: 'min(800px, 90vw)',
+      height: 'clamp(80px, 10vh, 100px)',
+      overflow: 'hidden',
+      marginTop: '-10px'
+    },
+    
+    item: {
+      width: 'clamp(80px, 10vw, 100px)',
+      height: 'clamp(80px, 10vw, 100px)',
+      borderRadius: '8px'
+    }
+  };
+
   return (
     <div 
       className="scroll-wheel-container"
       ref={wheelRef}
-      style={{ 
-        width: '100%',
-        maxWidth: '800px',
-        height: '100px',  // Reduced from 120px
-        overflow: 'hidden',
-        marginTop: '-10px'  // Added negative margin
-      }}
+      style={scrollWheelStyles.container}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
@@ -89,12 +99,144 @@ const ScrollWheel = ({ items }) => {
   );
 };
 
+const responsiveStyles = {
+  playerContainer: {
+    width: '100%',
+    maxWidth: '1200px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 'clamp(15px, 3vw, 30px)',
+    margin: '0 auto',
+    padding: 'clamp(20px, 4vw, 40px)',
+    position: 'relative',
+    height: '100vh',
+    justifyContent: 'center'
+  },
+  
+  mainContent: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    gap: 'clamp(20px, 4vw, 40px)',
+    flexWrap: 'wrap',
+    padding: '0 clamp(10px, 3vw, 20px)',
+    marginTop: '80px' // Add space below navbar
+  },
+  
+  trackInfo: {
+    flex: '1 1 300px',
+    minWidth: '280px',
+    maxWidth: '500px',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: '15px'
+  },
+  
+  albumArtContainer: {
+    flex: '1 1 300px',
+    width: '100%',
+    maxWidth: '500px',
+    aspectRatio: '1',
+    position: 'relative'
+  },
+  
+  albumArt: {
+    width: '100%',
+    height: '100%',
+    maxWidth: '500px',
+    maxHeight: '500px',
+    borderRadius: '15px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+    position: 'relative',
+    zIndex: 1,
+    objectFit: 'cover'
+  },
+  
+  title: {
+    fontFamily: 'Loubag, sans-serif',
+    fontSize: 'clamp(1.5rem, 5vw, 3.5rem)',
+    margin: '0',
+    textAlign: 'left',
+    color: '#ECE0C4',
+    textShadow: `
+      2px 2px 0 rgba(255,0,0,0.2),
+      -2px -2px 0 rgba(0,0,255,0.2),
+      1px -1px 0 rgba(255,0,255,0.2)
+    `,
+    animation: 'textGlitch 3s infinite',
+    lineHeight: '1.1',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  },
+  
+  artist: {
+    fontFamily: 'Notable, sans-serif',
+    fontSize: 'clamp(0.8rem, 3vw, 1.5rem)',
+    margin: '0',
+    opacity: 0.9,
+    letterSpacing: '1px',
+    color: '#ECE0C4',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis'
+  },
+  
+  controls: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 'clamp(15px, 3vw, 30px)',
+    margin: '20px 0',
+    width: '100%'
+  },
+  
+  recentlyPlayedSection: {
+    width: '100%',
+    maxWidth: '500px',
+    marginTop: '40px',
+    alignSelf: 'flex-start',
+    paddingLeft: 'clamp(10px, 3vw, 20px)'
+  },
+  
+  recentlyPlayedTitle: {
+    fontFamily: 'Loubag, sans-serif',
+    fontSize: 'clamp(1rem, 3vw, 1.5rem)',
+    color: '#FFC764',
+    letterSpacing: '3px',
+    marginBottom: '20px',
+    textAlign: 'left'
+  }
+};
+
+// Add media query styles
+const mediaStyles = `
+  @media (max-width: 768px) {
+    .mainContent {
+      flex-direction: column-reverse;
+    }
+    
+    .albumArtContainer {
+      margin-bottom: 20px;
+    }
+    
+    .trackInfo {
+      align-items: center;
+      text-align: center;
+    }
+  }
+`;
+
 const Home = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState({
-    title: 'NEW LIGHT',
-    artist: 'JOHN MAYER',
+    title: 'Loading song...',
+    artist: 'Loading artist...',
     albumArt: '../assets/default-album-art.png',
     progress: 35,
     duration: 100
@@ -228,60 +370,32 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [accessToken]);
 
+  const buttonStyles = {
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '10px',
+    position: 'relative',
+    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    className: 'control-button',
+    outline: 'none',
+    WebkitTapHighlightColor: 'transparent',
+    userSelect: 'none',
+    touchAction: 'manipulation'
+  };
+
   return (
     <>
       <img src={cloudsSvg} alt="" className="clouds-main" />
       <img src={cloudsSvg} alt="" className="clouds-small" />
-      <div className="player-container" style={{
-        width: '100%',
-        maxWidth: '1200px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '30px',
-        margin: '0 auto',
-        marginTop: '50px',
-        padding: '40px',
-        paddingLeft: '120px'
-      }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          gap: '40px',
-          padding: '0'
-        }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            width: '500px'
-          }}>
-            <h1 style={{ 
-              fontFamily: 'Loubag, sans-serif',
-              fontSize: '5rem',
-              margin: '0',
-              textAlign: 'left',
-              color: '#ECE0C4',
-              textShadow: `
-                2px 2px 0 rgba(255,0,0,0.2),
-                -2px -2px 0 rgba(0,0,255,0.2),
-                1px -1px 0 rgba(255,0,255,0.2)
-              `,
-              animation: 'textGlitch 3s infinite'
-            }}>
+      <div className="player-container" style={responsiveStyles.playerContainer}>
+        <div style={responsiveStyles.mainContent}>
+          <div style={responsiveStyles.trackInfo}>
+            <h1 style={responsiveStyles.title}>
               {currentTrack.title}
             </h1>
 
-            <h2 style={{ 
-              fontFamily: 'Notable, sans-serif',
-              fontSize: '2rem',
-              margin: '0',
-              opacity: 0.9,
-              letterSpacing: '1px',
-              color: 'white'
-            }}>
+            <h2 style={responsiveStyles.artist}>
               {currentTrack.artist}
             </h2>
 
@@ -324,78 +438,95 @@ const Home = () => {
               </div>
             </div>
 
-            <button 
-              onClick={() => setIsPlaying(!isPlaying)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '10px',
-                width: '80px',
-                height: '80px',
-                margin: '10px auto'
-              }}
-            >
-              <img 
-                src={isPlaying ? pauseIcon : playIcon} 
-                alt={isPlaying ? "Pause" : "Play"}
+            <div style={responsiveStyles.controls}>
+              <button 
+                className="control-button"
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0.8,
-                  transition: 'opacity 0.2s ease'
+                  ...buttonStyles,
+                  width: '60px',
+                  height: '60px'
                 }}
-              />
-            </button>
+              >
+                <img 
+                  src={require('../assets/skip-backward-icon.svg').default}
+                  alt="Previous"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
+              
+              <button 
+                className="control-button"
+                onClick={() => setIsPlaying(!isPlaying)}
+                style={{
+                  ...buttonStyles,
+                  width: '100px',
+                  height: '100px',
+                  margin: '0 10px'
+                }}
+              >
+                <img 
+                  src={isPlaying ? pauseIcon : playIcon} 
+                  alt={isPlaying ? "Pause" : "Play"}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
+
+              <button 
+                className="control-button"
+                style={{
+                  ...buttonStyles,
+                  width: '60px',
+                  height: '60px'
+                }}
+              >
+                <img 
+                  src={require('../assets/skip-forward-icon.svg').default}
+                  alt="Next"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
+            </div>
           </div>
 
-          <div style={{ 
-            position: 'relative', 
-            width: '600px',
-            height: '600px', 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <div style={responsiveStyles.albumArtContainer}>
             <AnimatedBlob 
               colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
               style={{
-                width: '600px',
-                height: '600px',
-                top: '-20px',
-                left: '0'
+                width: '100%',
+                height: '100%',
+                maxWidth: '600px',
+                maxHeight: '600px',
+                position: 'absolute',
+                top: '-5%',
+                left: '-5%',
+                transform: 'scale(1.1)'
               }}
               static={true}
             />
             <img 
               src={currentTrack.albumArt} 
               alt="Album Art" 
-              style={{
-                width: '500px',
-                height: '500px',
-                borderRadius: '15px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                position: 'relative',
-                zIndex: 1
-              }} 
+              style={responsiveStyles.albumArt} 
             />
           </div>
         </div>
-        <div style={{
-          width: '500px',  
-          marginTop: '-240px',
-          alignSelf: 'flex-start',
-          paddingLeft: '0'
-        }}>
-          <h3 style={{
-            fontFamily: 'Loubag, sans-serif',
-            fontSize: '1.5rem',
-            color: '#FFC764',
-            letterSpacing: '3px',
-            marginBottom: '5px',
-            marginTop: '140px',
-            textAlign: 'left'
-          }}>
+        <div style={responsiveStyles.recentlyPlayedSection}>
+          <h3 style={responsiveStyles.recentlyPlayedTitle}>
             RECENTLY PLAYED
           </h3>
           <div style={{
