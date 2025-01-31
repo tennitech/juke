@@ -5,7 +5,7 @@ export { DeskThing };
 // The following imports are from other files that setup their own functions
 import { setupSettings } from "./settings";
 import { userInput } from "./userInput";
-import { sendImage, sendSampleData } from "./sendingData";
+// import { sendImage, sendSampleData } from "./sendingData";
 
 /**
  *
@@ -40,18 +40,14 @@ DeskThing.on("start", start);
 // Main exit point of the server
 DeskThing.on("stop", stop);
 
-const handleRequest = async (socketData) => {
-  switch (socketData.request) {
-    case "sampleData":
-      sendSampleData();
-      break;
-    case "image":
-      sendImage();
-      break;
-    default:
-      DeskThing.sendError("Invalid Request");
-      break;
-  }
-};
+// Sending a message to the client
+DeskThing.send({ type: 'message', payload: 'Hello, Client!'});
 
-DeskThing.on("get", handleRequest);
+// Listening for a response from the client
+DeskThing.on('data', (data) => {
+    console.log('Received data from client:', data.payload); // will print "someResponse" in this example
+});
+
+DeskThing.on('set', (data) => {
+    console.log('Received data from client:', data.payload.key); // will print 'value' in this example
+});

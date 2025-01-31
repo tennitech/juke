@@ -27,17 +27,13 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    const onAppData = async (data) => {
-      console.log('Received data from the server!');
-      console.log(data.payload);
-    };
+  // Sending a message to the server
+  DeskThing.send({ type: 'set', payload: { key: 'value' } });
 
-    const removeListener = DeskThing.on('data', onAppData);
-
-    return () => {
-      removeListener();
-    };
+  // Listening for a response from the server
+  DeskThing.on('message', (data) => {
+    console.log('Received response from server:', data); // logs 'Hello, Client!'
+    DeskThing.send({type: 'data', payload: 'someResponse'})
   });
 
   return (

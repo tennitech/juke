@@ -10,6 +10,8 @@
     "axios": "^1.7.2",
     "color-thief-browser": "^2.0.2",
     "cors": "^2.8.5",
+    "deskthing-client": "^0.10.4",
+    "deskthing-server": "^0.10.3",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "framer-motion": "^11.2.10",

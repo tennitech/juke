@@ -10,6 +10,7 @@
 
 # Production
 /build
+/jukeos/build
 
 # Environment Variables
 .env
