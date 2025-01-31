@@ -15,7 +15,12 @@ function requestUserAuthorization() {
       "playlist-read-collaborative",
       "user-library-read",
       "user-follow-read",
-      "user-top-read"
+      "user-top-read",
+      "user-read-playback-state",
+      "user-modify-playback-state",
+      "user-read-currently-playing",
+      "user-read-recently-played",
+      "streaming"
     ].join(" ")
   });
   const redirectUrl = new URL("http://localhost:3001/login/spotify");
@@ -42,6 +47,12 @@ const Profile = () => {
     }
   }, [accessToken]);
 
+  /*
+    This pulls the information of the current user. The information incldue: display name, email, number of 
+    followers, profile image, Spotify URL, and country. The obtained information is stored in `setProfileData`.
+
+    Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-current-users-profile
+  */
   const loadProfileData = (accessToken) => {
     if (!accessToken) return;
 

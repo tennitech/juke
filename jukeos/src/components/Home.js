@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
-import backgroundPng from '../assets/background.png';
+import { PlayerContext } from './Player';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
@@ -232,14 +232,14 @@ const mediaStyles = `
 `;
 
 const Home = () => {
-  const { accessToken } = useContext(SpotifyAuthContext);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
+  const { track, paused, playUri, togglePlay } = useContext(PlayerContext);
   const [currentTrack, setCurrentTrack] = useState({
     title: 'Loading song...',
     artist: 'Loading artist...',
     albumArt: '../assets/default-album-art.png',
-    progress: 35,
-    duration: 100
+    progress: 0,
+    duration: 1
   });
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
@@ -292,47 +292,41 @@ const Home = () => {
    *   Example: /api/recently-played instead of calling Spotify directly
    */
   const fetchRecentlyPlayed = () => {
-    if (!accessToken) return;
+    if (accessToken) {
+      setIsLoadingRecent(true);
 
-    setIsLoadingRecent(true);
-    
-    // Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-    axios.get(
-      "https://api.spotify.com/v1/me/player/recently-played",
-      {
-        params: { limit: 20 }, // Adjust limit as needed
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      }
-    )
-      .then((response) => {
-        console.log("Successfully fetched recently played:", response);
+      performFetch("https://api.spotify.com/v1/me/player/recently-played", { limit: 10 }, accessToken, invalidateAccess)
+        .then((response) => {
+          console.log("Successfully fetched recently played:", response);
 
-        if (response && response.items) {
-          // Transform the data to match our UI needs
-          const transformedTracks = response.items
-            .filter((item) => item && item.track && item.track.album)
-            .map((item) => ({
-              id: item.track.id,
-              title: item.track.name,
-              artist: item.track.artists[0].name,
-              imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
-              playedAt: item.played_at,
-              // Add any additional track data you need
-              albumName: item.track.album.name,
-              duration: item.track.duration_ms,
-              uri: item.track.uri
-            }));
+          if (response && response.items) {
+            // Transform the data to match our UI needs
+            const transformedTracks = response.items
+              .filter((item) => item && item.track && item.track.album)
+              .map((item) => ({
+                id: item.track.id,
+                title: item.track.name,
+                artist: item.track.artists[0].name,
+                imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
+                playedAt: new Date(item.played_at),
+                // Add any additional track data you need
+                albumName: item.track.album.name,
+                duration: item.track.duration_ms,
+                uri: item.track.uri
+              }))
+              .sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime())
 
-          setRecentlyPlayed(transformedTracks);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to fetch recently played:", error);
-        setRecentlyPlayedError(error);
-      })
-      .finally(() => {
-        setIsLoadingRecent(false);
-      });
+            setRecentlyPlayed(transformedTracks);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to fetch recently played:", error);
+          setRecentlyPlayedError(error);
+        })
+        .finally(() => {
+          setIsLoadingRecent(false);
+        });
+    }
   };
 
   useEffect(() => {
@@ -388,15 +382,57 @@ const Home = () => {
     <>
       <img src={cloudsSvg} alt="" className="clouds-main" />
       <img src={cloudsSvg} alt="" className="clouds-small" />
-      <div className="player-container" style={responsiveStyles.playerContainer}>
-        <div style={responsiveStyles.mainContent}>
-          <div style={responsiveStyles.trackInfo}>
-            <h1 style={responsiveStyles.title}>
-              {currentTrack.title}
+      <div className="player-container" style={{
+        width: '100%',
+        maxWidth: '1200px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '30px',
+        margin: '0 auto',
+        marginTop: '50px',
+        padding: '40px',
+        paddingLeft: '120px'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          gap: '40px',
+          padding: '0'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+            width: '500px'
+          }}>
+            <h1 style={{ 
+              fontFamily: 'Loubag, sans-serif',
+              fontSize: '5rem',
+              margin: '0',
+              textAlign: 'left',
+              color: '#ECE0C4',
+              textShadow: `
+                2px 2px 0 rgba(255,0,0,0.2),
+                -2px -2px 0 rgba(0,0,255,0.2),
+                1px -1px 0 rgba(255,0,255,0.2)
+              `,
+              animation: 'textGlitch 3s infinite'
+            }}>
+              {track?.name|| "Unknown"}
             </h1>
 
-            <h2 style={responsiveStyles.artist}>
-              {currentTrack.artist}
+            <h2 style={{ 
+              fontFamily: 'Notable, sans-serif',
+              fontSize: '2rem',
+              margin: '0',
+              opacity: 0.9,
+              letterSpacing: '1px',
+              color: 'white'
+            }}>
+              {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
             </h2>
 
             <div style={{
@@ -437,10 +473,21 @@ const Home = () => {
                 }} />
               </div>
             </div>
-
-            <div style={responsiveStyles.controls}>
-              <button 
-                className="control-button"
+            <button 
+              onClick={() => togglePlay()}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '10px',
+                width: '80px',
+                height: '80px',
+                margin: '10px auto'
+              }}
+            >
+              <img 
+                src={paused ? playIcon : pauseIcon} 
+                alt={paused ? "Play" : "Pause"}
                 style={{
                   ...buttonStyles,
                   width: '60px',
@@ -519,7 +566,7 @@ const Home = () => {
               static={true}
             />
             <img 
-              src={currentTrack.albumArt} 
+              src={track?.album?.images?.[0]?.url || '../assets/default-album-art.png'} 
               alt="Album Art" 
               style={responsiveStyles.albumArt} 
             />
@@ -550,16 +597,13 @@ const Home = () => {
                 ) : (
                   recentlyPlayed.map((track, index) => (
                     <div 
-                      key={track.id} 
+                      key={index} 
                       className="scroll-wheel-item"
                       style={{
                         transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
                         opacity: index === 0 ? 1 : 1 - index * 0.2
                       }}
-                      onClick={() => {
-                        // TODO: Implement track selection/playback
-                        console.log('Track selected:', track);
-                      }}
+                      onClick={() => playUri(track.uri)}
                     >
                       <img 
                         src={track.imageUrl}

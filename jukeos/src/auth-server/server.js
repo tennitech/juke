@@ -15,8 +15,6 @@ app.use(express.urlencoded({ extended: true }));
 const ClientId = process.env.SPOTIFY_CLIENT_ID;
 const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-console.log(ClientId, ClientSecret);
-
 app.use(cors());
 
 app.get('/login/spotify', async (req, res) => {
