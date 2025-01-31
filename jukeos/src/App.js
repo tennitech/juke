@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
+import { DeskThing } from 'deskthing-client';
 import NavigationBar from './components/NavigationBar';
 import Home from './components/Home';
 import Library from './components/Library';
@@ -25,6 +26,19 @@ function App() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const onAppData = async (data) => {
+      console.log('Received data from the server!');
+      console.log(data.payload);
+    };
+
+    const removeListener = DeskThing.on('data', onAppData);
+
+    return () => {
+      removeListener();
+    };
+  });
 
   return (
     <Router>
