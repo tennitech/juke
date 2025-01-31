@@ -115,7 +115,6 @@ const Player = ({ children }) => {
 
 export default Player;
 
-
 export const PlayerContext = createContext({
   online: false,
   active: false,

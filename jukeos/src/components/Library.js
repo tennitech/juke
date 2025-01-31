@@ -1,11 +1,13 @@
 import React, { useState, useRef, useContext, useMemo, useEffect } from 'react';
+import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
+import { PlayerContext } from './Player';
+
+import '../App.css';
+import selectBestImage from './Utilities';
+
 import backgroundPng from '../assets/background.png';
 import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-album-art.png';
-import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
-import { PlayerContext } from './Player';
-import selectBestImage from './Utilities';
-import '../App.css';
 
 
 const ScrollWheel = ({ items, playUri }) => {

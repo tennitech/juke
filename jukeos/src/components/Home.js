@@ -1,14 +1,16 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import { PlayerContext } from './Player';
-import cloudsSvg from '../assets/clouds.svg';
-import playIcon from '../assets/play-icon.svg';
-import pauseIcon from '../assets/pause-icon.svg';
-import AnimatedBlob from './AnimatedBlob';
-import '../App.css';
+
 import axios from 'axios';
 import selectBestImage from './Utilities';
 import defaultAlbumArt from '../assets/default-album-art.png';
+
+import '../App.css';
+import AnimatedBlob from './AnimatedBlob';
+import cloudsSvg from '../assets/clouds.svg';
+import playIcon from '../assets/play-icon.svg';
+import pauseIcon from '../assets/pause-icon.svg';
 
 
 const ScrollWheel = ({ items }) => {

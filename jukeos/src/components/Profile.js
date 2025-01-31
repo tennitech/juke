@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SpotifyAuthContext } from '../contexts/spotify';
+
 import axios from 'axios';
+
 import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';
 
