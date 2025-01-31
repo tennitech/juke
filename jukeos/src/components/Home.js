@@ -7,22 +7,8 @@ import pauseIcon from '../assets/pause-icon.svg';
 import AnimatedBlob from './AnimatedBlob';
 import '../App.css';
 import axios from 'axios';
+import selectBestImage from './Utilities';
 import defaultAlbumArt from '../assets/default-album-art.png';
-
-
-function selectBestImage(images) {
-  const minWidth = 150, minHeight = 150;
-
-  return images.reduce((previous, current) => {
-    const validImage
-      = current.width >= minWidth && current.height >= minHeight;
-    const betterThanPrevious
-      = !previous || (current.width < previous.width && current.height < previous.height);
-
-    return (validImage && betterThanPrevious)
-      ? current : previous;
-  }, null) || images[0];
-}
 
 
 const ScrollWheel = ({ items }) => {
