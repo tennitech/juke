@@ -1,10 +1,7 @@
 import React, { useState, useRef, useContext, useMemo, useEffect } from 'react';
 import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 import { PlayerContext } from './Player';
-
 import '../App.css';
-import selectBestImage from './Utilities';
-
 import backgroundPng from '../assets/background.png';
 import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-album-art.png';
@@ -96,6 +93,19 @@ const ScrollWheel = ({ items, playUri }) => {
   );
 };
 
+export function selectBestImage(images) {
+    const minWidth = 150, minHeight = 150;
+
+    return images.reduce((previous, current) => {
+        const validImage
+            = current.width >= minWidth && current.height >= minHeight;
+        const betterThanPrevious
+            = !previous || (current.width < previous.width && current.height < previous.height);
+
+        return (validImage && betterThanPrevious)
+            ? current : previous;
+    }, null) || images[0];
+}
 
 const LibrarySection = ({ title, items, playUri }) => {
   return (
