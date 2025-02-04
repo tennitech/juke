@@ -1,6 +1,6 @@
 {
   "id": "deskthingapp",
-  "isAudioSource": false,
+  "isAudioSource": true,
   "isWebApp": true,
   "requires": [],
   "label": "",
