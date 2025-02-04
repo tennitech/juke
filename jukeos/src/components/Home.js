@@ -1,13 +1,13 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import backgroundPng from '../assets/background.png';
+import axios from 'axios';
+import defaultAlbumArt from '../assets/default-album-art.png';
+import '../App.css';
+import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
-import AnimatedBlob from './AnimatedBlob';
-import '../App.css';
-import axios from 'axios';
-import defaultAlbumArt from '../assets/default-album-art.png';
 
 const ScrollWheel = ({ items }) => {
   const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
@@ -33,7 +33,6 @@ const ScrollWheel = ({ items }) => {
     const walk = (x - startX.current) * 2;
     wheelRef.current.scrollLeft = scrollLeft.current - walk;
   };
-
   const scrollWheelStyles = {
     container: {
       width: '100%',
@@ -290,6 +289,8 @@ const Home = () => {
    * - Implement error handling for expired/invalid tokens
    * - Consider implementing a proxy endpoint to hide Spotify credentials
    *   Example: /api/recently-played instead of calling Spotify directly
+   * 
+   * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
    */
   const fetchRecentlyPlayed = () => {
     if (!accessToken) return;
@@ -370,19 +371,19 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [accessToken]);
 
-  const buttonStyles = {
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '10px',
-    position: 'relative',
-    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    className: 'control-button',
-    outline: 'none',
-    WebkitTapHighlightColor: 'transparent',
-    userSelect: 'none',
-    touchAction: 'manipulation'
-  };
+    const buttonStyles = {
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '10px',
+        position: 'relative',
+        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        className: 'control-button',
+        outline: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+        touchAction: 'manipulation'
+    };
 
   return (
       <>
@@ -411,7 +412,6 @@ const Home = () => {
                 <span>{formatTime(currentTrack.progress)}</span>
                 <span>{formatTime(currentTrack.duration)}</span>
               </div>
-
               <div style={{
                 width: '100%',
                 marginTop: '10px'
