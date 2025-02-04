@@ -1,12 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SpotifyAuthContext } from '../contexts/spotify';
+
 import axios from 'axios';
+
 import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';
 
+
 // TODO: Probably a better spot
 // But I want to get this working
-function requestUserAuthorization() {  
+function requestUserAuthorization() {
   const redirectParams = new URLSearchParams({
     scope: [
       "user-read-private",
@@ -28,6 +31,7 @@ function requestUserAuthorization() {
   
   window.location.href = redirectUrl;
 }
+
 
 const Profile = () => {
   const { accessToken } = useContext(SpotifyAuthContext);
@@ -64,13 +68,16 @@ const Profile = () => {
       const data = response.data;
       setProfileData({
         displayName: data.display_name || 'Spotify User',
-        email: data.email || 'No email provided',
-        followers: data.followers?.total || 0,
+        email: data.email || 'Unknown Email',
+        followers: data.followers?.total || '?',
         profileImage: data.images?.[0]?.url || require("../assets/default-user-profile-image.svg").default,
-        spotifyUrl: data.external_urls?.spotify || '#',
-        country: data.country || 'Unknown'
+        spotifyUrl: data.external_urls?.spotify || 'Unknown URL',
+        country: data.country || 'Unknown Country',
+        subscription: data.product || "Unknown Subscription Status"
       });
-    }).catch((err) => console.log("Error loading profile data:", err));
+    }).catch((err) => {
+      console.log("Error loading profile data:", err)
+    });
   };
 
   return (
@@ -155,5 +162,6 @@ const Profile = () => {
     </div>
   );
 };
+
 
 export default Profile;

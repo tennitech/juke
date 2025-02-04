@@ -1,13 +1,13 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import { PlayerContext } from './Player';
+import axios from 'axios';
+import defaultAlbumArt from '../assets/default-album-art.png';
+import '../App.css';
+import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
-import AnimatedBlob from './AnimatedBlob';
-import '../App.css';
-import axios from 'axios';
-import defaultAlbumArt from '../assets/default-album-art.png';
 
 const ScrollWheel = ({ items }) => {
   const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
@@ -89,6 +89,7 @@ const ScrollWheel = ({ items }) => {
   );
 };
 
+
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
   const { track, paused, playUri, togglePlay } = useContext(PlayerContext);
@@ -145,6 +146,8 @@ const Home = () => {
    * - Implement error handling for expired/invalid tokens
    * - Consider implementing a proxy endpoint to hide Spotify credentials
    *   Example: /api/recently-played instead of calling Spotify directly
+   * 
+   * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
    */
   const fetchRecentlyPlayed = () => {
     if (accessToken) {
