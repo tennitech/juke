@@ -426,15 +426,6 @@ html, body, #root {
   z-index: 1;
 }
 
-.album-glow{
-  position: relative;
-  width: 600px;
-  height: 600px;
-  display: flex;
-
-}
-
-
 @media (max-width: 800px) {
   .album-art {
     width: 50vw;
