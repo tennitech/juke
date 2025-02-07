@@ -32,9 +32,8 @@
     "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\"",
     "start:frontend": "react-scripts start",
     "start:backend": "cd ./src/auth-server && node server.js",
-    "build": "vite build && npm run build-server && node scripts/package.js",
-    "build-server": "esbuild server/index.js --bundle --platform=node --outfile=dist/index.js",
-    "dev": "vite",
+    "build": "react-scripts build && npm run build-server && node scripts/package.js",
+    "build-server": "esbuild server/index.js --bundle --platform=node --outfile=build/index.js",
     "eject": "react-scripts eject",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -57,9 +56,9 @@
     ]
   },
   "devDependencies": {
-    "@vitejs/plugin-legacy": "^6.0.0",
+    "@vitejs/plugin-legacy": "^6.0.1",
     "archiver": "^7.0.1",
     "concurrently": "^8.2.2",
-    "vite": "^6.0.11"
+    "vite": "^6.1.0"
   }
 }

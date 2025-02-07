@@ -21,7 +21,7 @@ async function addFilesToArchive(archive, folderPath, baseFolder = "") {
 async function createPackage() {
   const packageName = process.env.npm_package_name;
   const version = process.env.npm_package_version;
-  const distPath = resolve("dist");
+  const distPath = resolve("build");
   const outputFile = join(distPath, `${packageName}-v${version}.zip`);
 
   const output = createWriteStream(outputFile);
