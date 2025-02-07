@@ -4,7 +4,7 @@ import { PlayerContext } from './Player';
 import '../App.css';
 import backgroundPng from '../assets/background.png';
 import mainGradient from '../assets/main-gradient.svg';
-import defaultAlbumArt from '../assets/default-album-art.png';
+import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 
 
 const ScrollWheel = ({ items, playUri }) => {

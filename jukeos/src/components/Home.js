@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import axios from 'axios';
-import defaultAlbumArt from '../assets/default-album-art.png';
+import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import '../App.css';
 import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
@@ -362,7 +362,7 @@ const Home = () => {
               static={true}
             />
             <img 
-              src={track?.album?.images?.[0]?.url || '../assets/default-album-art.png'} 
+              src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
               alt="Album Art" 
               style={{
                 width: '500px',
