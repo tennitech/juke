@@ -354,11 +354,10 @@ const Home = () => {
             <AnimatedBlob
                 colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']}
                 style={{
-                  width: '600px',
-                  height: '600px',
-                  top: '-20px',
-                  left: '0'
-                }}
+                  width: '45vw',
+                  maxWidth: '600px',
+                  height: '40vw',
+            }}
                 static={true}
             />
             <img
