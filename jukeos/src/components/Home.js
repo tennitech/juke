@@ -252,7 +252,7 @@ const Home = () => {
             gap: '10px',
             width: '500px'
           }}>
-            <h1 style={{ 
+            <h1 style={{
               fontFamily: 'Loubag, sans-serif',
               fontSize: '5rem',
               margin: '0',
@@ -268,7 +268,7 @@ const Home = () => {
               {track?.name|| "Unknown"}
             </h1>
 
-            <h2 style={{ 
+            <h2 style={{
               fontFamily: 'Notable, sans-serif',
               fontSize: '2rem',
               margin: '0',
@@ -296,7 +296,7 @@ const Home = () => {
               width: '100%',
               marginTop: '10px'
             }}>
-              <div 
+              <div
                 style={{
                   width: '100%',
                   height: '4px',
@@ -318,7 +318,7 @@ const Home = () => {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => togglePlay()}
               style={{
                 background: 'transparent',
@@ -330,8 +330,8 @@ const Home = () => {
                 margin: '10px auto'
               }}
             >
-              <img 
-                src={paused ? playIcon : pauseIcon} 
+              <img
+                src={paused ? playIcon : pauseIcon}
                 alt={paused ? "Play" : "Pause"}
                 style={{
                   width: '100%',
@@ -343,23 +343,23 @@ const Home = () => {
             </button>
           </div>
 
-          <div style={{ 
-            position: 'relative', 
+          <div style={{
+            position: 'relative',
             width: '600px',
-            height: '600px', 
+            height: '600px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <AnimatedBlob 
-              colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
-              style={{
-                width: '600px',
-                height: '600px',
-                top: '-20px',
-                left: '0'
-              }}
-              static={true}
+            <AnimatedBlob
+                colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']}
+                style={{
+                  width: '600px',
+                  height: '600px',
+                  top: '-20px',
+                  left: '0'
+                }}
+                static={true}
             />
             <img 
               src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
@@ -376,7 +376,7 @@ const Home = () => {
           </div>
         </div>
         <div style={{
-          width: '500px',  
+          width: '500px',
           marginTop: '-240px',
           alignSelf: 'flex-start',
           paddingLeft: '0'
