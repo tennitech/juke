@@ -8,7 +8,33 @@ import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
+import ColorThief from "color-thief-browser";
 
+//Move location possibly in the future
+export function useColorThief(imageSrc) {
+  const [colors, setColors] = useState(["rgb(0, 0, 0)"]);
+
+  useEffect(() => {
+    if (!imageSrc) return;
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = imageSrc;
+
+    img.onload = () => {
+      const colorThief = new ColorThief();
+      const palette = colorThief.getPalette(img, 2);
+      const rgbColors = palette.map(
+          (color) => `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+      );
+      setColors(rgbColors);
+    };
+  }, [imageSrc]);
+
+  return colors;
+}
+
+//Unused Component
 const ScrollWheel = ({ items }) => {
   const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
   const wheelRef = useRef(null);
@@ -352,7 +378,7 @@ const Home = () => {
             justifyContent: 'center'
           }}>
             <AnimatedBlob
-                colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']}
+                colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
                 style={{
                   width: '600px',
                   height: '600px',

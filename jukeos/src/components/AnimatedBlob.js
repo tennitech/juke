@@ -23,12 +23,15 @@ const AnimatedBlob = ({ colors, style = {}, static: isStatic = false }) => {
     animate();
   }, [isStatic]);
 
+  // This is the old
+  // radial-gradient(circle at 30% 30%, ${colors[0]} 0%, rgba(255, 255, 255, 0) 70%),
+  // radial-gradient(circle at 70% 70%, ${colors[1]} 0%,  rgba(255, 255, 255, 0) 70%)
+
   const gradientStyle = {
     borderRadius: style.width === '600px' ? '25px' : '50%',
     background: `
-      radial-gradient(circle at 30% 30%, ${colors[0]} 0%, rgba(255, 255, 255, 0) 70%),
-      radial-gradient(circle at 70% 70%, ${colors[1]} 0%, rgba(255, 255, 255, 0) 70%)
-    `,
+      radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0) 0%, ${colors[0]} 30%,${colors[1]} 60%,${colors[2]} 90%)
+`,
     filter: 'blur(30px)',
     position: 'absolute',
     zIndex: -1,
