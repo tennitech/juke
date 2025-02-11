@@ -380,11 +380,11 @@ const Home = () => {
             <AnimatedBlob
                 colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
                 style={{
-                  width: '45vw',
+                  width: '40vw',
                   maxWidth: '600px',
-                  height: '40vw',
+                  height: '35vw',
             }}
-                static={true}
+                static={false}
             />
             <img 
               src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
