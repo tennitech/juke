@@ -7,6 +7,7 @@ import ColorThief from 'color-thief-browser';
 
 import AnimatedBlob from './AnimatedBlob';
 import spotlightPng from '../assets/spotlight.png';
+import {useColorThief} from "./Home";
 
 
 const NavigationBar = () => {
@@ -131,11 +132,11 @@ const NavigationBar = () => {
           </div>
         </div>
       </nav>
-      <img
-        src={spotlightPng}
-        alt="Spotlight"
-        className={`spotlight ${isFlickering ? 'flicker' : ''}`}
-      />
+      {/*<img*/}
+      {/*  src={spotlightPng}*/}
+      {/*  alt="Spotlight"*/}
+      {/*  className={`spotlight ${isFlickering ? 'flicker' : ''}`}*/}
+      {/*/>*/}
       <div className="user-profile-container">
         <div style={{ position: 'relative' }}>
           <AnimatedBlob colors={dominantColors} />
