@@ -292,7 +292,7 @@ const Home = () => {
             width: '100%',
             alignItems: 'center'
           }}>
-            <h1 style={{ 
+            <h1 style={{
               fontFamily: 'Loubag, sans-serif',
               fontSize: 'clamp(3rem, 6vw, 7rem)',
               margin: '0',
@@ -303,7 +303,7 @@ const Home = () => {
               {track?.name || "Unknown"}
             </h1>
 
-            <h2 style={{ 
+            <h2 style={{
               fontFamily: 'Notable, sans-serif',
               fontSize: 'clamp(1.2rem, 3vw, 2.5rem)',
               margin: '0',
