@@ -8,53 +8,60 @@ import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
+import previousIcon from '../assets/skip-backward-icon.svg';
+import nextIcon from '../assets/skip-forward-icon.svg';
 
-const ScrollWheel = ({ items }) => {
-  const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
+const ScrollWheel = ({ items, isMobile }) => {
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [centerIndex, setCenterIndex] = useState(0);
   const wheelRef = useRef(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
 
   const handleMouseDown = (e) => {
-    isDragging.current = true;
-    startX.current = e.pageX - wheelRef.current.offsetLeft;
-    scrollLeft.current = wheelRef.current.scrollLeft;
+    setIsDragging(true);
+    setStartX(e.pageX - wheelRef.current.offsetLeft);
+    setScrollLeft(wheelRef.current.scrollLeft);
   };
 
   const handleMouseUp = () => {
-    isDragging.current = false;
+    setIsDragging(false);
+    // Snap to nearest item
+    if (wheelRef.current) {
+      const itemWidth = isMobile ? 60 : 120; // Width + gap
+      const scrollPosition = wheelRef.current.scrollLeft;
+      const newIndex = Math.round(scrollPosition / itemWidth);
+      setCenterIndex(newIndex);
+      wheelRef.current.scrollTo({
+        left: newIndex * itemWidth,
+        behavior: 'smooth'
+      });
+    }
   };
 
   const handleMouseMove = (e) => {
-    if (!isDragging.current) return;
+    if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - wheelRef.current.offsetLeft;
-    const walk = (x - startX.current) * 2;
-    wheelRef.current.scrollLeft = scrollLeft.current - walk;
+    const walk = (x - startX) * 2;
+    wheelRef.current.scrollLeft = scrollLeft - walk;
+    
+    // Update center index while dragging
+    const itemWidth = isMobile ? 60 : 120;
+    const currentIndex = Math.round(wheelRef.current.scrollLeft / itemWidth);
+    setCenterIndex(currentIndex);
   };
 
   return (
     <div 
       className="scroll-wheel-container"
       ref={wheelRef}
-      style={{ 
-        width: '100%',
-        maxWidth: '800px',
-        height: '100px',  // Reduced from 120px
-        overflow: 'hidden',
-        marginTop: '-10px'  // Added negative margin
-      }}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onMouseMove={handleMouseMove}
     >
-      <div className="scroll-wheel-track" style={{
-        display: 'flex',
-        gap: '20px',
-        padding: '0 20px'
-      }}>
+      <div className="scroll-wheel-track">
         {items.map((item, index) => {
           const distance = Math.abs(index - centerIndex);
           const scale = Math.max(0.6, 1 - (distance * 0.2));
@@ -74,8 +81,8 @@ const ScrollWheel = ({ items }) => {
                 src={item.imageUrl || defaultAlbumArt}
                 alt={item.title}
                 style={{
-                  width: '100px',  // Reduced size
-                  height: '100px',  // Reduced size
+                  width: isMobile ? '60px' : '100px',
+                  height: isMobile ? '60px' : '100px',
                   objectFit: 'cover',
                   borderRadius: '8px',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
@@ -89,10 +96,21 @@ const ScrollWheel = ({ items }) => {
   );
 };
 
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
-  const { track, paused, playUri, togglePlay } = useContext(PlayerContext);
+  const { track, paused, playUri, togglePlay, previousTrack, nextTrack } = useContext(PlayerContext);
   const [currentTrack, setCurrentTrack] = useState({
     progress: 0,
     duration: 1
@@ -100,6 +118,7 @@ const Home = () => {
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -222,88 +241,109 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [accessToken]);
 
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      setIsMobile(window.innerWidth <= 768);
+    }, 250); // 250ms debounce
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
-    <>
+    <div className="home-container" style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      overflow: 'auto',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '120px 5vw 40px 5vw'
+    }}>
       <img src={cloudsSvg} alt="" className="clouds-main" />
       <img src={cloudsSvg} alt="" className="clouds-small" />
       <div className="player-container" style={{
         width: '100%',
-        maxWidth: '1200px',
+        maxWidth: '1400px',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: isMobile ? 'column' : 'row',
         alignItems: 'center',
-        gap: '30px',
-        margin: '0 auto',
-        marginTop: '50px',
-        padding: '40px',
-        paddingLeft: '120px'
+        padding: isMobile ? '1vh 4vw' : '2vh 6vw',
+        position: 'relative',
+        gap: '4vw'
       }}>
+        {/* Left side - Track Info and Controls */}
         <div style={{
           display: 'flex',
+          flexDirection: 'column',
+          width: isMobile ? '100%' : '65%',
+          order: 1,
           alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          gap: '40px',
-          padding: '0'
+          gap: '1vh'
         }}>
+          {/* Track Info */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
-            width: '500px'
+            gap: '0.5vh',
+            width: '100%',
+            alignItems: 'center'
           }}>
             <h1 style={{ 
               fontFamily: 'Loubag, sans-serif',
-              fontSize: '5rem',
+              fontSize: 'clamp(3rem, 6vw, 7rem)',
               margin: '0',
-              textAlign: 'left',
+              textAlign: 'center',
               color: '#ECE0C4',
-              textShadow: `
-                2px 2px 0 rgba(255,0,0,0.2),
-                -2px -2px 0 rgba(0,0,255,0.2),
-                1px -1px 0 rgba(255,0,255,0.2)
-              `,
-              animation: 'textGlitch 3s infinite'
+              lineHeight: 1
             }}>
-              {track?.name|| "Unknown"}
+              {track?.name || "Unknown"}
             </h1>
 
             <h2 style={{ 
               fontFamily: 'Notable, sans-serif',
-              fontSize: '2rem',
+              fontSize: 'clamp(1.2rem, 3vw, 2.5rem)',
               margin: '0',
+              marginTop: '0.2vh',
               opacity: 0.9,
               letterSpacing: '1px',
-              color: 'white'
+              color: 'white',
+              textAlign: 'center'
             }}>
               {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
             </h2>
 
+            {/* Progress bar */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              width: '100%',
-              fontSize: '0.8rem',
-              color: '#ECE0C4',
-              opacity: 0.8,
-              marginTop: '5px'
+              width: '80%',
+              margin: '0.5vh auto',
+              padding: '5px 0'
             }}>
-              <span>{formatTime(currentTrack.progress)}</span>
-              <span>{formatTime(currentTrack.duration)}</span>
-            </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                width: '100%',
+                fontSize: '1rem',
+                color: '#ECE0C4',
+                opacity: 0.8,
+                marginTop: '5px'
+              }}>
+                <span>{formatTime(currentTrack.progress)}</span>
+                <span>{formatTime(currentTrack.duration)}</span>
+              </div>
 
-            <div style={{
-              width: '100%',
-              marginTop: '10px'
-            }}>
               <div 
                 style={{
                   width: '100%',
-                  height: '4px',
+                  height: '6px',
                   backgroundColor: 'rgba(236, 224, 196, 0.2)',
-                  borderRadius: '2px',
+                  borderRadius: '3px',
                   position: 'relative',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  marginTop: '10px'
                 }}
                 onClick={handleProgressClick}
               >
@@ -311,136 +351,157 @@ const Home = () => {
                   width: `${(currentTrack.progress / currentTrack.duration) * 100}%`,
                   height: '100%',
                   backgroundColor: '#ECE0C4',
-                  borderRadius: '2px',
+                  borderRadius: '3px',
                   position: 'absolute',
                   transition: 'width 0.1s linear'
                 }} />
               </div>
             </div>
 
-            <button 
-              onClick={() => togglePlay()}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '10px',
-                width: '80px',
-                height: '80px',
-                margin: '10px auto'
-              }}
-            >
-              <img 
-                src={paused ? playIcon : pauseIcon} 
-                alt={paused ? "Play" : "Pause"}
+            {/* Playback Controls */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: isMobile ? '20px' : '30px',
+              marginTop: '0.5vh'
+            }}>
+              <button 
+                onClick={previousTrack}
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0.8,
-                  transition: 'opacity 0.2s ease'
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '15px',
+                  width: '80px',
+                  height: '80px'
                 }}
-              />
-            </button>
-          </div>
+              >
+                <img 
+                  src={previousIcon} 
+                  alt="Previous"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
 
-          <div style={{ 
-            position: 'relative', 
-            width: '600px',
-            height: '600px', 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <AnimatedBlob 
-              colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
-              style={{
-                width: '600px',
-                height: '600px',
-                top: '-20px',
-                left: '0'
-              }}
-              static={true}
-            />
-            <img 
-              src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
-              alt="Album Art" 
-              style={{
-                width: '500px',
-                height: '500px',
-                borderRadius: '15px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                position: 'relative',
-                zIndex: 1
-              }} 
-            />
-          </div>
-        </div>
-        <div style={{
-          width: '500px',  
-          marginTop: '-240px',
-          alignSelf: 'flex-start',
-          paddingLeft: '0'
-        }}>
-          <h3 style={{
-            fontFamily: 'Loubag, sans-serif',
-            fontSize: '1.5rem',
-            color: '#FFC764',
-            letterSpacing: '3px',
-            marginBottom: '5px',
-            marginTop: '140px',
-            textAlign: 'left'
-          }}>
-            RECENTLY PLAYED
-          </h3>
-          <div style={{
-            width: '100%',
-            height: '200px',
-            overflow: 'hidden',
-            marginTop: '-40px'
-          }}>
-            <div className="scroll-wheel-container">
-              <div className="scroll-wheel-track" style={{
-                minHeight: '180px',
-                paddingLeft: '0',  // Remove default padding to start from left
-                paddingRight: '40px'
-              }}>
-                {isLoadingRecent ? (
-                  // TODO: Add loading spinner/skeleton
-                  <div>Loading recently played...</div>
-                ) : recentlyPlayedError ? (
-                  // TODO: Add error state UI
-                  <div>Error loading recently played tracks</div>
-                ) : (
-                  recentlyPlayed.map((track, index) => (
-                    <div 
-                      key={index} 
-                      className="scroll-wheel-item"
-                      style={{
-                        transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
-                        opacity: index === 0 ? 1 : 1 - index * 0.2
-                      }}
-                      onClick={() => playUri(track.uri)}
-                    >
-                      <img 
-                        src={track.imageUrl}
-                        alt={`${track.title} by ${track.artist}`}
-                        style={{
-                          width: '100px',
-                          height: '100px',
-                          objectFit: 'cover',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                        }}
-                      />
-                    </div>
-                  ))
-                )}
-              </div>
+              <button 
+                onClick={togglePlay}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '15px',
+                  width: '100px',
+                  height: '100px'
+                }}
+              >
+                <img 
+                  src={paused ? playIcon : pauseIcon} 
+                  alt={paused ? "Play" : "Pause"}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
+
+              <button 
+                onClick={nextTrack}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '15px',
+                  width: '80px',
+                  height: '80px'
+                }}
+              >
+                <img 
+                  src={nextIcon} 
+                  alt="Next"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
             </div>
           </div>
+
+          {/* Recently Played Section */}
+          <div style={{
+            width: '100%',
+            marginTop: '1vh',
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <h3 style={{
+              fontFamily: 'Loubag, sans-serif',
+              fontSize: 'clamp(2.5rem, 4vw, 4.5rem)',
+              color: '#FFC764',
+              letterSpacing: '3px',
+              marginBottom: '0.5vh',
+              textAlign: 'center'
+            }}>
+              RECENTLY PLAYED
+            </h3>
+            <ScrollWheel items={recentlyPlayed} isMobile={isMobile} />
+          </div>
+        </div>
+
+        {/* Right side - Album Art */}
+        <div style={{ 
+          position: 'relative',
+          width: isMobile ? '60%' : '35%',
+          maxWidth: isMobile ? '300px' : '400px',
+          height: 'auto',
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          order: isMobile ? 0 : 2,
+          marginBottom: isMobile ? '2vh' : 0,
+          alignSelf: 'flex-start',
+          marginTop: isMobile ? '0' : 'calc(0.6em)'
+        }}>
+          <AnimatedBlob 
+            colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              top: '-2%',
+              left: '0'
+            }} 
+            static={true}
+          />
+          <img 
+            src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
+            alt="Album Art" 
+            style={{
+              width: '100%',
+              aspectRatio: '1/1',
+              borderRadius: '15px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              position: 'relative',
+              zIndex: 1,
+              objectFit: 'cover'
+            }} 
+          />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
