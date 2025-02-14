@@ -46,7 +46,7 @@ const AnimatedBlob = ({ colors, style = {}, static: isStatic = false }) => {
   // radial-gradient(circle at 70% 70%, ${colors[1]} 0%,  rgba(255, 255, 255, 0) 70%)
 
   const gradientStyle = {
-    borderRadius: style.width <= '80px' ? '25px' : '65%',
+    borderRadius: style.width <= '80px' ? '25px' : '35%',
     background: `
       radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0) 0%, ${animatedColors[0]} 30%, ${animatedColors[1]} 60%, ${animatedColors[2]} 90%)
 `,

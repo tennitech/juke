@@ -381,8 +381,8 @@ const Home = () => {
                 colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
                 style={{
                   width: '30vw',
-                  maxWidth: '575px',
-                  maxHeight: '575px',
+                  maxWidth: '525px',
+                  maxHeight: '525px',
                   height: '30vw',
             }}
                 static={false}
