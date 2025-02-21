@@ -115,28 +115,17 @@ const Home = () => {
     const position = Math.floor(percentage * currentTrack.duration);
     
     try {
-      await axios.put(
+      await performPut(
         'https://api.spotify.com/v1/me/player/seek',
+        { position_ms: position * 1000 },
         null,
-        {
-          params: { position_ms: position * 1000 },
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
+        accessToken,
+        invalidateAccess
       );
 
-      // await performPut(
-      //   'https://api.spotify.com/v1/me/player/seek',
-      //   null,
-      //   {
-      //     params: { position_ms: position * 1000 }
-      //   },
-      //   accessToken,
-      //   invalidateAccess
-      // );
-
-      setCurrentTrack(prev => ({
+      setCurrentTrack((prev) => ({
         ...prev,
-        progress: position
+        progress: position,
       }));
     } catch (error) {
       console.error('Failed to seek:', error);
