@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
-import axios from 'axios';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import '../App.css';
 import AnimatedBlob from './AnimatedBlob';
