@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
-import spotlightPng from '../assets/spotlight.png';
-import AnimatedBlob from './AnimatedBlob';
+
 import ColorThief from 'color-thief-browser';
-import axios from 'axios';
+
+import AnimatedBlob from './AnimatedBlob';
+import spotlightPng from '../assets/spotlight.png';
+
 
 const NavigationBar = () => {
   const navbarContentRef = useRef(null);

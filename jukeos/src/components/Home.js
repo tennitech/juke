@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
+import defaultAlbumArt from '../assets/default-art-placeholder.svg';
+import '../App.css';
+import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
-import AnimatedBlob from './AnimatedBlob';
-import '../App.css';
-import axios from 'axios';
-import defaultAlbumArt from '../assets/default-album-art.png';
 
 const ScrollWheel = ({ items }) => {
   const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
@@ -89,6 +88,7 @@ const ScrollWheel = ({ items }) => {
   );
 };
 
+
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
   const { track, paused, playUri, togglePlay } = useContext(PlayerContext);
@@ -114,17 +114,17 @@ const Home = () => {
     const position = Math.floor(percentage * currentTrack.duration);
     
     try {
-      await axios.put(
+      await performPut(
         'https://api.spotify.com/v1/me/player/seek',
+        { position_ms: position * 1000 },
         null,
-        {
-          params: { position_ms: position * 1000 },
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
+        accessToken,
+        invalidateAccess
       );
-      setCurrentTrack(prev => ({
+
+      setCurrentTrack((prev) => ({
         ...prev,
-        progress: position
+        progress: position,
       }));
     } catch (error) {
       console.error('Failed to seek:', error);
@@ -145,6 +145,8 @@ const Home = () => {
    * - Implement error handling for expired/invalid tokens
    * - Consider implementing a proxy endpoint to hide Spotify credentials
    *   Example: /api/recently-played instead of calling Spotify directly
+   * 
+   * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
    */
   const fetchRecentlyPlayed = () => {
     if (accessToken) {
@@ -200,15 +202,13 @@ const Home = () => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await axios.get('https://api.spotify.com/v1/me/player', {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+        const data = await performFetch('https://api.spotify.com/v1/me/player', {}, accessToken, invalidateAccess);
         
-        if (response.data) {
+        if (data) {
           setCurrentTrack(prev => ({
             ...prev,
-            progress: response.data.progress_ms / 1000,
-            duration: response.data.item.duration_ms / 1000
+            progress: data.progress_ms / 1000,
+            duration: data.item.duration_ms / 1000
           }));
         }
       } catch (error) {
@@ -249,7 +249,7 @@ const Home = () => {
             gap: '10px',
             width: '500px'
           }}>
-            <h1 style={{ 
+            <h1 style={{
               fontFamily: 'Loubag, sans-serif',
               fontSize: '5rem',
               margin: '0',
@@ -265,7 +265,7 @@ const Home = () => {
               {track?.name|| "Unknown"}
             </h1>
 
-            <h2 style={{ 
+            <h2 style={{
               fontFamily: 'Notable, sans-serif',
               fontSize: '2rem',
               margin: '0',
@@ -293,7 +293,7 @@ const Home = () => {
               width: '100%',
               marginTop: '10px'
             }}>
-              <div 
+              <div
                 style={{
                   width: '100%',
                   height: '4px',
@@ -315,7 +315,7 @@ const Home = () => {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => togglePlay()}
               style={{
                 background: 'transparent',
@@ -327,8 +327,8 @@ const Home = () => {
                 margin: '10px auto'
               }}
             >
-              <img 
-                src={paused ? playIcon : pauseIcon} 
+              <img
+                src={paused ? playIcon : pauseIcon}
                 alt={paused ? "Play" : "Pause"}
                 style={{
                   width: '100%',
@@ -340,26 +340,25 @@ const Home = () => {
             </button>
           </div>
 
-          <div style={{ 
-            position: 'relative', 
+          <div style={{
+            position: 'relative',
             width: '600px',
-            height: '600px', 
+            height: '600px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}>
-            <AnimatedBlob 
-              colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
-              style={{
-                width: '600px',
-                height: '600px',
-                top: '-20px',
-                left: '0'
-              }}
-              static={true}
+            <AnimatedBlob
+                colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']}
+                style={{
+                  width: '45vw',
+                  maxWidth: '600px',
+                  height: '40vw',
+            }}
+                static={true}
             />
             <img 
-              src={track?.album?.images?.[0]?.url || '../assets/default-album-art.png'} 
+              src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
               alt="Album Art" 
               style={{
                 width: '500px',
@@ -373,7 +372,7 @@ const Home = () => {
           </div>
         </div>
         <div style={{
-          width: '500px',  
+          width: '500px',
           marginTop: '-240px',
           alignSelf: 'flex-start',
           paddingLeft: '0'

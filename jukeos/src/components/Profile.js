@@ -1,12 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { SpotifyAuthContext } from '../contexts/spotify';
-import axios from 'axios';
+import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+
 import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';
 
+
 // TODO: Probably a better spot
 // But I want to get this working
-function requestUserAuthorization() {  
+function requestUserAuthorization() {
   const redirectParams = new URLSearchParams({
     scope: [
       "user-read-private",
@@ -29,8 +30,9 @@ function requestUserAuthorization() {
   window.location.href = redirectUrl;
 }
 
+
 const Profile = () => {
-  const { accessToken } = useContext(SpotifyAuthContext);
+  const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
   const [profileData, setProfileData] = useState({
     displayName: '',
     email: '',
@@ -56,21 +58,21 @@ const Profile = () => {
   const loadProfileData = (accessToken) => {
     if (!accessToken) return;
 
-    axios.get("https://api.spotify.com/v1/me", {
-      headers: {
-        "Authorization": "Bearer " + accessToken
-      }
-    }).then((response) => {
-      const data = response.data;
+    performFetch(
+      "https://api.spotify.com/v1/me", {}, accessToken, invalidateAccess
+    ).then((data) => {
       setProfileData({
         displayName: data.display_name || 'Spotify User',
-        email: data.email || 'No email provided',
-        followers: data.followers?.total || 0,
+        email: data.email || 'Unknown Email',
+        followers: data.followers?.total || '?',
         profileImage: data.images?.[0]?.url || require("../assets/default-user-profile-image.svg").default,
-        spotifyUrl: data.external_urls?.spotify || '#',
-        country: data.country || 'Unknown'
+        spotifyUrl: data.external_urls?.spotify || 'Unknown URL',
+        country: data.country || 'Unknown Country',
+        subscription: data.product || "Unknown Subscription Status"
       });
-    }).catch((err) => console.log("Error loading profile data:", err));
+    }).catch((err) => {
+      console.log("Error loading profile data:", err)
+    });
   };
 
   return (
@@ -148,12 +150,13 @@ const Profile = () => {
             onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
             onMouseOut={e => e.target.style.transform = 'scale(1)'}
           >
-            Login in Spotify
+            Login with Spotify
           </button>
         </div>
       </div>
     </div>
   );
 };
+
 
 export default Profile;

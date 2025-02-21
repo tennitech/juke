@@ -1,14 +1,6 @@
 import { useState, createContext, useContext, useEffect } from "react";
 import { SpotifyAuthContext, performPut } from "../contexts/spotify";
 
-export const PlayerContext = createContext({
-  online: false,
-  active: false,
-  paused: true,
-  track: null,
-  togglePlay: () => {},
-  playUri: () => {}
-});
 
 const Player = ({ children }) => {
   const { playbackReady, accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
@@ -120,4 +112,14 @@ const Player = ({ children }) => {
   );
 };
 
+
 export default Player;
+
+export const PlayerContext = createContext({
+  online: false,
+  active: false,
+  paused: true,
+  track: null,
+  togglePlay: () => {},
+  playUri: () => {}
+});
