@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
-import axios from 'axios';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import '../App.css';
 import AnimatedBlob from './AnimatedBlob';
@@ -115,17 +114,17 @@ const Home = () => {
     const position = Math.floor(percentage * currentTrack.duration);
     
     try {
-      await axios.put(
+      await performPut(
         'https://api.spotify.com/v1/me/player/seek',
+        { position_ms: position * 1000 },
         null,
-        {
-          params: { position_ms: position * 1000 },
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
+        accessToken,
+        invalidateAccess
       );
-      setCurrentTrack(prev => ({
+
+      setCurrentTrack((prev) => ({
         ...prev,
-        progress: position
+        progress: position,
       }));
     } catch (error) {
       console.error('Failed to seek:', error);
@@ -203,15 +202,13 @@ const Home = () => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await axios.get('https://api.spotify.com/v1/me/player', {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
+        const data = await performFetch('https://api.spotify.com/v1/me/player', {}, accessToken, invalidateAccess);
         
-        if (response.data) {
+        if (data) {
           setCurrentTrack(prev => ({
             ...prev,
-            progress: response.data.progress_ms / 1000,
-            duration: response.data.item.duration_ms / 1000
+            progress: data.progress_ms / 1000,
+            duration: data.item.duration_ms / 1000
           }));
         }
       } catch (error) {
