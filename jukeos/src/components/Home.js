@@ -11,11 +11,10 @@ import pauseIcon from '../assets/pause-icon.svg';
 import previousIcon from '../assets/skip-backward-icon.svg';
 import nextIcon from '../assets/skip-forward-icon.svg';
 
-const ScrollWheel = ({ items, isMobile }) => {
+const ScrollWheel = ({ items, isMobile, playUri }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const [centerIndex, setCenterIndex] = useState(0);
   const wheelRef = useRef(null);
 
   const handleMouseDown = (e) => {
@@ -26,16 +25,16 @@ const ScrollWheel = ({ items, isMobile }) => {
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    // Snap to nearest item
     if (wheelRef.current) {
-      const itemWidth = isMobile ? 60 : 120; // Width + gap
-      const scrollPosition = wheelRef.current.scrollLeft;
+      const itemWidth = isMobile ? 60 : 120;
+      const containerCenter = wheelRef.current.offsetWidth / 2;
+      const scrollPosition = wheelRef.current.scrollLeft + containerCenter;
       const newIndex = Math.round(scrollPosition / itemWidth);
-      setCenterIndex(newIndex);
       wheelRef.current.scrollTo({
-        left: newIndex * itemWidth,
+        left: newIndex * itemWidth - containerCenter + (itemWidth / 2),
         behavior: 'smooth'
       });
+      playUri(items[newIndex % items.length].uri);
     }
   };
 
@@ -45,52 +44,50 @@ const ScrollWheel = ({ items, isMobile }) => {
     const x = e.pageX - wheelRef.current.offsetLeft;
     const walk = (x - startX) * 2;
     wheelRef.current.scrollLeft = scrollLeft - walk;
-    
-    // Update center index while dragging
+  };
+
+  const handleScroll = () => {
     const itemWidth = isMobile ? 60 : 120;
-    const currentIndex = Math.round(wheelRef.current.scrollLeft / itemWidth);
-    setCenterIndex(currentIndex);
+    const totalWidth = itemWidth * items.length;
+    if (wheelRef.current.scrollLeft <= 0) {
+      wheelRef.current.scrollLeft = totalWidth;
+    } else if (wheelRef.current.scrollLeft >= totalWidth * 2) {
+      wheelRef.current.scrollLeft = totalWidth;
+    }
   };
 
   return (
-    <div 
+    <div
       className="scroll-wheel-container"
       ref={wheelRef}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onMouseMove={handleMouseMove}
+      onScroll={handleScroll}
     >
       <div className="scroll-wheel-track">
-        {items.map((item, index) => {
-          const distance = Math.abs(index - centerIndex);
-          const scale = Math.max(0.6, 1 - (distance * 0.2));
-          const opacity = Math.max(0.3, 1 - (distance * 0.3));
-          
-          return (
-            <div 
-              key={index} 
-              className="scroll-wheel-item"
+        {[...items, ...items, ...items].map((item, index) => (
+          <div
+            key={index}
+            className="scroll-wheel-item"
+            onClick={() => playUri(item.uri)}
+          >
+            <img
+              src={item.imageUrl || defaultAlbumArt}
+              alt={item.title}
               style={{
-                transform: `scale(${scale})`,
-                opacity: opacity,
-                transition: 'all 0.3s ease'
+                width: isMobile ? '60px' : '100px',
+                height: isMobile ? '60px' : '100px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                transition: 'transform 0.3s ease',
+                transform: isDragging ? 'scale(1)' : 'scale(1.05)'
               }}
-            >
-              <img 
-                src={item.imageUrl || defaultAlbumArt}
-                alt={item.title}
-                style={{
-                  width: isMobile ? '60px' : '100px',
-                  height: isMobile ? '60px' : '100px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}
-              />
-            </div>
-          );
-        })}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -177,7 +174,6 @@ const Home = () => {
           console.log("Successfully fetched recently played:", response);
 
           if (response && response.items) {
-            // Transform the data to match our UI needs
             const transformedTracks = response.items
               .filter((item) => item && item.track && item.track.album)
               .map((item) => ({
@@ -186,12 +182,11 @@ const Home = () => {
                 artist: item.track.artists[0].name,
                 imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
                 playedAt: new Date(item.played_at),
-                // Add any additional track data you need
                 albumName: item.track.album.name,
                 duration: item.track.duration_ms,
                 uri: item.track.uri
               }))
-              .sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime())
+              .sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime());
 
             setRecentlyPlayed(transformedTracks);
           }
@@ -210,8 +205,7 @@ const Home = () => {
     if (accessToken) {
       fetchRecentlyPlayed();
 
-      // Optional: Set up polling to keep recently played list updated
-      const pollInterval = setInterval(fetchRecentlyPlayed, 30000); // 30 seconds
+      const pollInterval = setInterval(fetchRecentlyPlayed, 30000);
 
       return () => clearInterval(pollInterval);
     }
@@ -244,11 +238,27 @@ const Home = () => {
   useEffect(() => {
     const handleResize = debounce(() => {
       setIsMobile(window.innerWidth <= 768);
-    }, 250); // 250ms debounce
+      const albumArtWidth = isMobile ? '60%' : '35%';
+      document.documentElement.style.setProperty('--album-art-width', albumArtWidth);
+    }, 250);
+
+    handleResize();
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isMobile]);
+
+  useEffect(() => {
+    const handleSpacebar = (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      }
+    };
+
+    window.addEventListener('keydown', handleSpacebar);
+    return () => window.removeEventListener('keydown', handleSpacebar);
+  }, [togglePlay]);
 
   return (
     <div className="home-container" style={{
@@ -449,7 +459,7 @@ const Home = () => {
           }}>
             <h3 style={{
               fontFamily: 'Loubag, sans-serif',
-              fontSize: 'clamp(2.5rem, 4vw, 4.5rem)',
+              fontSize: 'clamp(1.8rem, 3vw, 3rem)',
               color: '#FFC764',
               letterSpacing: '3px',
               marginBottom: '0.5vh',
@@ -457,23 +467,24 @@ const Home = () => {
             }}>
               RECENTLY PLAYED
             </h3>
-            <ScrollWheel items={recentlyPlayed} isMobile={isMobile} />
+            <ScrollWheel items={recentlyPlayed} isMobile={isMobile} playUri={playUri} />
           </div>
         </div>
 
         {/* Right side - Album Art */}
         <div style={{ 
           position: 'relative',
-          width: isMobile ? '60%' : '35%',
-          maxWidth: isMobile ? '300px' : '400px',
+          width: isMobile ? '50%' : '35%',
+          maxWidth: isMobile ? '200px' : '400px',
           height: 'auto',
           display: 'flex',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           justifyContent: 'center',
           order: isMobile ? 0 : 2,
           marginBottom: isMobile ? '2vh' : 0,
-          alignSelf: 'flex-start',
-          marginTop: isMobile ? '0' : 'calc(0.6em)'
+          alignSelf: 'center',
+          marginTop: isMobile ? '0' : 'calc(0.6em)',
+          zIndex: 2
         }}>
           <AnimatedBlob 
             colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
@@ -489,15 +500,7 @@ const Home = () => {
           <img 
             src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
             alt="Album Art" 
-            style={{
-              width: '100%',
-              aspectRatio: '1/1',
-              borderRadius: '15px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-              position: 'relative',
-              zIndex: 1,
-              objectFit: 'cover'
-            }} 
+            className="album-art"
           />
         </div>
       </div>
