@@ -1,11 +1,13 @@
-import { DeskThing, SocketData } from "deskthing-server";
+import { DeskThing } from "deskthing-server";
 // Doing this is required in order for the server to link with DeskThing
 export { DeskThing };
 
 // The following imports are from other files that setup their own functions
 import { setupSettings } from "./settings";
-import { userInput } from "./userInput";
+// import { userInput } from "./userInput";
 // import { sendImage, sendSampleData } from "./sendingData";
+
+import axios from "axios";
 
 /**
  *
@@ -26,7 +28,7 @@ const start = async () => {
   const Data = await DeskThing.getData();
 
   setupSettings(Data);
-  userInput(Data);
+  // userInput(Data);
   // This will make Data.settings.theme.value equal whatever the user selects
 };
 
@@ -40,14 +42,57 @@ DeskThing.on("start", start);
 // Main exit point of the server
 DeskThing.on("stop", stop);
 
-// Sending a message to the client
-DeskThing.send({ type: 'message', payload: 'Hello, Client!'});
 
-// Listening for a response from the client
-DeskThing.on('data', (data) => {
-    console.log('Received data from client:', data.payload); // will print "someResponse" in this example
-});
+async function performFetch(data) {
+    console.log('Received fetch url from client:', data.url);
+    try {
+        const response = await axios.get(data.url, {
+            headers: {
+                "Authorization": "Bearer " + data.accessToken
+            },
+            params: data.params,
+        });
 
-DeskThing.on('set', (data) => {
-    console.log('Received data from client:', data.payload.key); // will print 'value' in this example
-});
+        DeskThing.send({type: 'get_resp', data: response?.data});
+    } catch (err) {
+        if (err.response) {
+            if (err.response.status === 401) {
+                return await performFetch(
+                    data, await invalidateAccess()
+                );
+            }
+        }
+
+        throw err;
+    }
+}
+
+DeskThing.on('fetch', performFetch);
+
+async function performPut(data) {
+    console.log('Received put url from client:', data.url);
+
+    try {
+        const response = await axios.put(data.url, data.body, {
+            headers: {
+                "Authorization": "Bearer " + data.accessToken
+            },
+            params: data.params
+        });
+
+        DeskThing.send({type: 'put_resp', data: response?.data});
+    } catch (err) {
+        if (err.response) {
+            if (err.response.status === 401) {
+                return await performPut(
+                    data, await invalidateAccess()
+                );
+            }
+        }
+
+        throw err;
+    }
+}
+
+DeskThing.on('fetch', performFetch);
+DeskThing.on('put', performPut);

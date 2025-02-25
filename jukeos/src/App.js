@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { DeskThing } from 'deskthing-client';
+// import { DeskThing } from 'deskthing-client';
 import NavigationBar from './components/NavigationBar';
 import Home from './components/Home';
 import Library from './components/Library';
@@ -26,15 +26,6 @@ function App() {
 
     return () => clearTimeout(timer);
   }, []);
-
-  // Sending a message to the server
-  DeskThing.send({ type: 'set', payload: { key: 'value' } });
-
-  // Listening for a response from the server
-  DeskThing.on('message', (data) => {
-    console.log('Received response from server:', data); // logs 'Hello, Client!'
-    DeskThing.send({type: 'data', payload: 'someResponse'})
-  });
 
   return (
     <Router>

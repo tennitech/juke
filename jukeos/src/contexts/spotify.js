@@ -1,5 +1,6 @@
 import { useState, createContext, useEffect } from "react";
 import axios from "axios";
+import { DeskThing } from 'deskthing-client';
 
 export const SpotifyAuthContext = createContext({
     accessToken: null,
@@ -55,52 +56,87 @@ export async function performFetch(
     url, params,
     accessToken, invalidateAccess
 ) {
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                "Authorization": "Bearer " + accessToken
-            },
-            params
-        });
+    DeskThing.send({
+        type: 'get',
+        url: url,
+        accessToken: accessToken,
+        params: params,
+        invalidateAccess: invalidateAccess
+    })
 
-        return response?.data;
-    } catch (err) {
-        if (err.response) {
-            if (err.response.status === 401) {
-                return await performFetch(
-                    url, params, accessToken, await invalidateAccess()
-                );
-            }
-        }
+    // Listening for a response from the server
+    // DeskThing.on('get_resp', (data) => {
+    //     console.log('Received response from server:', data); // logs 'Hello, Client!'
+    // });
+    const data = DeskThing.once('get_resp');
+    console.log("Received ", data);
+    return data;
 
-        throw err;
-    }
+    // try {
+    //     const response = await axios.get(url, {
+    //         headers: {
+    //             "Authorization": "Bearer " + accessToken
+    //         },
+    //         params
+    //     });
+
+    //     return response?.data;
+    // } catch (err) {
+    //     if (err.response) {
+    //         if (err.response.status === 401) {
+    //             return await performFetch(
+    //                 url, params, accessToken, await invalidateAccess()
+    //             );
+    //         }
+    //     }
+
+    //     throw err;
+    // }
 }
 
 export async function performPut(
     url, params, body,
     accessToken, invalidateAccess
 ) {
-    try {
-        const response = await axios.put(url, body, {
-            headers: {
-                "Authorization": "Bearer " + accessToken
-            },
-            params
-        });
 
-        return response?.data;
-    } catch (err) {
-        if (err.response) {
-            if (err.response.status === 401) {
-                return await performPut(
-                    url, params, body, accessToken, await invalidateAccess()
-                );
-            }
-        }
+    DeskThing.send({
+        type: 'put',
+        url: url,
+        accessToken: accessToken,
+        params: params,
+        body: body,
+        invalidateAccess: invalidateAccess
+    })
 
-        throw err;
-    }
+    // Listening for a response from the server
+    // DeskThing.on('put_resp', (data) => {
+    //     console.log('Received response from server:', data); // logs 'Hello, Client!'
+    // });
+    const data = DeskThing.once('put_resp');
+    console.log("Received ", data);
+    return data;
+
+
+    // try {
+    //     const response = await axios.put(url, body, {
+    //         headers: {
+    //             "Authorization": "Bearer " + accessToken
+    //         },
+    //         params
+    //     });
+
+    //     return response?.data;
+    // } catch (err) {
+    //     if (err.response) {
+    //         if (err.response.status === 401) {
+    //             return await performPut(
+    //                 url, params, body, accessToken, await invalidateAccess()
+    //             );
+    //         }
+    //     }
+
+    //     throw err;
+    // }
 }
 
 export function ProvideSpotifyAuthContext({ children }) {
