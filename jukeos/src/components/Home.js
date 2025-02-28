@@ -389,7 +389,7 @@ const Home = () => {
             />
             <img 
               src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
-              alt="Album Art" 
+              alt="Album Art"
               className={"album-art"}
             />
           </div>
