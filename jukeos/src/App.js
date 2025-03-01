@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import NavigationBar from './components/NavigationBar';
+import CarThingNavBar from './components/CarThingNavBar';
 import Home from './components/Home';
 import Library from './components/Library';
 import Settings from './components/Settings';
@@ -35,11 +36,21 @@ function App() {
 
 function AppContent({ isLoading }) {
   const location = useLocation();
+  const [isCarThing, setIsCarThing] = useState(window.innerWidth <= 800 && window.innerHeight <= 480);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCarThing(window.innerWidth <= 800 && window.innerHeight <= 480);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <ProvideSpotifyAuthContext>
       <StartupScreen isLoading={isLoading} />
-      <NavigationBar />
+      {isCarThing ? <CarThingNavBar /> : <NavigationBar />}
       <Player>
         <div className="page-content">
           <AnimatePresence mode="wait">
