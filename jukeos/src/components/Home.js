@@ -11,11 +11,69 @@ import pauseIcon from '../assets/pause-icon.svg';
 import previousIcon from '../assets/skip-backward-icon.svg';
 import nextIcon from '../assets/skip-forward-icon.svg';
 
-const ScrollWheel = ({ items, isMobile, playUri }) => {
+// New component to handle marquee scrolling when the text is too long.
+const MarqueeText = ({ text, maxChars = 20, scrollDuration = 10, scrollDelay = 2 }) => {
+  if (!text || text.length <= maxChars) {
+    return <span>{text}</span>;
+  }
+  return (
+    <div className="marquee-container">
+      <div
+        className="marquee-content"
+        style={{
+          animationDuration: `${scrollDuration}s`,
+          animationDelay: `${scrollDelay}s`
+        }}
+      >
+        {text}&nbsp;&nbsp;&nbsp;{text}
+      </div>
+    </div>
+  );
+};
+
+const ScrollWheel = ({ items, isMobile, isCarThing, playUri }) => {
+  const wheelRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
-  const wheelRef = useRef(null);
+
+  // Triple the items array for infinite scrolling effect
+  const tripleItems = [...items, ...items, ...items];
+  
+  // Determine item width based on car display
+  const itemWidth = isCarThing ? 40 : (isMobile ? 60 : 100);
+  
+  useEffect(() => {
+    // Set initial scroll position to the middle set of items
+    if (wheelRef.current) {
+      const middlePosition = items.length * itemWidth;
+      wheelRef.current.scrollLeft = middlePosition;
+    }
+  }, [items.length, itemWidth]);
+
+  const handleScroll = () => {
+    if (wheelRef.current) {
+      const { scrollLeft, scrollWidth } = wheelRef.current;
+      const itemsWidth = items.length * itemWidth;
+      
+      // If we've scrolled to the end of the middle set
+      if (scrollLeft >= itemsWidth * 2) {
+        wheelRef.current.scrollLeft = scrollLeft - itemsWidth;
+      }
+      // If we've scrolled to the start of the middle set
+      else if (scrollLeft <= 0) {
+        wheelRef.current.scrollLeft = scrollLeft + itemsWidth;
+      }
+    }
+  };
+
+  useEffect(() => {
+    const wheel = wheelRef.current;
+    if (wheel) {
+      wheel.addEventListener('scroll', handleScroll);
+      return () => wheel.removeEventListener('scroll', handleScroll);
+    }
+  }, [items.length]);
 
   const handleMouseDown = (e) => {
     setIsDragging(true);
@@ -23,36 +81,72 @@ const ScrollWheel = ({ items, isMobile, playUri }) => {
     setScrollLeft(wheelRef.current.scrollLeft);
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    if (wheelRef.current) {
-      const itemWidth = isMobile ? 60 : 120;
-      const containerCenter = wheelRef.current.offsetWidth / 2;
-      const scrollPosition = wheelRef.current.scrollLeft + containerCenter;
-      const newIndex = Math.round(scrollPosition / itemWidth);
-      wheelRef.current.scrollTo({
-        left: newIndex * itemWidth - containerCenter + (itemWidth / 2),
-        behavior: 'smooth'
-      });
-      playUri(items[newIndex % items.length].uri);
-    }
-  };
-
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - wheelRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
+    const walk = (x - startX);
     wheelRef.current.scrollLeft = scrollLeft - walk;
   };
 
-  const handleScroll = () => {
-    const itemWidth = isMobile ? 60 : 120;
-    const totalWidth = itemWidth * items.length;
-    if (wheelRef.current.scrollLeft <= 0) {
-      wheelRef.current.scrollLeft = totalWidth;
-    } else if (wheelRef.current.scrollLeft >= totalWidth * 2) {
-      wheelRef.current.scrollLeft = totalWidth;
+  const centerNearestItem = () => {
+    const container = wheelRef.current;
+    const containerCenter = container.offsetWidth / 2;
+    const currentScroll = container.scrollLeft;
+    // Determine the index whose center is nearest the container center
+    const index = Math.round((currentScroll + containerCenter - (itemWidth / 2)) / itemWidth);
+    const newScrollLeft = index * itemWidth + (itemWidth / 2) - containerCenter;
+    container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+    return index;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    const index = centerNearestItem();
+    if (typeof playUri === 'function' && items[index]) {
+      try {
+        const result = playUri(items[index].uri);
+        if (result && typeof result.catch === 'function') {
+          result.catch((e) => {
+            if (!(e && e.response && e.response.status === 404)) {
+              console.error(e);
+            } else {
+              // Swallow 404 errors
+            }
+          });
+        }
+      } catch (e) {
+        if (!(e && e.response && e.response.status === 404)) {
+          console.error(e);
+        }
+      }
+    }
+  };
+
+  const handleItemClick = (index, item) => {
+    const container = wheelRef.current;
+    const containerCenter = container.offsetWidth / 2;
+    const newScrollLeft = index * itemWidth + (itemWidth / 2) - containerCenter;
+    container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
+    if (typeof playUri === 'function') {
+      try {
+        const result = playUri(item.uri);
+        if (result && typeof result.catch === 'function') {
+          result.catch((e) => {
+            if (!(e && e.response && e.response.status === 404)) {
+              console.error(e);
+            } else {
+              // Swallow 404 errors
+            }
+          });
+        }
+      } catch (e) {
+        if (!(e && e.response && e.response.status === 404)) {
+          console.error(e);
+        }
+      }
+    } else {
+      console.error('playUri is not defined');
     }
   };
 
@@ -61,29 +155,51 @@ const ScrollWheel = ({ items, isMobile, playUri }) => {
       className="scroll-wheel-container"
       ref={wheelRef}
       onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onMouseMove={handleMouseMove}
-      onScroll={handleScroll}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={() => { if(isDragging) handleMouseUp(); }}
+      style={{ 
+        overflowX: 'auto',
+        whiteSpace: 'nowrap',
+        width: '100%',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        padding: isCarThing ? '10px 0' : '20px 0',
+        '&::-webkit-scrollbar': {
+          display: 'none'
+        }
+      }}
     >
-      <div className="scroll-wheel-track">
-        {[...items, ...items, ...items].map((item, index) => (
+      <div className="scroll-wheel-track" 
+        style={{ 
+          display: 'inline-flex',
+          paddingLeft: 'calc(50% - 20px)',  // Center the items
+          paddingRight: 'calc(50% - 20px)',
+          gap: '10px'
+        }}
+      >
+        {tripleItems.map((item, index) => (
           <div
-            key={index}
+            key={`${item.id}-${index}`}
             className="scroll-wheel-item"
-            onClick={() => playUri(item.uri)}
+            onClick={() => { handleItemClick(index % items.length, item); }}
+            style={{ 
+              display: 'inline-block',
+              margin: '0 5px'
+            }}
           >
             <img
               src={item.imageUrl || defaultAlbumArt}
               alt={item.title}
               style={{
-                width: isMobile ? '60px' : '100px',
-                height: isMobile ? '60px' : '100px',
+                width: isCarThing ? '40px' : (isMobile ? '60px' : '100px'),
+                height: isCarThing ? '40px' : (isMobile ? '60px' : '100px'),
                 objectFit: 'cover',
                 borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
                 transition: 'transform 0.3s ease',
-                transform: isDragging ? 'scale(1)' : 'scale(1.05)'
+                transform: isDragging ? 'scale(1)' : 'scale(1.05)',
+                cursor: 'pointer'
               }}
             />
           </div>
@@ -116,6 +232,7 @@ const Home = () => {
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isCarThing, setIsCarThing] = useState(window.innerWidth <= 800 && window.innerHeight <= 480);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -144,7 +261,11 @@ const Home = () => {
         progress: position
       }));
     } catch (error) {
-      console.error('Failed to seek:', error);
+      if (error.response && error.response.status === 404) {
+        console.warn('Player inactive; seek request ignored');
+      } else {
+        console.error('Failed to seek:', error);
+      }
     }
   };
 
@@ -238,7 +359,9 @@ const Home = () => {
   useEffect(() => {
     const handleResize = debounce(() => {
       setIsMobile(window.innerWidth <= 768);
-      const albumArtWidth = isMobile ? '60%' : '35%';
+      const car = window.innerWidth <= 800 && window.innerHeight <= 480;
+      setIsCarThing(car);
+      const albumArtWidth = window.innerWidth <= 768 ? '60%' : '35%';
       document.documentElement.style.setProperty('--album-art-width', albumArtWidth);
     }, 250);
 
@@ -246,13 +369,21 @@ const Home = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isMobile]);
+  }, []);
 
   useEffect(() => {
     const handleSpacebar = (e) => {
       if (e.code === 'Space') {
         e.preventDefault();
-        togglePlay();
+        if (typeof togglePlay === 'function') {
+          try {
+            togglePlay();
+          } catch (e) {
+            console.error(e);
+          }
+        } else {
+          console.error('togglePlay is not defined');
+        }
       }
     };
 
@@ -271,7 +402,7 @@ const Home = () => {
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: '120px 5vw 40px 5vw'
+      padding: isCarThing ? '60px 2vw 20px' : (isMobile ? '120px 5vw 40px 5vw' : '120px 5vw 40px 5vw'),
     }}>
       <img src={cloudsSvg} alt="" className="clouds-main" />
       <img src={cloudsSvg} alt="" className="clouds-small" />
@@ -280,10 +411,11 @@ const Home = () => {
         maxWidth: '1400px',
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         padding: isMobile ? '1vh 4vw' : '2vh 6vw',
         position: 'relative',
-        gap: '4vw'
+        gap: isMobile ? '2vw' : '4vw',
+        minHeight: isCarThing ? '400px' : 'auto'
       }}>
         {/* Left side - Track Info and Controls */}
         <div style={{
@@ -292,38 +424,57 @@ const Home = () => {
           width: isMobile ? '100%' : '65%',
           order: 1,
           alignItems: 'center',
-          gap: '1vh'
+          gap: isCarThing ? '0.2vh' : '0.5vh',
+          paddingBottom: isCarThing ? '60px' : '80px'
         }}>
           {/* Track Info */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '0.5vh',
+            gap: isCarThing ? '0.2vh' : '0.5vh',
             width: '100%',
             alignItems: 'center'
           }}>
             <h1 style={{
               fontFamily: 'Loubag, sans-serif',
-              fontSize: 'clamp(3rem, 6vw, 7rem)',
+              fontSize: isCarThing ? '1.5rem' : 'clamp(3rem, 6vw, 7rem)',
               margin: '0',
               textAlign: 'center',
               color: '#ECE0C4',
-              lineHeight: 1
+              lineHeight: 1,
+              maxWidth: '90%',
+              overflow: 'hidden'
             }}>
-              {track?.name || "Unknown"}
+              {!isMobile ? (
+                <MarqueeText text={track?.name || "Unknown"} maxChars={20} />
+              ) : (
+                track?.name || "Unknown"
+              )}
             </h1>
 
             <h2 style={{
               fontFamily: 'Notable, sans-serif',
-              fontSize: 'clamp(1.2rem, 3vw, 2.5rem)',
+              fontSize: isCarThing ? '0.9rem' : 'clamp(1.2rem, 3vw, 2.5rem)',
               margin: '0',
-              marginTop: '0.2vh',
+              marginTop: isCarThing ? '0.1vh' : '0.2vh',
               opacity: 0.9,
               letterSpacing: '1px',
               color: 'white',
-              textAlign: 'center'
+              textAlign: 'center',
+              maxWidth: '90%',
+              overflow: 'hidden'
             }}>
-              {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
+              {!isMobile ? (
+                <MarqueeText
+                  text={
+                    track?.artists?.map(artist => artist.name)?.join(", ") ||
+                    "Unknown"
+                  }
+                  maxChars={25}
+                />
+              ) : (
+                track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"
+              )}
             </h2>
 
             {/* Progress bar */}
@@ -377,14 +528,14 @@ const Home = () => {
               marginTop: '0.5vh'
             }}>
               <button 
-                onClick={previousTrack}
+                onClick={() => { if (typeof previousTrack === 'function') { previousTrack(); } else { console.error('previousTrack is not defined'); } }}
                 style={{
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '15px',
-                  width: '80px',
-                  height: '80px'
+                  padding: isCarThing ? '8px' : '15px',
+                  width: isCarThing ? '50px' : '80px',
+                  height: isCarThing ? '50px' : '80px'
                 }}
               >
                 <img 
@@ -400,14 +551,14 @@ const Home = () => {
               </button>
 
               <button 
-                onClick={togglePlay}
+                onClick={() => { if (typeof togglePlay === 'function') { togglePlay(); } else { console.error('togglePlay is not defined'); } }}
                 style={{
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '15px',
-                  width: '100px',
-                  height: '100px'
+                  padding: isCarThing ? '8px' : '15px',
+                  width: isCarThing ? '60px' : '100px',
+                  height: isCarThing ? '60px' : '100px'
                 }}
               >
                 <img 
@@ -423,14 +574,14 @@ const Home = () => {
               </button>
 
               <button 
-                onClick={nextTrack}
+                onClick={() => { if (typeof nextTrack === 'function') { nextTrack(); } else { console.error('nextTrack is not defined'); } }}
                 style={{
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '15px',
-                  width: '80px',
-                  height: '80px'
+                  padding: isCarThing ? '8px' : '15px',
+                  width: isCarThing ? '50px' : '80px',
+                  height: isCarThing ? '50px' : '80px'
                 }}
               >
                 <img 
@@ -445,44 +596,48 @@ const Home = () => {
                 />
               </button>
             </div>
-          </div>
 
-          {/* Recently Played Section */}
-          <div style={{
-            width: '100%',
-            marginTop: '1vh',
-            position: 'relative',
-            zIndex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-            <h3 style={{
-              fontFamily: 'Loubag, sans-serif',
-              fontSize: 'clamp(1.8rem, 3vw, 3rem)',
-              color: '#FFC764',
-              letterSpacing: '3px',
-              marginBottom: '0.5vh',
-              textAlign: 'center'
+            {/* Recently Played Section */}
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              marginTop: isCarThing ? '20px' : '40px',
+              position: 'relative',
+              zIndex: 1
             }}>
-              RECENTLY PLAYED
-            </h3>
-            <ScrollWheel items={recentlyPlayed} isMobile={isMobile} playUri={playUri} />
+              <h3 style={{
+                fontFamily: 'Loubag, sans-serif',
+                fontSize: isCarThing ? '0.9rem' : 'clamp(1.8rem, 3vw, 3rem)',
+                color: '#FFC764',
+                letterSpacing: '3px',
+                marginBottom: isCarThing ? '10px' : '15px',
+                textAlign: 'center'
+              }}>
+                RECENTLY PLAYED
+              </h3>
+              <ScrollWheel 
+                items={recentlyPlayed} 
+                isMobile={isMobile} 
+                isCarThing={isCarThing} 
+                playUri={playUri} 
+              />
+            </div>
           </div>
         </div>
 
         {/* Right side - Album Art */}
         <div style={{ 
           position: 'relative',
-          width: isMobile ? '50%' : '35%',
-          maxWidth: isMobile ? '200px' : '400px',
-          height: 'auto',
+          width: isMobile ? '80%' : '35%',
+          maxWidth: isMobile ? '300px' : '400px',
+          aspectRatio: '1',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           order: isMobile ? 0 : 2,
           marginBottom: isMobile ? '2vh' : 0,
-          alignSelf: 'center',
           marginTop: isMobile ? '0' : 'calc(0.6em)',
           zIndex: 2
         }}>
