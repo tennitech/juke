@@ -12,6 +12,7 @@ const Player = ({ children }) => {
   const [track, setTrack] = useState(null);
   const [paused, setPaused] = useState(true);
 
+  //TODO Refactor a lot of this listener logic
   useEffect(() => {
     if (accessToken && playbackReady && !player) {
       console.log("Constructing player");
@@ -40,25 +41,14 @@ const Player = ({ children }) => {
         setOnline(false);
       });
 
-      p.addListener("player_state_changed", (state) => {
-        if (state) {
-          setTrack(state.track_window.current_track);
-          setPaused(state.paused);
-
-          p.getCurrentState().then((state) => {
-            setActive(!!state);
-          });
-        }
-      });
-
       p.addListener('initialization_error', ({ message }) => {
         console.error(message);
       });
-  
+
       p.addListener('authentication_error', ({ message }) => {
         console.error(message);
       });
-  
+
       p.addListener('account_error', ({ message }) => {
         console.error(message);
       });
@@ -66,6 +56,30 @@ const Player = ({ children }) => {
       p.connect();
     }
   }, [accessToken, playbackReady, player]);
+
+
+  //Use effect to keep track of the current Track.
+  useEffect(() => {
+    if (!player) return;
+
+    const syncTrack = () => {
+      player.getCurrentState().then((state) => {
+        if (state && state.track_window.current_track) {
+          setTrack(state.track_window.current_track);
+          console.log("Setting Track: " + JSON.stringify(track));
+          setPaused(state.paused);
+          setActive(!!state);
+        }
+      }).catch((err) => console.error("Error getting player state:", err));
+    };
+
+    // Sync track on player state change
+    player.addListener("player_state_changed", syncTrack);
+
+    return () => {
+      player.removeListener("player_state_changed", syncTrack);
+    };
+  }, [player]);
 
   const togglePlay = () => {
     player.togglePlay().then(() => {
