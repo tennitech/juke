@@ -52,6 +52,7 @@ function AppContent({ isLoading }) {
       <StartupScreen isLoading={isLoading} />
       {isCarThing ? <CarThingNavBar /> : <NavigationBar />}
       <Player>
+        <NavigationBar />
         <div className="page-content">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>

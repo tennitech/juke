@@ -1,13 +1,13 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
-import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
-import axios from 'axios';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import '../App.css';
 import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
+import ColorThief from "color-thief-browser";
 import previousIcon from '../assets/skip-backward-icon.svg';
 import nextIcon from '../assets/skip-forward-icon.svg';
 
@@ -30,6 +30,30 @@ const MarqueeText = ({ text, maxChars = 20, scrollDuration = 10, scrollDelay = 2
     </div>
   );
 };
+
+// Hook to get dominant colors from an image using Color Thief.
+export function useColorThief(imageSrc) {
+  const [colors, setColors] = useState(["rgb(0, 0, 0)"]);
+
+  useEffect(() => {
+    if (!imageSrc) return;
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = imageSrc;
+
+    img.onload = () => {
+      const colorThief = new ColorThief();
+      const palette = colorThief.getPalette(img, 2);
+      const rgbColors = palette.map(
+        (color) => `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+      );
+      setColors(rgbColors);
+    };
+  }, [imageSrc]);
+
+  return colors;
+}
 
 const ScrollWheel = ({ items, isMobile, isCarThing, playUri }) => {
   const wheelRef = useRef(null);
@@ -110,8 +134,6 @@ const ScrollWheel = ({ items, isMobile, isCarThing, playUri }) => {
           result.catch((e) => {
             if (!(e && e.response && e.response.status === 404)) {
               console.error(e);
-            } else {
-              // Swallow 404 errors
             }
           });
         }
@@ -135,8 +157,6 @@ const ScrollWheel = ({ items, isMobile, isCarThing, playUri }) => {
           result.catch((e) => {
             if (!(e && e.response && e.response.status === 404)) {
               console.error(e);
-            } else {
-              // Swallow 404 errors
             }
           });
         }
@@ -164,10 +184,7 @@ const ScrollWheel = ({ items, isMobile, isCarThing, playUri }) => {
         width: '100%',
         scrollbarWidth: 'none',
         msOverflowStyle: 'none',
-        padding: isCarThing ? '10px 0' : '20px 0',
-        '&::-webkit-scrollbar': {
-          display: 'none'
-        }
+        padding: isCarThing ? '10px 0' : '20px 0'
       }}
     >
       <div className="scroll-wheel-track" 
@@ -248,17 +265,17 @@ const Home = () => {
     const position = Math.floor(percentage * currentTrack.duration);
     
     try {
-      await axios.put(
+      await performPut(
         'https://api.spotify.com/v1/me/player/seek',
+        { position_ms: position * 1000 },
         null,
-        {
-          params: { position_ms: position * 1000 },
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        }
+        accessToken,
+        invalidateAccess
       );
-      setCurrentTrack(prev => ({
+
+      setCurrentTrack((prev) => ({
         ...prev,
-        progress: position
+        progress: position,
       }));
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -269,31 +286,13 @@ const Home = () => {
     }
   };
 
-  /**
-   * Backend Requirements for Recently Played Tracks:
-   * 
-   * This frontend code calls Spotify's /me/player/recently-played endpoint which requires:
-   * 1. A valid Spotify access token in the Authorization header
-   * 2. Returns up to 20 most recently played tracks
-   * 
-   * Backend Team Needs to:
-   * - Implement token refresh mechanism to ensure valid access tokens
-   * - Consider caching recently played tracks to reduce API calls
-   * - Handle rate limiting (Spotify allows 1 request/sec)
-   * - Implement error handling for expired/invalid tokens
-   * - Consider implementing a proxy endpoint to hide Spotify credentials
-   *   Example: /api/recently-played instead of calling Spotify directly
-   * 
-   * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
-   */
+  // Fetch recently played tracks
   const fetchRecentlyPlayed = () => {
     if (accessToken) {
       setIsLoadingRecent(true);
 
       performFetch("https://api.spotify.com/v1/me/player/recently-played", { limit: 10 }, accessToken, invalidateAccess)
         .then((response) => {
-          console.log("Successfully fetched recently played:", response);
-
           if (response && response.items) {
             const transformedTracks = response.items
               .filter((item) => item && item.track && item.track.album)
@@ -325,9 +324,7 @@ const Home = () => {
   useEffect(() => {
     if (accessToken) {
       fetchRecentlyPlayed();
-
       const pollInterval = setInterval(fetchRecentlyPlayed, 30000);
-
       return () => clearInterval(pollInterval);
     }
   }, [accessToken]);
@@ -337,15 +334,12 @@ const Home = () => {
 
     const interval = setInterval(async () => {
       try {
-        const response = await axios.get('https://api.spotify.com/v1/me/player', {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        
-        if (response.data) {
+        const data = await performFetch('https://api.spotify.com/v1/me/player', {}, accessToken, invalidateAccess);
+        if (data) {
           setCurrentTrack(prev => ({
             ...prev,
-            progress: response.data.progress_ms / 1000,
-            duration: response.data.item.duration_ms / 1000
+            progress: data.progress_ms / 1000,
+            duration: data.item.duration_ms / 1000
           }));
         }
       } catch (error) {
@@ -366,7 +360,6 @@ const Home = () => {
     }, 250);
 
     handleResize();
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -417,7 +410,7 @@ const Home = () => {
         gap: isMobile ? '2vw' : '4vw',
         minHeight: isCarThing ? '400px' : 'auto'
       }}>
-        {/* Left side - Track Info and Controls */}
+        {/* Left Side - Track Info, Controls, and Recently Played */}
         <div style={{
           display: 'flex',
           flexDirection: 'column',
@@ -451,7 +444,6 @@ const Home = () => {
                 track?.name || "Unknown"
               )}
             </h1>
-
             <h2 style={{
               fontFamily: 'Notable, sans-serif',
               fontSize: isCarThing ? '0.9rem' : 'clamp(1.2rem, 3vw, 2.5rem)',
@@ -476,158 +468,160 @@ const Home = () => {
                 track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"
               )}
             </h2>
-
-            {/* Progress bar */}
-            <div style={{
-              width: '80%',
-              margin: '0.5vh auto',
-              padding: '5px 0'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                width: '100%',
-                fontSize: '1rem',
-                color: '#ECE0C4',
-                opacity: 0.8,
-                marginTop: '5px'
-              }}>
-                <span>{formatTime(currentTrack.progress)}</span>
-                <span>{formatTime(currentTrack.duration)}</span>
-              </div>
-
-              <div 
-                style={{
-                  width: '100%',
-                  height: '6px',
-                  backgroundColor: 'rgba(236, 224, 196, 0.2)',
-                  borderRadius: '3px',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  marginTop: '10px'
-                }}
-                onClick={handleProgressClick}
-              >
-                <div style={{
-                  width: `${(currentTrack.progress / currentTrack.duration) * 100}%`,
-                  height: '100%',
-                  backgroundColor: '#ECE0C4',
-                  borderRadius: '3px',
-                  position: 'absolute',
-                  transition: 'width 0.1s linear'
-                }} />
-              </div>
-            </div>
-
-            {/* Playback Controls */}
+          </div>
+          {/* Progress Bar */}
+          <div style={{
+            width: '80%',
+            margin: '0.5vh auto',
+            padding: '5px 0'
+          }}>
             <div style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: isMobile ? '20px' : '30px',
-              marginTop: '0.5vh'
-            }}>
-              <button 
-                onClick={() => { if (typeof previousTrack === 'function') { previousTrack(); } else { console.error('previousTrack is not defined'); } }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: isCarThing ? '8px' : '15px',
-                  width: isCarThing ? '50px' : '80px',
-                  height: isCarThing ? '50px' : '80px'
-                }}
-              >
-                <img 
-                  src={previousIcon} 
-                  alt="Previous"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
-
-              <button 
-                onClick={() => { if (typeof togglePlay === 'function') { togglePlay(); } else { console.error('togglePlay is not defined'); } }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: isCarThing ? '8px' : '15px',
-                  width: isCarThing ? '60px' : '100px',
-                  height: isCarThing ? '60px' : '100px'
-                }}
-              >
-                <img 
-                  src={paused ? playIcon : pauseIcon} 
-                  alt={paused ? "Play" : "Pause"}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
-
-              <button 
-                onClick={() => { if (typeof nextTrack === 'function') { nextTrack(); } else { console.error('nextTrack is not defined'); } }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: isCarThing ? '8px' : '15px',
-                  width: isCarThing ? '50px' : '80px',
-                  height: isCarThing ? '50px' : '80px'
-                }}
-              >
-                <img 
-                  src={nextIcon} 
-                  alt="Next"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
-            </div>
-
-            {/* Recently Played Section */}
-            <div style={{
+              justifyContent: 'space-between',
               width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              marginTop: isCarThing ? '20px' : '40px',
-              position: 'relative',
-              zIndex: 1
+              fontSize: '1rem',
+              color: '#ECE0C4',
+              opacity: 0.8,
+              marginTop: '5px'
             }}>
-              <h3 style={{
-                fontFamily: 'Loubag, sans-serif',
-                fontSize: isCarThing ? '0.9rem' : 'clamp(1.8rem, 3vw, 3rem)',
-                color: '#FFC764',
-                letterSpacing: '3px',
-                marginBottom: isCarThing ? '10px' : '15px',
-                textAlign: 'center'
-              }}>
-                RECENTLY PLAYED
-              </h3>
-              <ScrollWheel 
-                items={recentlyPlayed} 
-                isMobile={isMobile} 
-                isCarThing={isCarThing} 
-                playUri={playUri} 
-              />
+              <span>{formatTime(currentTrack.progress)}</span>
+              <span>{formatTime(currentTrack.duration)}</span>
+            </div>
+            <div 
+              style={{
+                width: '100%',
+                height: '6px',
+                backgroundColor: 'rgba(236, 224, 196, 0.2)',
+                borderRadius: '3px',
+                position: 'relative',
+                cursor: 'pointer',
+                marginTop: '10px'
+              }}
+              onClick={handleProgressClick}
+            >
+              <div style={{
+                width: `${(currentTrack.progress / currentTrack.duration) * 100}%`,
+                height: '100%',
+                backgroundColor: '#ECE0C4',
+                borderRadius: '3px',
+                position: 'absolute',
+                transition: 'width 0.1s linear'
+              }} />
             </div>
           </div>
+          {/* Playback Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: isMobile ? '20px' : '30px',
+            marginTop: '0.5vh'
+          }}>
+            <button 
+              onClick={() => { 
+                if (typeof previousTrack === 'function') { previousTrack(); } 
+                else { console.error('previousTrack is not defined'); } 
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: isCarThing ? '8px' : '15px',
+                width: isCarThing ? '50px' : '80px',
+                height: isCarThing ? '50px' : '80px'
+              }}
+            >
+              <img 
+                src={previousIcon} 
+                alt="Previous"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0.8,
+                  transition: 'opacity 0.2s ease'
+                }}
+              />
+            </button>
+            <button 
+              onClick={() => { 
+                if (typeof togglePlay === 'function') { togglePlay(); } 
+                else { console.error('togglePlay is not defined'); } 
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: isCarThing ? '8px' : '15px',
+                width: isCarThing ? '60px' : '100px',
+                height: isCarThing ? '60px' : '100px'
+              }}
+            >
+              <img 
+                src={paused ? playIcon : pauseIcon} 
+                alt={paused ? "Play" : "Pause"}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0.8,
+                  transition: 'opacity 0.2s ease'
+                }}
+              />
+            </button>
+            <button 
+              onClick={() => { 
+                if (typeof nextTrack === 'function') { nextTrack(); } 
+                else { console.error('nextTrack is not defined'); } 
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: isCarThing ? '8px' : '15px',
+                width: isCarThing ? '50px' : '80px',
+                height: isCarThing ? '50px' : '80px'
+              }}
+            >
+              <img 
+                src={nextIcon} 
+                alt="Next"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0.8,
+                  transition: 'opacity 0.2s ease'
+                }}
+              />
+            </button>
+          </div>
+          {/* Recently Played Section */}
+          <div style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginTop: isCarThing ? '20px' : '40px',
+            position: 'relative',
+            zIndex: 1
+          }}>
+            <h3 style={{
+              fontFamily: 'Loubag, sans-serif',
+              fontSize: isCarThing ? '0.9rem' : 'clamp(1.8rem, 3vw, 3rem)',
+              color: '#FFC764',
+              letterSpacing: '3px',
+              marginBottom: isCarThing ? '10px' : '15px',
+              textAlign: 'center'
+            }}>
+              RECENTLY PLAYED
+            </h3>
+            <ScrollWheel 
+              items={recentlyPlayed} 
+              isMobile={isMobile} 
+              isCarThing={isCarThing} 
+              playUri={playUri} 
+            />
+          </div>
         </div>
-
-        {/* Right side - Album Art */}
+        {/* Right Side - Album Art with Animated Blob using Color Thief */}
         <div style={{ 
           position: 'relative',
           width: isMobile ? '80%' : '35%',
@@ -642,7 +636,7 @@ const Home = () => {
           zIndex: 2
         }}>
           <AnimatedBlob 
-            colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']} 
+            colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)} 
             style={{
               width: '100%',
               height: '100%',
@@ -650,7 +644,7 @@ const Home = () => {
               top: '-2%',
               left: '0'
             }} 
-            static={true}
+            static={false}
           />
           <img 
             src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
