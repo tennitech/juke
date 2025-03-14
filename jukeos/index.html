@@ -7,16 +7,15 @@
     <meta content="Juke - Your Music, Reimagined" name="description"/>
 
     <!-- All necessary icons for all platforms. Generated via: https://realfavicongenerator.net/ -->
-    <link href="%PUBLIC_URL%/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
-    <link href="%PUBLIC_URL%/favicon.svg" rel="icon" type="image/svg+xml"/>
-    <link href="%PUBLIC_URL%/favicon.ico" rel="shortcut icon"/>
-    <link href="%PUBLIC_URL%/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
+    <link href="/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
+    <link href="/favicon.svg" rel="icon" type="image/svg+xml"/>
+    <link href="/favicon.ico" rel="shortcut icon"/>
+    <link href="/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
     <meta content="Juke" name="apple-mobile-web-app-title"/>
 
     <!-- Manifest for web app installation -->
-    <link href="%PUBLIC_URL%/site.webmanifest" rel="manifest"/>
+    <link href="/site.webmanifest" rel="manifest"/>
 
-    <!-- Note: %PUBLIC_URL% is replaced during the build process -->
     <title>Juke</title>
     <link href="https://fonts.googleapis.com/css2?family=Notable&display=swap" rel="stylesheet"/>
 </head>
@@ -24,9 +23,21 @@
 <noscript>You need to enable JavaScript to run this app.</noscript>
 
 <!-- I hate this with a burning passion -->
+<script>
+    window.onSpotifyWebPlaybackSDKReady = () => {
+        const p = new Spotify.Player({
+            name,
+            getOAuthToken: async callback => {
+                const token = await getOAuthToken();
+                callback(token);
+            },
+        });
+    };
+</script>
 <script src="https://sdk.scdn.co/spotify-player.js"></script>
 
 <div id="root"></div>
+<script type="module" src="/src/index.jsx"></script>
 
 </body>
 </html>

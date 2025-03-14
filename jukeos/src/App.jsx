@@ -13,7 +13,7 @@ import Profile from './components/Profile';
 
 import Player from './components/Player';
 
-import { ProvideSpotifyAuthContext } from './contexts/spotify';
+import { ProvideSpotifyAuthContext } from './contexts/spotify.jsx';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);

@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch } from '../contexts/spotify.jsx';
 
 import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
+import { SpotifyAuthContext, performFetch } from '../contexts/spotify.jsx';
 
 import ColorThief from 'color-thief-browser';
 
@@ -15,7 +15,7 @@ const NavigationBar = () => {
   const [isFlickering, setIsFlickering] = useState(false);
   const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
   const {accessToken, invalidateAccess} = useContext(SpotifyAuthContext);
-  const [profilePicture, setProfilePicture] = useState(require("../assets/default-user-profile-image.svg").default);
+  const [profilePicture, setProfilePicture] = useState("../assets/default-user-profile-image.svg");
   const navigate = useNavigate();
 
   const extractDominantColors = (imageSrc) => {
@@ -31,7 +31,7 @@ const NavigationBar = () => {
   };
 
   useEffect(() => {
-    extractDominantColors(require('../assets/default-user-profile-image.svg').default);
+    extractDominantColors('../assets/default-user-profile-image.svg');
   }, []);
 
   useEffect(() => {
