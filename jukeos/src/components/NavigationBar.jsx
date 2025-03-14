@@ -15,7 +15,7 @@ const NavigationBar = () => {
   const [isFlickering, setIsFlickering] = useState(false);
   const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
   const {accessToken, invalidateAccess} = useContext(SpotifyAuthContext);
-  const [profilePicture, setProfilePicture] = useState("../assets/default-user-profile-image.svg");
+  const [profilePicture, setProfilePicture] = useState("/src/assets/default-user-profile-image.svg");
   const navigate = useNavigate();
 
   const extractDominantColors = (imageSrc) => {
@@ -31,7 +31,7 @@ const NavigationBar = () => {
   };
 
   useEffect(() => {
-    extractDominantColors('../assets/default-user-profile-image.svg');
+    extractDominantColors('/src/assets/default-user-profile-image.svg');
   }, []);
 
   useEffect(() => {
