@@ -19,5 +19,11 @@ export default defineConfig({
         entryFileNames: '[name]-[hash].js',
       },
     }
-  }
+  },
+  preview: {
+    port: 3000,
+  },
+  server: {
+    port: 3000,
+  },
 })
