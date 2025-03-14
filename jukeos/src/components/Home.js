@@ -636,14 +636,13 @@ const Home = () => {
           zIndex: 2
         }}>
           <AnimatedBlob 
-            colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)} 
+            colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
             style={{
-              width: '100%',
-              height: '100%',
-              position: 'absolute',
-              top: '-2%',
-              left: '0'
-            }} 
+              width: '30vw',
+              maxWidth: '525px',
+              maxHeight: '525px',
+              height: '30vw',
+            }}
             static={false}
           />
           <img 

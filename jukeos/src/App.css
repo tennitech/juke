@@ -432,7 +432,7 @@ html, body, #root {
 
 .album-art {
   width: 30vw;
-  max-width: 300px;
+  max-width: 500px;
   height: auto;
   object-fit: cover;
   border-radius: 15px;
