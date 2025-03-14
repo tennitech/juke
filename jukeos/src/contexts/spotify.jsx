@@ -56,42 +56,42 @@ export async function performFetch(
     url, params,
     accessToken, invalidateAccess
 ) {
-    // DeskThing.send({
-    //     type: 'get',
-    //     url: url,
-    //     accessToken: accessToken,
-    //     params: params,
-    //     invalidateAccess: invalidateAccess
-    // })
+    DeskThing.send({
+        type: 'get',
+        url: url,
+        accessToken: accessToken,
+        params: params,
+        invalidateAccess: invalidateAccess
+    })
 
-    // // Listening for a response from the server
-    // // DeskThing.on('get_resp', (data) => {
-    // //     console.log('Received response from server:', data); // logs 'Hello, Client!'
-    // // });
-    // const data = DeskThing.once('get_resp');
-    // console.log("Received ", data);
-    // return data;
+    // Listening for a response from the server
+    // DeskThing.on('get_resp', (data) => {
+    //     console.log('Received response from server:', data); // logs 'Hello, Client!'
+    // });
+    const data = DeskThing.once('get_resp');
+    console.log("Received ", data);
+    return data;
 
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                "Authorization": "Bearer " + accessToken
-            },
-            params
-        });
+    // try {
+    //     const response = await axios.get(url, {
+    //         headers: {
+    //             "Authorization": "Bearer " + accessToken
+    //         },
+    //         params
+    //     });
 
-        return response?.data;
-    } catch (err) {
-        if (err.response) {
-            if (err.response.status === 401) {
-                return await performFetch(
-                    url, params, accessToken, await invalidateAccess()
-                );
-            }
-        }
+    //     return response?.data;
+    // } catch (err) {
+    //     if (err.response) {
+    //         if (err.response.status === 401) {
+    //             return await performFetch(
+    //                 url, params, accessToken, await invalidateAccess()
+    //             );
+    //         }
+    //     }
 
-        throw err;
-    }
+    //     throw err;
+    // }
 }
 
 export async function performPut(
@@ -99,44 +99,44 @@ export async function performPut(
     accessToken, invalidateAccess
 ) {
 
-    // DeskThing.send({
-    //     type: 'put',
-    //     url: url,
-    //     accessToken: accessToken,
-    //     params: params,
-    //     body: body,
-    //     invalidateAccess: invalidateAccess
-    // })
+    DeskThing.send({
+        type: 'put',
+        url: url,
+        accessToken: accessToken,
+        params: params,
+        body: body,
+        invalidateAccess: invalidateAccess
+    })
 
-    // // Listening for a response from the server
-    // // DeskThing.on('put_resp', (data) => {
-    // //     console.log('Received response from server:', data); // logs 'Hello, Client!'
-    // // });
-    // const data = DeskThing.once('put_resp');
-    // console.log("Received ", data);
-    // return data;
+    // Listening for a response from the server
+    // DeskThing.on('put_resp', (data) => {
+    //     console.log('Received response from server:', data); // logs 'Hello, Client!'
+    // });
+    const data = DeskThing.once('put_resp');
+    console.log("Received ", data);
+    return data;
 
 
-    try {
-        const response = await axios.put(url, body, {
-            headers: {
-                "Authorization": "Bearer " + accessToken
-            },
-            params
-        });
+    // try {
+    //     const response = await axios.put(url, body, {
+    //         headers: {
+    //             "Authorization": "Bearer " + accessToken
+    //         },
+    //         params
+    //     });
 
-        return response?.data;
-    } catch (err) {
-        if (err.response) {
-            if (err.response.status === 401) {
-                return await performPut(
-                    url, params, body, accessToken, await invalidateAccess()
-                );
-            }
-        }
+    //     return response?.data;
+    // } catch (err) {
+    //     if (err.response) {
+    //         if (err.response.status === 401) {
+    //             return await performPut(
+    //                 url, params, body, accessToken, await invalidateAccess()
+    //             );
+    //         }
+    //     }
 
-        throw err;
-    }
+    //     throw err;
+    // }
 }
 
 export function ProvideSpotifyAuthContext({ children }) {
