@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useEffect } from "react";
+import {useState, createContext, useContext, useEffect, useCallback} from "react";
 import { SpotifyAuthContext, performPut } from "../contexts/spotify";
 
 
@@ -81,11 +81,35 @@ const Player = ({ children }) => {
     };
   }, [player]);
 
-  const togglePlay = () => {
+  //TODO: Do better error catching
+
+  const togglePlay = useCallback(() => {
+    if(player==null){
+      return; // Just catch when its null. Prevents runtime errors
+    }
     player.togglePlay().then(() => {
       console.log("Toggle Play");
     });
-  };
+  }, []);
+
+
+  const nextTrack = useCallback(() => {
+    if(player==null){
+      return; // Just catch when its null. Prevents runtime errors
+    }
+    player.nextTrack().then(() => {
+      console.log('Skipped to next track!');
+    });
+  }, []);
+
+  const prevTrack = useCallback(() => {
+    if(player==null){
+      return; // Just catch when its null. Prevents runtime errors
+    }
+    player.previousTrack().then(() => {
+      console.log('Set to previous track!');
+    });
+  }, []);
 
   const playUri = (uri) => {
     console.log("Play", uri, uri.split(":")[1]);
@@ -118,7 +142,9 @@ const Player = ({ children }) => {
         paused,
         track,
         togglePlay,
-        playUri
+        playUri,
+        nextTrack,
+        prevTrack
       }
     }>
       { children }
@@ -135,5 +161,7 @@ export const PlayerContext = createContext({
   paused: true,
   track: null,
   togglePlay: () => {},
-  playUri: () => {}
+  playUri: () => {},
+  nextTrack: () => {},
+  prevTrack: () => {}
 });
