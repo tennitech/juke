@@ -14,46 +14,50 @@ const Player = ({ children }) => {
 
   //TODO Refactor a lot of this listener logic
   useEffect(() => {
-    if (accessToken && playbackReady && !player) {
+    if (accessToken && playbackReady && !player && window.Spotify) {
       console.log("Constructing player");
 
-      // eslint-disable-next-line no-undef
-      const p = new Spotify.Player({
-        name: "Juke Spotify Player",
-        getOAuthToken: (callback) => callback(accessToken)
-      });
-
-      setPlayer(p);
-
-      p.addListener("ready", ({ device_id }) => {
-        setDeviceId(device_id);
-
-        p.getCurrentState().then((state) => {
-          console.log("Id State", state);
+      try {
+        // eslint-disable-next-line no-undef
+        const p = new Spotify.Player({
+          name: "Juke Spotify Player",
+          getOAuthToken: (callback) => callback(accessToken)
         });
 
-        setOnline(true);
-      });
+        setPlayer(p);
 
-      p.addListener("not_ready", ({ device_id }) => {
-        setDeviceId(device_id);
+        p.addListener("ready", ({ device_id }) => {
+          setDeviceId(device_id);
 
-        setOnline(false);
-      });
+          p.getCurrentState().then((state) => {
+            console.log("Id State", state);
+          });
 
-      p.addListener('initialization_error', ({ message }) => {
-        console.error(message);
-      });
+          setOnline(true);
+        });
 
-      p.addListener('authentication_error', ({ message }) => {
-        console.error(message);
-      });
+        p.addListener("not_ready", ({ device_id }) => {
+          setDeviceId(device_id);
 
-      p.addListener('account_error', ({ message }) => {
-        console.error(message);
-      });
+          setOnline(false);
+        });
 
-      p.connect();
+        p.addListener('initialization_error', ({ message }) => {
+          console.error(message);
+        });
+
+        p.addListener('authentication_error', ({ message }) => {
+          console.error(message);
+        });
+
+        p.addListener('account_error', ({ message }) => {
+          console.error(message);
+        });
+
+        p.connect();
+      } catch (error) {
+        console.error("Error initializing Spotify player:", error);
+      }
     }
   }, [accessToken, playbackReady, player]);
 
