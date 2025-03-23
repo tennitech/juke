@@ -80,7 +80,7 @@ const Harmony = () => {
       console.error("Error generating response:", error);
       
       // Extract more useful error information
-      let errorMessage = "Sorry, I encountered an error processing your request.";
+      const errorMessage = "Sorry, I encountered an error processing your request.";
       
       if (error.message) {
         errorMessage += ` Error details: ${error.message}`;
