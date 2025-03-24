@@ -3,7 +3,6 @@ import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import '../App.css';
 import backgroundPng from '../assets/background.png';
-import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 
 
@@ -334,27 +333,16 @@ const LibraryTesting = () => {
         position: 'relative',
         zIndex: 1
       }}>
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '200vw',
-          height: 'auto',
-          zIndex: 2,
-          pointerEvents: 'none'
-        }}>
-          <img 
-            src={mainGradient} 
-            alt="gradient" 
-            style={{
-              width: '62%',
-              height: 'auto',
-              display: 'block',
-              margin: '0 auto'
-            }}
-          />
-        </div>
+        {/* 
+          GRADIENT PLACEMENT NOTES FOR DYNAMIC IMPLEMENTATION:
+          - Position: fixed at bottom of screen
+          - Centered horizontally (left: 50%, transform: translateX(-50%))
+          - Extra wide (200vw) to ensure coverage
+          - z-index: 2 (above background, below content)
+          - No pointer events (doesn't interfere with interaction)
+          - Content itself: 62% width, auto height, centered
+        */}
+        
         <div style={{
           paddingTop: '120px',
           paddingBottom: '40px',
