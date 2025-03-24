@@ -1,10 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { motion, AnimatePresence } from 'framer-motion';
 import backgroundPng from '../assets/background.png';
+import cloudsSvg from '../assets/clouds.svg';
+import harmonyGoldStar from '../assets/harmony-gold-star.svg';
+import harmonyBlueStar from '../assets/harmony-blue-star.svg';
+// Import these or use your own cloud/star assets
+// import largeStarVariants from '../assets/harmony-large.svg';
+// import smallStarVariants from '../assets/star-small.svg';
 
 // Temporary hard-coded API key for testing - REMOVE IN PRODUCTION
 const GEMINI_API_KEY = 'AIzaSyD0FdPiQBQuu7zJx92nNEEnP322bkNIX4A';
 // const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+
+// Memoized cloud component for better performance
+const Cloud = memo(({ src, animate, style }) => (
+  <motion.img
+    src={src}
+    alt=""
+    animate={animate}
+    style={style}
+  />
+));
+
+// Memoized star component for better performance
+const Star = memo(({ src, animate, style, onClick }) => (
+  <motion.img
+    src={src}
+    alt=""
+    animate={animate}
+    onClick={onClick}
+    style={style}
+  />
+));
+
+// Memoized message component
+const ChatMessage = memo(({ role, content }) => (
+  <div style={{
+    alignSelf: role === 'user' ? 'flex-end' : 'flex-start',
+    maxWidth: '70%',
+    padding: '12px 16px',
+    borderRadius: role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+    backgroundColor: role === 'user' ? 'rgba(236, 224, 196, 0.2)' : 'rgba(100, 100, 255, 0.2)',
+    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
+    wordBreak: 'break-word'
+  }}>
+    {content}
+  </div>
+));
 
 const Harmony = () => {
   const [messages, setMessages] = useState([]);
@@ -12,6 +55,29 @@ const Harmony = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState(null);
   const [error, setError] = useState(null);
+  const [uiStage, setUiStage] = useState('initial'); // 'initial', 'stars', 'chat'
+  
+  // Reference to scroll messages container to bottom
+  const messagesEndRef = useRef(null);
+
+  // Add inside your Harmony component to compute a vertical scale based on viewport height
+  const [starScale, setStarScale] = useState(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      const baselineHeight = 800; // Baseline height for scaling calculation
+      const minScale = 0.4; // Minimum scale allowed
+      const currentHeight = window.innerHeight;
+      
+      // More aggressive scaling formula
+      const scale = Math.max(minScale, Math.min(1, currentHeight / baselineHeight));
+      setStarScale(scale);
+    };
+    
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
 
   // Initialize Gemini API using environment variable
   useEffect(() => {
@@ -52,11 +118,27 @@ const Harmony = () => {
           }
         ]
       }));
+
+      // Start animation sequence
+      const timer = setTimeout(() => {
+        setUiStage('stars');
+      }, 500);
+      
+      return () => clearTimeout(timer);
     } catch (error) {
       console.error("Error initializing Gemini API:", error);
       setError('Failed to initialize Gemini API. Check console for details.');
     }
   }, []);
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleStarClick = () => {
+    setUiStage('chat');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -80,7 +162,7 @@ const Harmony = () => {
       console.error("Error generating response:", error);
       
       // Extract more useful error information
-      const errorMessage = "Sorry, I encountered an error processing your request.";
+      let errorMessage = "Sorry, I encountered an error processing your request.";
       
       if (error.message) {
         errorMessage += ` Error details: ${error.message}`;
@@ -99,39 +181,274 @@ const Harmony = () => {
     }
   };
 
+  // Simplified, more efficient animations
+  const leftCloudVariants = {
+    initial: { x: -300, opacity: 0 },
+    stars: { x: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
+    chat: { x: -120, opacity: 0.5, transition: { duration: 0.8, ease: "easeOut" } }
+  };
+
+  const rightCloudVariants = {
+    initial: { x: 300, opacity: 0 },
+    stars: { x: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
+    chat: { x: 120, opacity: 0.5, transition: { duration: 0.8, ease: "easeOut" } }
+  };
+
+  const bottomCloudVariants = {
+    initial: { y: 100, opacity: 0 },
+    stars: { y: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
+    chat: { y: 50, opacity: 0.5, transition: { duration: 0.8, ease: "easeOut" } }
+  };
+
+  // Optimized, simplified animations
+  const largeStarVariants = {
+    initial: { opacity: 0, scale: 0.5 },
+    stars: { opacity: 1, scale: 1, transition: { delay: 0.3, duration: 0.8, ease: "easeOut" } },
+    chat: { opacity: 0, scale: 1.2, transition: { duration: 0.4 } }
+  };
+
+  const smallStarVariants = {
+    initial: { opacity: 0, scale: 0.5 },
+    stars: { opacity: 1, scale: 1, transition: { delay: 0.5, duration: 0.8, ease: "easeOut" } },
+    chat: { opacity: 0, scale: 1.2, transition: { duration: 0.4 } }
+  };
+
+  const textVariants = {
+    initial: { opacity: 0, y: 20 },
+    stars: { opacity: 1, y: 0, transition: { delay: 0.7, duration: 0.6, ease: "easeOut" } },
+    chat: { opacity: 0, y: -20, transition: { duration: 0.4 } }
+  };
+
+  const chatContainerVariants = {
+    initial: { opacity: 0 },
+    chat: { opacity: 1, transition: { delay: 0.2, duration: 0.6 } }
+  };
+
+  // Lighter-weight idle animations
+  const cloudIdleAnimation = {
+    x: [0, 5, 0, -5, 0],
+    transition: {
+      duration: 10,
+      repeat: Infinity,
+      ease: "easeInOut",
+      times: [0, 0.25, 0.5, 0.75, 1]
+    }
+  };
+
+  const starIdleAnimation = {
+    rotate: [0, 3, 0, -3, 0],
+    transition: {
+      duration: 6,
+      repeat: Infinity,
+      ease: "easeInOut",
+      times: [0, 0.25, 0.5, 0.75, 1]
+    }
+  };
+
+  // Preload images for better performance
+  useEffect(() => {
+    const preloadImages = () => {
+      new Image().src = backgroundPng;
+      new Image().src = cloudsSvg;
+      new Image().src = harmonyGoldStar;
+      new Image().src = harmonyBlueStar;
+    };
+    preloadImages();
+  }, []);
+
   return (
     <div style={{
       backgroundImage: `url(${backgroundPng})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      minHeight: '100vh',
-      padding: '20px',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       color: '#ECE0C4',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center'
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      backgroundColor: '#000000',
+      willChange: 'transform' // Hint for browser hardware acceleration
     }}>
-      <div className="glow" style={{ marginBottom: '20px', textAlign: 'center' }}>
-        <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>HARMONY</h2>
-        <p style={{ fontSize: '1.2rem', marginBottom: '30px' }}>Your AI companion powered by Google Gemini</p>
-      </div>
+      {/* Left clouds */}
+      <motion.div
+        initial="initial"
+        animate={uiStage}
+        variants={leftCloudVariants}
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: '20%',
+          width: '35%',
+          pointerEvents: 'none',
+          zIndex: 1,
+          willChange: 'transform'
+        }}
+      >
+        <Cloud 
+          src={cloudsSvg}
+          animate={uiStage === 'stars' ? cloudIdleAnimation : undefined}
+          style={{
+            width: '100%',
+            filter: 'brightness(0.7) contrast(1.1)',
+            willChange: 'transform'
+          }}
+        />
+      </motion.div>
 
-      {error ? (
-        <div style={{
-          width: '80%',
-          maxWidth: '600px',
-          padding: '20px',
-          borderRadius: '15px',
-          backgroundColor: 'rgba(255, 0, 0, 0.2)',
-          backdropFilter: 'blur(10px)',
-          marginTop: '50px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ marginBottom: '15px' }}>Configuration Error</h3>
-          <p>{error}</p>
-        </div>
-      ) : (
-        <div style={{
+      {/* Right clouds */}
+      <motion.div
+        initial="initial"
+        animate={uiStage}
+        variants={rightCloudVariants}
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: '30%',
+          width: '35%',
+          pointerEvents: 'none',
+          zIndex: 1,
+          transform: 'scaleX(-1)',
+          willChange: 'transform'
+        }}
+      >
+        <Cloud 
+          src={cloudsSvg}
+          animate={uiStage === 'stars' ? cloudIdleAnimation : undefined}
+          style={{
+            width: '100%',
+            filter: 'brightness(0.7) contrast(1.1)',
+            willChange: 'transform'
+          }}
+        />
+      </motion.div>
+
+      {/* Bottom clouds */}
+      <motion.div
+        initial="initial"
+        animate={uiStage}
+        variants={bottomCloudVariants}
+        style={{
+          position: 'absolute',
+          left: '10%',
+          bottom: '5%',
+          width: '25%',
+          pointerEvents: 'none',
+          zIndex: 1,
+          willChange: 'transform'
+        }}
+      >
+        <Cloud 
+          src={cloudsSvg}
+          animate={uiStage === 'stars' ? cloudIdleAnimation : undefined}
+          style={{
+            width: '100%',
+            filter: 'brightness(0.7) contrast(1.1)',
+            willChange: 'transform'
+          }}
+        />
+      </motion.div>
+
+      {/* Star content wrapper - this div contains both stars and text */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: `translate(-50%, -50%) scale(${starScale})`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          width: '100%',
+          height: 'auto',
+          pointerEvents: 'none',
+          zIndex: 10
+        }}
+      >
+        {/* Gold star container */}
+        <motion.div
+          initial="initial"
+          animate={uiStage}
+          variants={largeStarVariants}
+          style={{
+            position: 'relative',
+            left: '0px',  // Shift left from center
+            marginTop: '100px',
+            marginBottom: '80px', // Space between stars and text
+            pointerEvents: 'auto', // Enable clicking
+            cursor: uiStage === 'stars' ? 'pointer' : 'default',
+            zIndex: 10
+          }}
+        >
+          <Star
+            src={harmonyGoldStar}
+            animate={uiStage === 'stars' ? starIdleAnimation : undefined}
+            onClick={uiStage === 'stars' ? handleStarClick : undefined}
+            style={{
+              width: '300px',
+              height: 'auto',
+              willChange: 'transform'
+            }}
+          />
+          
+          {/* Blue star (positioned relative to gold star) */}
+          <motion.div
+            initial="initial"
+            animate={uiStage}
+            variants={smallStarVariants}
+            style={{
+              position: 'absolute',
+              top: '-20px',
+              left: 'calc(100% - 60px)',
+              zIndex: 11
+            }}
+          >
+            <Star
+              src={harmonyBlueStar}
+              animate={uiStage === 'stars' ? starIdleAnimation : undefined}
+              style={{
+                width: '120px',
+                height: 'auto',
+                willChange: 'transform'
+              }}
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* TAP TO ASK HARMONY text - positioned within the same scaled container */}
+        <motion.div
+          initial="initial"
+          animate={uiStage}
+          variants={textVariants}
+          style={{
+            textAlign: 'center',
+            color: '#f5f5dc',
+            fontFamily: 'Notable, sans-serif',
+            fontSize: '3.0rem',
+            fontWeight: 'bold',
+            letterSpacing: '0.3rem',
+            textShadow: '0 0 8px rgba(255,255,255,0.4)',
+            width: '100%',
+            pointerEvents: 'none'
+          }}
+        >
+          TAP TO ASK HARMONY
+        </motion.div>
+      </motion.div>
+
+      {/* Chat UI */}
+      {(uiStage === 'chat' || error) && (
+        <motion.div
+          initial="initial"
+          animate={uiStage}
+          variants={chatContainerVariants}
+          className="chat-container"
+          style={{
           width: '90%',
           maxWidth: '800px',
           height: '70vh',
@@ -141,8 +458,28 @@ const Harmony = () => {
           borderRadius: '15px',
           overflow: 'hidden',
           backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(10px)'
-        }}>
+            backdropFilter: 'blur(5px)', // Reduced blur for better performance
+            zIndex: 20,
+            willChange: 'opacity, transform'
+          }}
+        >
+          {error ? (
+            <div style={{
+              width: '100%',
+              height: '100%',
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255, 0, 0, 0.2)',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ marginBottom: '15px' }}>Configuration Error</h3>
+              <p>{error}</p>
+            </div>
+          ) : (
+            <>
           <div style={{
             flex: 1,
             overflow: 'auto',
@@ -164,17 +501,7 @@ const Harmony = () => {
             )}
             
             {messages.map((msg, index) => (
-              <div key={index} style={{
-                alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                maxWidth: '70%',
-                padding: '12px 16px',
-                borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                backgroundColor: msg.role === 'user' ? 'rgba(236, 224, 196, 0.2)' : 'rgba(100, 100, 255, 0.2)',
-                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.2)',
-                wordBreak: 'break-word'
-              }}>
-                {msg.content}
-              </div>
+                  <ChatMessage key={index} role={msg.role} content={msg.content} />
             ))}
             
             {isLoading && (
@@ -192,6 +519,7 @@ const Harmony = () => {
                 <span className="typing-dot"></span>
               </div>
             )}
+                <div ref={messagesEndRef} />
           </div>
           
           <form onSubmit={handleSubmit} style={{
@@ -231,7 +559,9 @@ const Harmony = () => {
               Send
             </button>
           </form>
-        </div>
+            </>
+          )}
+        </motion.div>
       )}
 
       <style jsx>{`
@@ -261,5 +591,4 @@ const Harmony = () => {
   );
 };
 
-
-export default Harmony;
+export default memo(Harmony);
