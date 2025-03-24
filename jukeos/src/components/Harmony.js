@@ -9,9 +9,8 @@ import harmonyBlueStar from '../assets/harmony-blue-star.svg';
 // import largeStarVariants from '../assets/harmony-large.svg';
 // import smallStarVariants from '../assets/star-small.svg';
 
-// Temporary hard-coded API key for testing - REMOVE IN PRODUCTION
-const GEMINI_API_KEY = 'AIzaSyD0FdPiQBQuu7zJx92nNEEnP322bkNIX4A';
-// const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
+// Remove hardcoded API key and use environment variable
+const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
 // Memoized cloud component for better performance
 const Cloud = memo(({ src, animate, style }) => (
