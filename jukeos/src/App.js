@@ -39,8 +39,8 @@ function AppContent({ isLoading }) {
   return (
     <ProvideSpotifyAuthContext>
       <StartupScreen isLoading={isLoading} />
-      <NavigationBar />
       <Player>
+        <NavigationBar />
         <div className="page-content">
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
