@@ -119,7 +119,7 @@ const ScrollWheel = ({ items }) => {
 
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
-  const { track, paused, playUri, togglePlay,nextTrack,prevTrack } = useContext(PlayerContext);
+  const { track, paused, playUri, togglePlay, nextTrack, prevTrack } = useContext(PlayerContext);
   const [currentTrack, setCurrentTrack] = useState({
     progress: 0,
     duration: 1
@@ -127,6 +127,39 @@ const Home = () => {
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const viewportRef = useRef(null);
+  
+  // Adjust the effect for optimal positioning
+  useEffect(() => {
+    // Calculate optimal position - run only once
+    const calculateOptimalPosition = () => {
+      if (!viewportRef.current) return;
+      
+      const aspectRatio = window.innerWidth / window.innerHeight;
+      const scrollableHeight = viewportRef.current.scrollHeight - viewportRef.current.clientHeight;
+      
+      if (scrollableHeight <= 0) return;
+      
+      // Adjusted position values to make content appear lower (increased values)
+      let scrollPosition;
+      
+      if (window.innerWidth < 1200) {
+        scrollPosition = scrollableHeight * 0.4; // Increased from 0.3 back to original 0.4
+      } else if (aspectRatio > 2) {
+        scrollPosition = scrollableHeight * 0.9; // Increased from 0.8
+      } else if (aspectRatio > 1.7) {
+        scrollPosition = scrollableHeight * 0.6; // Increased from 0.45 back to original 0.6
+      } else {
+        scrollPosition = scrollableHeight * 0.3; // Increased from 0.2
+      }
+      
+      // Apply position once, then will be locked due to overflow:hidden
+      viewportRef.current.scrollTop = scrollPosition;
+    };
+    
+    // Small delay to ensure content is rendered
+    setTimeout(calculateOptimalPosition, 100);
+  }, []); // Empty dependency array - only run once on mount
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -248,38 +281,87 @@ const Home = () => {
   }, [accessToken]);
 
   return (
-    <>
-      <img src={cloudsSvg} alt="" className="clouds-main" />
-      <img src={cloudsSvg} alt="" className="clouds-small" />
+    <div 
+      ref={viewportRef}
+      className="home-viewport" 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: 'clamp(140px, 18vh, 180px)',
+        paddingBottom: 'clamp(25px, 10vh, 50px)',
+        zIndex: 999,
+        isolation: 'isolate'
+      }}
+    >
+      <img src={cloudsSvg} alt="" className="clouds-main" style={{ 
+        position: 'absolute', 
+        width: 'min(45vw, 750px)',
+        height: 'auto', 
+        top: 'clamp(10%, 5vh, 15%)',
+        left: '0',
+        opacity: 0.85,
+        filter: 'blur(2px)',
+        zIndex: -1,
+        transform: 'translateX(-15%) translateY(clamp(0px, 5vh, 40px))'
+      }} />
+      
+      <img src={cloudsSvg} alt="" className="clouds-small" style={{ 
+        position: 'absolute', 
+        width: 'min(35vw, 450px)', // Slightly reduced size
+        height: 'auto', 
+        bottom: '2%', // Better bottom positioning
+        right: '5%', // Anchor to right side instead of left
+        opacity: 0.7, // More transparent
+        filter: 'blur(3px)', // Increased blur effect
+        zIndex: -1,
+        transform: 'rotateY(180deg) scale(0.9)' // Flip and scale down slightly
+      }} />
+      
       <div className="player-container" style={{
         width: '100%',
         maxWidth: '1200px',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        gap: '30px',
-        margin: '0 auto',
-        marginTop: '50px',
-        padding: '40px',
-        paddingLeft: '120px'
+        alignItems: 'flex-start',
+        justifyContent: 'flex-start',
+        padding: 'clamp(10px, 2vh, 20px) clamp(20px, 4vw, 60px)',
+        position: 'relative',
+        minHeight: 'min-content',
+        transform: 'scale(min(1, 0.9))',
+        transformOrigin: 'top center'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           width: '100%',
-          gap: '40px',
-          padding: '0'
+          minHeight: 'min(45vh, 380px)',
+          maxHeight: 'min(60vh, 450px)',
+          flexWrap: 'wrap',
+          padding: '0',
+          marginBottom: '0'
         }}>
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px',
-            width: '500px'
+            gap: 'clamp(1vh, 1.5vh, 2vh)',
+            width: 'clamp(280px, 40%, 500px)',
+            height: 'auto',
+            padding: 'clamp(10px, 2vw, 30px)',
+            paddingLeft: 'clamp(20px, 4vw, 60px)',
+            flex: '1 1 auto'
           }}>
             <h1 style={{
               fontFamily: 'Loubag, sans-serif',
-              fontSize: '5rem',
+              fontSize: 'clamp(2.2rem, 4vw, 4rem)',
               margin: '0',
               textAlign: 'left',
               color: '#ECE0C4',
@@ -295,7 +377,7 @@ const Home = () => {
 
             <h2 style={{
               fontFamily: 'Notable, sans-serif',
-              fontSize: '2rem',
+              fontSize: 'clamp(1.2rem, 2vw, 1.6rem)',
               margin: '0',
               opacity: 0.9,
               letterSpacing: '1px',
@@ -308,10 +390,10 @@ const Home = () => {
               display: 'flex',
               justifyContent: 'space-between',
               width: '100%',
-              fontSize: '0.8rem',
+              fontSize: 'clamp(0.7rem, 1vw, 0.9rem)',
               color: '#ECE0C4',
               opacity: 0.8,
-              marginTop: '5px'
+              marginTop: '0.5vh'
             }}>
               <span>{formatTime(currentTrack.progress)}</span>
               <span>{formatTime(currentTrack.duration)}</span>
@@ -319,18 +401,18 @@ const Home = () => {
 
             <div style={{
               width: '100%',
-              marginTop: '10px'
+              marginTop: '1vh'
             }}>
               <div
-                  style={{
-                    width: '100%',
-                    height: '4px',
-                    backgroundColor: 'rgba(236, 224, 196, 0.2)',
-                    borderRadius: '2px',
-                    position: 'relative',
-                    cursor: 'pointer'
-                  }}
-                  onClick={handleProgressClick}
+                style={{
+                  width: '100%',
+                  height: '4px',
+                  backgroundColor: 'rgba(236, 224, 196, 0.2)',
+                  borderRadius: '2px',
+                  position: 'relative',
+                  cursor: 'pointer'
+                }}
+                onClick={handleProgressClick}
               >
                 <div style={{
                   width: `${(currentTrack.progress / currentTrack.duration) * 100}%`,
@@ -343,151 +425,170 @@ const Home = () => {
               </div>
             </div>
 
-
             <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '20px',
-                  marginTop: '10px',
-                  marginBottom: '10px'
-                }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '2vw',
+                marginTop: 'clamp(2vh, 3vh, 4vh)',
+                marginBottom: 'clamp(4vh, 6vh, 10vh)',
+                maxHeight: '80px'
+              }}
             >
-              {/* Prev Button*/}
               <button
-                  onClick={() => prevTrack()}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '10px',
-                    width: '60px',
-                    height: '60px'
-                  }}
+                onClick={() => prevTrack()}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: 'clamp(35px, 4vw, 50px)',
+                  height: 'clamp(35px, 4vw, 50px)'
+                }}
               >
                 <img
-                    src={prevIcon}
-                    alt="Next"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      opacity: 0.8,
-                      transition: 'opacity 0.2s ease'
-                    }}
+                  src={prevIcon}
+                  alt="Previous"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
                 />
               </button>
 
+              <button
+                onClick={() => togglePlay()}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: 'clamp(45px, 5vw, 70px)',
+                  height: 'clamp(45px, 5vw, 70px)'
+                }}
+              >
+                <img
+                  src={paused ? playIcon : pauseIcon}
+                  alt={paused ? "Play" : "Pause"}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
 
-              {/* Play/Pause Button */}
-                <button
-                    onClick={() => togglePlay()}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '10px',
-                      width: '80px',
-                      height: '80px'
-                    }}
-                >
-                  <img
-                      src={paused ? playIcon : pauseIcon}
-                      alt={paused ? "Play" : "Pause"}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0.8,
-                        transition: 'opacity 0.2s ease'
-                      }}
-                  />
-                </button>
-
-                {/* Next Button */}
-                <button
-                    onClick={() => nextTrack()}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '10px',
-                      width: '60px',
-                      height: '60px'
-                    }}
-                >
-                  <img
-                      src={nextIcon}
-                      alt="Next"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        opacity: 0.8,
-                        transition: 'opacity 0.2s ease'
-                      }}
-                  />
-                </button>
+              <button
+                onClick={() => nextTrack()}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: 'clamp(35px, 4vw, 50px)',
+                  height: 'clamp(35px, 4vw, 50px)'
+                }}
+              >
+                <img
+                  src={nextIcon}
+                  alt="Next"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0.8,
+                    transition: 'opacity 0.2s ease'
+                  }}
+                />
+              </button>
             </div>
           </div>
 
           <div style={{
             position: 'relative',
-            width: '600px',
-            height: '600px',
+            width: 'clamp(180px, 38%, 420px)',
+            aspectRatio: '1/1',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            margin: '0 auto',
+            flex: '0 1 auto',
+            zIndex: '1'
           }}>
             <AnimatedBlob
-                colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
-                style={{
-                  width: '30vw',
-                  maxWidth: '525px',
-                  maxHeight: '525px',
-                  height: '30vw',
-                }}
-                static={false}
+              colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
+              style={{
+                width: '100%',
+                height: '100%',
+                maxWidth: '100%',
+                maxHeight: '100%',
+                zIndex: '-1'
+              }}
+              static={false}
             />
             <img
-                src={track?.album?.images?.[0]?.url || defaultAlbumArt}
-                alt="Album Art"
-                className={"album-art"}
+              src={track?.album?.images?.[0]?.url || defaultAlbumArt}
+              alt="Album Art"
+              style={{
+                position: 'absolute',
+                width: '90%',
+                height: '90%',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+              }}
             />
           </div>
         </div>
+        
         <div style={{
-          width: '500px',
-          marginTop: '-240px',
-          alignSelf: 'flex-start',
-          paddingLeft: '0'
+          width: 'clamp(280px, 40%, 500px)',
+          marginTop: '-15px',
+          paddingLeft: 'clamp(20px, 4vw, 60px)',
+          position: 'relative',
+          minHeight: '100px',
+          maxHeight: 'calc(35vh - 20px)',
+          height: 'auto',
+          overflow: 'visible'
         }}>
           <h3 style={{
             fontFamily: 'Loubag, sans-serif',
-            fontSize: '1.5rem',
+            fontSize: 'clamp(1.2rem, 2vw, 1.5rem)',
             color: '#FFC764',
             letterSpacing: '3px',
-            marginBottom: '5px',
-            marginTop: '140px',
+            marginBottom: 'clamp(3px, 0.3vh, 6px)',
+            marginTop: '0',
             textAlign: 'left'
           }}>
             RECENTLY PLAYED
           </h3>
           <div style={{
             width: '100%',
-            height: '200px',
-            overflow: 'hidden',
-            marginTop: '-40px'
+            minHeight: '70px',
+            maxHeight: 'calc(30vh - 20px)',
+            height: 'auto',
+            overflow: 'visible',
+            marginTop: 'clamp(0px, 0.3vh, 5px)'
           }}>
-            <div className="scroll-wheel-container">
+            <div className="scroll-wheel-container" style={{ 
+              height: '100%',
+              width: '150%',
+              marginTop: '-5px'
+            }}>
               <div className="scroll-wheel-track" style={{
-                minHeight: '180px',
-                paddingLeft: '0',  // Remove default padding to start from left
-                paddingRight: '40px'
+                minHeight: '100%',
+                paddingLeft: '0',
+                paddingRight: '4vw',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'clamp(5px, 1vw, 12px)'
               }}>
                 {isLoadingRecent ? (
-                  // TODO: Add loading spinner/skeleton
                   <div>Loading recently played...</div>
                 ) : recentlyPlayedError ? (
-                  // TODO: Add error state UI
                   <div>Error loading recently played tracks</div>
                 ) : (
                   recentlyPlayed.map((track, index) => (
@@ -495,8 +596,9 @@ const Home = () => {
                       key={index} 
                       className="scroll-wheel-item"
                       style={{
-                        transform: index === 0 ? 'scale(1)' : `scale(${0.8 - index * 0.1})`,
-                        opacity: index === 0 ? 1 : 1 - index * 0.2
+                        transform: index === 0 ? 'scale(1)' : `scale(${0.9 - index * 0.05})`,
+                        opacity: index === 0 ? 1 : 1 - index * 0.15,
+                        marginRight: index === recentlyPlayed.length - 1 ? 0 : 'clamp(5px, 1vw, 15px)'
                       }}
                       onClick={() => playUri(track.uri)}
                     >
@@ -504,8 +606,8 @@ const Home = () => {
                         src={track.imageUrl}
                         alt={`${track.title} by ${track.artist}`}
                         style={{
-                          width: '100px',
-                          height: '100px',
+                          width: 'clamp(55px, 8vw, 80px)',
+                          height: 'clamp(55px, 8vw, 80px)',
                           objectFit: 'cover',
                           borderRadius: '8px',
                           boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
@@ -519,7 +621,7 @@ const Home = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
