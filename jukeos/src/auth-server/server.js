@@ -4,7 +4,15 @@ const axios = require('axios');
 const cors = require('cors');
 
 // NOTE: This is a hack because node is evoked in src/auth-server
-require('dotenv').config({ path: `${__dirname}/../.env` });
+require('dotenv').config({ path: `${__dirname}/../../.env` });
+
+if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+  console.error('ERROR: Spotify client credentials are missing. Please set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables.');
+  process.exit(1); // Exit the process with an error code
+}
+
+const ClientId = process.env.SPOTIFY_CLIENT_ID;
+const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
 const app = express();
 const port = 3001;
@@ -12,12 +20,13 @@ const port = 3001;
 app.use(bodyParser.json());
 app.use(express.urlencoded({ extended: true }));
 
-const ClientId = process.env.SPOTIFY_CLIENT_ID;
-const ClientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-
 app.use(cors());
 
 app.get('/login/spotify', async (req, res) => {
+  if (!ClientId || ClientId === 'undefined') {
+    return res.status(400).send('Spotify client ID not configured. Please check your environment variables.');
+  }
+  
   const params = new URLSearchParams();
   params.append("client_id", ClientId);
   params.append("response_type", "code");
@@ -32,6 +41,10 @@ app.get('/login/spotify', async (req, res) => {
 });
 
 app.post('/refresh/spotify', (req, res) => {
+  if (!ClientId || ClientId === 'undefined') {
+    return res.status(500).send('Spotify client ID not configured. Please check your environment variables.');
+  }
+  
   if (!req.body.refresh_token) {
     res.status(400).send('juke_refresh_token_not_defined');
   } else {
@@ -61,6 +74,10 @@ app.post('/refresh/spotify', (req, res) => {
 });
 
 app.get('/callback/spotify', (req, res) => {
+  if (!ClientId || ClientId === 'undefined') {
+    return res.status(500).send('Spotify client ID not configured. Please check your environment variables.');
+  }
+  
   if (!req.query.code) {
     res.status(400).send(req.query.error || "juke_unknown_error");
   } else {
