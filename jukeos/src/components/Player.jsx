@@ -1,5 +1,5 @@
 import { useState, createContext, useContext, useEffect } from "react";
-import { SpotifyAuthContext, performPut } from "../contexts/spotify";
+import { SpotifyAuthContext, performPut } from "../contexts/spotify.jsx";
 
 
 const Player = ({ children }) => {

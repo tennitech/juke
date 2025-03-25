@@ -4,7 +4,6 @@ export { DeskThing };
 
 // The following imports are from other files that setup their own functions
 import { setupSettings } from "./settings";
-// import { userInput } from "./userInput";
 // import { sendImage, sendSampleData } from "./sendingData";
 
 import axios from "axios";
@@ -28,8 +27,6 @@ const start = async () => {
   const Data = await DeskThing.getData();
 
   setupSettings(Data);
-  // userInput(Data);
-  // This will make Data.settings.theme.value equal whatever the user selects
 };
 
 const stop = async () => {
