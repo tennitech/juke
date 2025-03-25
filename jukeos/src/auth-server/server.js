@@ -41,9 +41,6 @@ app.get('/login/spotify', async (req, res) => {
 });
 
 app.post('/refresh/spotify', (req, res) => {
-  if (!ClientId || ClientId === 'undefined') {
-    return res.status(500).send('Spotify client ID not configured. Please check your environment variables.');
-  }
   
   if (!req.body.refresh_token) {
     res.status(400).send('juke_refresh_token_not_defined');
@@ -74,9 +71,6 @@ app.post('/refresh/spotify', (req, res) => {
 });
 
 app.get('/callback/spotify', (req, res) => {
-  if (!ClientId || ClientId === 'undefined') {
-    return res.status(500).send('Spotify client ID not configured. Please check your environment variables.');
-  }
   
   if (!req.query.code) {
     res.status(400).send(req.query.error || "juke_unknown_error");
