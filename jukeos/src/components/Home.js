@@ -35,87 +35,6 @@ export function useColorThief(imageSrc) {
   return colors;
 }
 
-//Unused Component
-const ScrollWheel = ({ items }) => {
-  const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
-  const wheelRef = useRef(null);
-  const isDragging = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-
-  const handleMouseDown = (e) => {
-    isDragging.current = true;
-    startX.current = e.pageX - wheelRef.current.offsetLeft;
-    scrollLeft.current = wheelRef.current.scrollLeft;
-  };
-
-  const handleMouseUp = () => {
-    isDragging.current = false;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging.current) return;
-    e.preventDefault();
-    const x = e.pageX - wheelRef.current.offsetLeft;
-    const walk = (x - startX.current) * 2;
-    wheelRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  return (
-    <div 
-      className="scroll-wheel-container"
-      ref={wheelRef}
-      style={{ 
-        width: '100%',
-        maxWidth: '800px',
-        height: '100px',  // Reduced from 120px
-        overflow: 'hidden',
-        marginTop: '-10px'  // Added negative margin
-      }}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onMouseMove={handleMouseMove}
-    >
-      <div className="scroll-wheel-track" style={{
-        display: 'flex',
-        gap: '20px',
-        padding: '0 20px'
-      }}>
-        {items.map((item, index) => {
-          const distance = Math.abs(index - centerIndex);
-          const scale = Math.max(0.6, 1 - (distance * 0.2));
-          const opacity = Math.max(0.3, 1 - (distance * 0.3));
-          
-          return (
-            <div 
-              key={index} 
-              className="scroll-wheel-item"
-              style={{
-                transform: `scale(${scale})`,
-                opacity: opacity,
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <img 
-                src={item.imageUrl || defaultAlbumArt}
-                alt={item.title}
-                style={{
-                  width: '100px',  // Reduced size
-                  height: '100px',  // Reduced size
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
@@ -127,38 +46,6 @@ const Home = () => {
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
-  
-  // // Adjust the effect for optimal positioning
-  // useEffect(() => {
-  //   // Calculate optimal position - run only once
-  //   const calculateOptimalPosition = () => {
-  //     if (!viewportRef.current) return;
-      
-  //     const aspectRatio = window.innerWidth / window.innerHeight;
-  //     const scrollableHeight = viewportRef.current.scrollHeight - viewportRef.current.clientHeight;
-      
-  //     if (scrollableHeight <= 0) return;
-      
-  //     // Adjusted position values to make content appear lower (increased values)
-  //     let scrollPosition;
-      
-  //     if (window.innerWidth < 1200) {
-  //       scrollPosition = scrollableHeight * 0.4; // Increased from 0.3 back to original 0.4
-  //     } else if (aspectRatio > 2) {
-  //       scrollPosition = scrollableHeight * 0.9; // Increased from 0.8
-  //     } else if (aspectRatio > 1.7) {
-  //       scrollPosition = scrollableHeight * 0.6; // Increased from 0.45 back to original 0.6
-  //     } else {
-  //       scrollPosition = scrollableHeight * 0.3; // Increased from 0.2
-  //     }
-      
-  //     // Apply position once, then will be locked due to overflow:hidden
-  //     viewportRef.current.scrollTop = scrollPosition;
-  //   };
-    
-  //   // Small delay to ensure content is rendered
-  //   setTimeout(calculateOptimalPosition, 100);
-  // }, []); // Empty dependency array - only run once on mount
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
