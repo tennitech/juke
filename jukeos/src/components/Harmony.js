@@ -9,7 +9,6 @@ import harmonyBlueStar from '../assets/harmony-blue-star.svg';
 // import largeStarVariants from '../assets/harmony-large.svg';
 // import smallStarVariants from '../assets/star-small.svg';
 
-// Remove hardcoded API key and use environment variable
 const GEMINI_API_KEY = process.env.REACT_APP_GEMINI_API_KEY;
 
 // Memoized cloud component for better performance
@@ -91,7 +90,7 @@ const Harmony = () => {
       
       const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
       setModel(genAI.getGenerativeModel({ 
-        model: "gemini-1.5-flash-latest",
+        model: "gemini-2.0-flash",
         generationConfig: {
           temperature: 0.7,
           topK: 40,
@@ -144,7 +143,8 @@ const Harmony = () => {
     if (!inputMessage.trim() || !model) return;
 
     // Add user message to chat
-    const newUserMessage = { role: 'user', content: inputMessage };
+    const formatPrompt = " Please list only the song titles you found, separated by newlines. Do not include any descriptions, bullet points, or additional text.";
+    const newUserMessage = { role: 'user', content: inputMessage + formatPrompt };
     setMessages(prev => [...prev, newUserMessage]);
     setInputMessage('');
     setIsLoading(true);
@@ -154,6 +154,7 @@ const Harmony = () => {
       const content = [{ text: inputMessage }];
       const result = await model.generateContent({ contents: [{ role: 'user', parts: content }] });
       const responseText = result.response.text();
+      console.log(responseText);
       
       // Add AI response to chat
       setMessages(prev => [...prev, { role: 'ai', content: responseText }]);
