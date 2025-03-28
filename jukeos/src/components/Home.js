@@ -128,37 +128,37 @@ const Home = () => {
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   
-  // Adjust the effect for optimal positioning
-  useEffect(() => {
-    // Calculate optimal position - run only once
-    const calculateOptimalPosition = () => {
-      if (!viewportRef.current) return;
+  // // Adjust the effect for optimal positioning
+  // useEffect(() => {
+  //   // Calculate optimal position - run only once
+  //   const calculateOptimalPosition = () => {
+  //     if (!viewportRef.current) return;
       
-      const aspectRatio = window.innerWidth / window.innerHeight;
-      const scrollableHeight = viewportRef.current.scrollHeight - viewportRef.current.clientHeight;
+  //     const aspectRatio = window.innerWidth / window.innerHeight;
+  //     const scrollableHeight = viewportRef.current.scrollHeight - viewportRef.current.clientHeight;
       
-      if (scrollableHeight <= 0) return;
+  //     if (scrollableHeight <= 0) return;
       
-      // Adjusted position values to make content appear lower (increased values)
-      let scrollPosition;
+  //     // Adjusted position values to make content appear lower (increased values)
+  //     let scrollPosition;
       
-      if (window.innerWidth < 1200) {
-        scrollPosition = scrollableHeight * 0.4; // Increased from 0.3 back to original 0.4
-      } else if (aspectRatio > 2) {
-        scrollPosition = scrollableHeight * 0.9; // Increased from 0.8
-      } else if (aspectRatio > 1.7) {
-        scrollPosition = scrollableHeight * 0.6; // Increased from 0.45 back to original 0.6
-      } else {
-        scrollPosition = scrollableHeight * 0.3; // Increased from 0.2
-      }
+  //     if (window.innerWidth < 1200) {
+  //       scrollPosition = scrollableHeight * 0.4; // Increased from 0.3 back to original 0.4
+  //     } else if (aspectRatio > 2) {
+  //       scrollPosition = scrollableHeight * 0.9; // Increased from 0.8
+  //     } else if (aspectRatio > 1.7) {
+  //       scrollPosition = scrollableHeight * 0.6; // Increased from 0.45 back to original 0.6
+  //     } else {
+  //       scrollPosition = scrollableHeight * 0.3; // Increased from 0.2
+  //     }
       
-      // Apply position once, then will be locked due to overflow:hidden
-      viewportRef.current.scrollTop = scrollPosition;
-    };
+  //     // Apply position once, then will be locked due to overflow:hidden
+  //     viewportRef.current.scrollTop = scrollPosition;
+  //   };
     
-    // Small delay to ensure content is rendered
-    setTimeout(calculateOptimalPosition, 100);
-  }, []); // Empty dependency array - only run once on mount
+  //   // Small delay to ensure content is rendered
+  //   setTimeout(calculateOptimalPosition, 100);
+  // }, []); // Empty dependency array - only run once on mount
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -281,7 +281,6 @@ const Home = () => {
 
   return (
     <div 
-      ref={viewportRef}
       className="home-viewport" 
       style={{
         position: 'fixed',
