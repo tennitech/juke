@@ -127,7 +127,6 @@ const Home = () => {
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
-  const viewportRef = useRef(null);
   
   // Adjust the effect for optimal positioning
   useEffect(() => {
