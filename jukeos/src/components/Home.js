@@ -7,7 +7,35 @@ import AnimatedBlob from './AnimatedBlob';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
+import ColorThief from "color-thief-browser";
+import nextIcon from "../assets/skip-forward-icon.svg"
+import prevIcon from "../assets/skip-backward-icon.svg"
 
+//Move location possibly in the future
+export function useColorThief(imageSrc) {
+  const [colors, setColors] = useState(["rgb(0, 0, 0)"]);
+
+  useEffect(() => {
+    if (!imageSrc) return;
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = imageSrc;
+
+    img.onload = () => {
+      const colorThief = new ColorThief();
+      const palette = colorThief.getPalette(img, 2);
+      const rgbColors = palette.map(
+          (color) => `rgb(${color[0]}, ${color[1]}, ${color[2]})`
+      );
+      setColors(rgbColors);
+    };
+  }, [imageSrc]);
+
+  return colors;
+}
+
+//Unused Component
 const ScrollWheel = ({ items }) => {
   const [centerIndex, setCenterIndex] = useState(Math.floor(items.length / 2));
   const wheelRef = useRef(null);
@@ -91,7 +119,7 @@ const ScrollWheel = ({ items }) => {
 
 const Home = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
-  const { track, paused, playUri, togglePlay } = useContext(PlayerContext);
+  const { track, paused, playUri, togglePlay,nextTrack,prevTrack } = useContext(PlayerContext);
   const [currentTrack, setCurrentTrack] = useState({
     progress: 0,
     duration: 1
@@ -262,7 +290,7 @@ const Home = () => {
               `,
               animation: 'textGlitch 3s infinite'
             }}>
-              {track?.name|| "Unknown"}
+              {track?.name || "Unknown"}
             </h1>
 
             <h2 style={{
@@ -294,15 +322,15 @@ const Home = () => {
               marginTop: '10px'
             }}>
               <div
-                style={{
-                  width: '100%',
-                  height: '4px',
-                  backgroundColor: 'rgba(236, 224, 196, 0.2)',
-                  borderRadius: '2px',
-                  position: 'relative',
-                  cursor: 'pointer'
-                }}
-                onClick={handleProgressClick}
+                  style={{
+                    width: '100%',
+                    height: '4px',
+                    backgroundColor: 'rgba(236, 224, 196, 0.2)',
+                    borderRadius: '2px',
+                    position: 'relative',
+                    cursor: 'pointer'
+                  }}
+                  onClick={handleProgressClick}
               >
                 <div style={{
                   width: `${(currentTrack.progress / currentTrack.duration) * 100}%`,
@@ -311,33 +339,94 @@ const Home = () => {
                   borderRadius: '2px',
                   position: 'absolute',
                   transition: 'width 0.1s linear'
-                }} />
+                }}/>
               </div>
             </div>
 
-            <button
-              onClick={() => togglePlay()}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '10px',
-                width: '80px',
-                height: '80px',
-                margin: '10px auto'
-              }}
-            >
-              <img
-                src={paused ? playIcon : pauseIcon}
-                alt={paused ? "Play" : "Pause"}
+
+            <div
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0.8,
-                  transition: 'opacity 0.2s ease'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '20px',
+                  marginTop: '10px',
+                  marginBottom: '10px'
                 }}
-              />
-            </button>
+            >
+              {/* Prev Button*/}
+              <button
+                  onClick={() => prevTrack()}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '10px',
+                    width: '60px',
+                    height: '60px'
+                  }}
+              >
+                <img
+                    src={prevIcon}
+                    alt="Next"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      opacity: 0.8,
+                      transition: 'opacity 0.2s ease'
+                    }}
+                />
+              </button>
+
+
+              {/* Play/Pause Button */}
+                <button
+                    onClick={() => togglePlay()}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '10px',
+                      width: '80px',
+                      height: '80px'
+                    }}
+                >
+                  <img
+                      src={paused ? playIcon : pauseIcon}
+                      alt={paused ? "Play" : "Pause"}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0.8,
+                        transition: 'opacity 0.2s ease'
+                      }}
+                  />
+                </button>
+
+                {/* Next Button */}
+                <button
+                    onClick={() => nextTrack()}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '10px',
+                      width: '60px',
+                      height: '60px'
+                    }}
+                >
+                  <img
+                      src={nextIcon}
+                      alt="Next"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0.8,
+                        transition: 'opacity 0.2s ease'
+                      }}
+                  />
+                </button>
+            </div>
           </div>
 
           <div style={{
@@ -349,25 +438,19 @@ const Home = () => {
             justifyContent: 'center'
           }}>
             <AnimatedBlob
-                colors={['#ECE0C4', 'rgba(236, 224, 196, 0.5)']}
+                colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
                 style={{
-                  width: '45vw',
-                  maxWidth: '600px',
-                  height: '40vw',
-            }}
-                static={true}
+                  width: '30vw',
+                  maxWidth: '525px',
+                  maxHeight: '525px',
+                  height: '30vw',
+                }}
+                static={false}
             />
-            <img 
-              src={track?.album?.images?.[0]?.url || defaultAlbumArt} 
-              alt="Album Art" 
-              style={{
-                width: '500px',
-                height: '500px',
-                borderRadius: '15px',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                position: 'relative',
-                zIndex: 1
-              }} 
+            <img
+                src={track?.album?.images?.[0]?.url || defaultAlbumArt}
+                alt="Album Art"
+                className={"album-art"}
             />
           </div>
         </div>

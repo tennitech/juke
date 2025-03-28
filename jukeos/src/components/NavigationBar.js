@@ -1,12 +1,10 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
-
 import ColorThief from 'color-thief-browser';
-
 import AnimatedBlob from './AnimatedBlob';
-import spotlightPng from '../assets/spotlight.png';
-
+import {PlayerContext} from "./Player";
+import defaultAlbumArt from "../assets/default-art-placeholder.svg";
 
 const NavigationBar = () => {
   const navbarContentRef = useRef(null);
@@ -14,10 +12,14 @@ const NavigationBar = () => {
   const [animationInProgress, setAnimationInProgress] = useState(false);
   const [isFlickering, setIsFlickering] = useState(false);
   const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
+  const [dominantRGBA,setDominantRGBA] = useState("");
   const {accessToken, invalidateAccess} = useContext(SpotifyAuthContext);
   const [profilePicture, setProfilePicture] = useState(require("../assets/default-user-profile-image.svg").default);
   const navigate = useNavigate();
+  const { track} = useContext(PlayerContext);
 
+  //Same function as useColorThief
+  //TODO useColorThief instead of logic in component
   const extractDominantColors = (imageSrc) => {
     const img = new Image();
     img.crossOrigin = 'Anonymous';
@@ -26,13 +28,16 @@ const NavigationBar = () => {
     img.onload = () => {
       const colorThief = new ColorThief();
       const palette = colorThief.getPalette(img, 2);
+      //Set two different RGB formats.
+      setDominantRGBA(palette.map(color => `rgba(${color[0]}, ${color[1]}, ${color[2]},0.9)`));
       setDominantColors(palette.map(color => `rgb(${color[0]}, ${color[1]}, ${color[2]})`));
+      //TODO Further investigate color scaling so it matches the background better
     };
   };
-
   useEffect(() => {
-    extractDominantColors(require('../assets/default-user-profile-image.svg').default);
-  }, []);
+    extractDominantColors(track?.album?.images[0]?.url || defaultAlbumArt)
+  }, [track]);
+
 
   useEffect(() => {
     if (navbarContentRef.current && !animationInProgress) {
@@ -43,10 +48,10 @@ const NavigationBar = () => {
         const navbarWidth = navbarContentRef.current.offsetWidth;
         const activeLinkCenter = activeLink.offsetLeft + activeLink.offsetWidth / 2;
         const offset = navbarWidth / 2 - activeLinkCenter;
-        
+
         navbarContentRef.current.style.transition = 'transform 800ms cubic-bezier(0.34, 1.56, 0.64, 1)';
         navbarContentRef.current.style.transform = `translateX(${offset}px)`;
-        
+
         setTimeout(() => {
           setAnimationInProgress(false);
           setIsFlickering(false);
@@ -75,13 +80,10 @@ const NavigationBar = () => {
           const linkCenter = link.offsetLeft + link.offsetWidth / 2;
           const distance = Math.abs(activeLinkCenter - linkCenter);
           const normalizedDistance = distance / (totalWidth / 2); // Value between 0 and 1
-          
           link.style.transition = 'filter 800ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 800ms cubic-bezier(0.34, 1.56, 0.64, 1)';
-          
           // More subtle blur calculation
           const blurAmount = Math.pow(normalizedDistance, 2) * 2; // Reduced max blur and made more gradual
           const opacity = Math.max(0.4, 1 - Math.pow(normalizedDistance, 1.5)); // Minimum opacity of 0.4
-          
           link.style.filter = `blur(${blurAmount}px)`;
           link.style.opacity = opacity;
         });
@@ -122,19 +124,32 @@ const NavigationBar = () => {
       <nav className="navbar">
         <div className="navbar-blur-container">
           <div className="navbar-content" ref={navbarContentRef}>
-            <NavLink to="/harmony">Harmony</NavLink>
-            <NavLink to="/" end>Home</NavLink>
-            <NavLink to="/library">Library</NavLink>
-            <NavLink to="/settings">Settings</NavLink>
+            {['/harmony', '/', '/library', '/settings'].map((path, index) => (
+                <NavLink
+                    key={path}
+                    to={path}
+                    end={path === '/'}
+                    style={({ isActive }) =>
+                        isActive
+                            ? {
+                              color: '#ECE0C4',
+                              textShadow: `0 0 20px ${dominantRGBA[0]}, 0 0 25px ${dominantRGBA[1]}, 0 0 35px ${dominantRGBA[2]}`
+                            }
+                            : {}
+                    }
+                >
+                  {path.replace('/', '') || 'Home'}
+                </NavLink>
+            ))}
             <NavLink to="/profile" className="profile-link">Profile</NavLink>
           </div>
         </div>
       </nav>
-      <img
-        src={spotlightPng}
-        alt="Spotlight"
-        className={`spotlight ${isFlickering ? 'flicker' : ''}`}
-      />
+      {/*<img*/}
+      {/*  src={spotlightPng}*/}
+      {/*  alt="Spotlight"*/}
+      {/*  className={`spotlight ${isFlickering ? 'flicker' : ''}`}*/}
+      {/*/>*/}
       <div className="user-profile-container">
         <div style={{ position: 'relative' }}>
           <AnimatedBlob colors={dominantColors} />
@@ -142,7 +157,6 @@ const NavigationBar = () => {
             src={profilePicture}
             alt="User Profile"
             className="user-profile-image"
-            onLoad={(e) => extractDominantColors(e.target.src)}
             onClick={() => navigate('/profile')}
           />
         </div>
