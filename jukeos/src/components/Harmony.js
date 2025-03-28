@@ -54,6 +54,9 @@ const Harmony = () => {
   const [model, setModel] = useState(null);
   const [error, setError] = useState(null);
   const [uiStage, setUiStage] = useState('initial'); // 'initial', 'stars', 'chat'
+  const [isListening, setIsListening] = useState(false);
+  const [browserSupportsSpeechRecognition, setBrowserSupportsSpeechRecognition] = useState(false);
+  const recognitionRef = useRef(null);
   
   // Reference to scroll messages container to bottom
   const messagesEndRef = useRef(null);
@@ -134,6 +137,39 @@ const Harmony = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Initialize Web Speech API
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputMessage(transcript);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+      
+      setBrowserSupportsSpeechRecognition(true);
+    } else {
+      setBrowserSupportsSpeechRecognition(false);
+      console.log('Browser does not support speech recognition');
+    }
+    
+    // Cleanup
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onend = null;
+      }
+    };
+  }, []);
+
   const handleStarClick = () => {
     setUiStage('chat');
   };
@@ -178,6 +214,19 @@ const Harmony = () => {
       }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      try {
+        recognitionRef.current?.start();
+        setIsListening(true);
+      } catch (error) {
+        console.error('Speech recognition error:', error);
+      }
     }
   };
 
@@ -543,6 +592,44 @@ const Harmony = () => {
                 marginRight: '10px'
               }}
             />
+            
+            {browserSupportsSpeechRecognition && (
+              <button
+                type="button"
+                onClick={toggleListening}
+                style={{
+                  backgroundColor: isListening ? 'rgba(255, 0, 0, 0.6)' : 'transparent',
+                  border: '2px solid #ECE0C4',
+                  color: '#ECE0C4',
+                  padding: '10px',
+                  borderRadius: '50%',
+                  marginRight: '10px',
+                  width: '45px',
+                  height: '45px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                {isListening ? (
+                  // Stop square when recording
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="6" y="6" width="12" height="12" fill="#ECE0C4" />
+                  </svg>
+                ) : (
+                  // Microphone icon when not recording
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15.5C14.21 15.5 16 13.71 16 11.5V6C16 3.79 14.21 2 12 2C9.79 2 8 3.79 8 6V11.5C8 13.71 9.79 15.5 12 15.5Z" 
+                          stroke="#ECE0C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M4.35 9.65V11.35C4.35 15.57 7.78 19 12 19C16.22 19 19.65 15.57 19.65 11.35V9.65" 
+                          stroke="#ECE0C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 19V22" stroke="#ECE0C4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+            )}
+            
             <button
               type="submit"
               disabled={!inputMessage.trim() || !model || isLoading}
