@@ -142,7 +142,54 @@ const Player = ({ children }) => {
         if (state && state.track_window.current_track) {
           setTrack(state.track_window.current_track);
           console.log("Setting Track: " + JSON.stringify(state.track_window.current_track));
+
           // console.log(recentlyPlayed);
+
+          // TODO: get the queue
+          // if (queue.length == 0)
+          // TODO: Get 5 similar song recommendations from Harmony
+          // let songs = queryHarmony(state.track_window.current_track, recentlyPlayed);
+          // For now, hard code in the top 5 songs on spotify right now
+          // TODO: Tweak the search query to give the best results
+          let songs = [
+            "Lady Gaga, Bruno Mars - Die With A Smile",
+            "ROSÉ, Bruno Mars - APT.",
+            "Billie Eilish - BIRDS OF A FEATHER",
+            "Doechii - Anxiety",
+            "Alex Warren - Ordinary"
+          ];
+
+          let songPromises = songs.map(async (song) => {
+            let [artist_str, songTitle] = song.split(" - ");
+            let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
+            // console.log(query);
+            try {
+              const response = await performFetch(
+                `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
+                {},
+                accessToken,
+                invalidateAccess
+              );
+
+              if (response.tracks.items.length === 0) {
+                console.error("No results found for query:", query);
+                return "";
+              }
+
+              console.log("URL: ", response.tracks.items[0].external_urls.spotify);
+              console.log("popularity: ", response.tracks.items[0].popularity);
+              return response.tracks.items[0].external_urls.spotify;
+            } catch (err) {
+              console.error("Error getting recommendations:", err);
+              return "";
+            }
+          });
+
+          Promise.all(songPromises).then((songUrls) => {
+            songUrls = songUrls.filter((url) => url !== "");
+            console.log(songUrls);
+            
+          });
           setPaused(state.paused);
           setActive(!!state);
         }
