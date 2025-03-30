@@ -4,6 +4,8 @@ import { PlayerContext } from './Player';
 import '../App.css';
 import backgroundPng from '../assets/background.png';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
+import AnimatedBlob from './AnimatedBlob';
+import { useColorThief } from './Home';
 
 
 const ScrollWheel = ({ items, playUri }) => {
@@ -122,13 +124,17 @@ const LibrarySection = ({ title, items, playUri }) => {
 
 const LibraryTesting = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
-  const { playUri } = useContext(PlayerContext);
+  const { track, playUri } = useContext(PlayerContext);
 
   const [ madeForYou, setMadeForYou ] = useState([]);
   const [ playlists, setPlaylists ] = useState([]);
   const [ podcasts, setPodcasts ] = useState([]);
   const [ albums, setAlbums ] = useState([]);
   const [ artists, setArtists ] = useState([]);
+
+  // Determine album art URL and get colors using the hook
+  const albumArtUrl = track?.album?.images?.[0]?.url || defaultAlbumArt;
+  const colors = useColorThief(albumArtUrl);
 
   // Consider implementing pagination if needed
   const sections = useMemo(() => [
@@ -318,50 +324,76 @@ const LibraryTesting = () => {
   // useEffect(() => { fetch Spotify data here }, [accessToken]);
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* TODO: Backend - Consider adding loading spinner/state here */}
+    <>
+      {/* Fixed-position gradient that stays at bottom of viewport */}
       <div style={{
-        backgroundImage: `url(${backgroundPng})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-        minHeight: '100vh',
-        padding: '20px',
-        perspective: '1000px',
-        overflow: 'hidden',
-        position: 'relative',
-        zIndex: 1
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        height: '180px',
+        zIndex: 999,
+        pointerEvents: 'none',
+        margin: 0,
+        padding: 0,
       }}>
-        {/* 
-          GRADIENT PLACEMENT NOTES FOR DYNAMIC IMPLEMENTATION:
-          - Position: fixed at bottom of screen
-          - Centered horizontally (left: 50%, transform: translateX(-50%))
-          - Extra wide (200vw) to ensure coverage
-          - z-index: 2 (above background, below content)
-          - No pointer events (doesn't interfere with interaction)
-          - Content itself: 62% width, auto height, centered
-        */}
-        
+        <AnimatedBlob
+          colors={colors}
+          style={{
+            width: '100%', // Back to 100%
+            height: '100%',
+            filter: 'blur(70px)', // Back to original blur amount
+            opacity: 0.75,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            borderRadius: 0,
+          }}
+          static={false}
+        />
+      </div>
+
+      {/* Your existing content */}
+      <div style={{ position: 'relative' }}>
         <div style={{
-          paddingTop: '120px',
-          paddingBottom: '40px',
-          overflowY: 'auto',
-          height: '100vh',
+          backgroundImage: `url(${backgroundPng})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
+          minHeight: '100vh',
+          padding: '0',
+          perspective: '1000px',
+          overflow: 'hidden',
           position: 'relative',
-          zIndex: 3
+          zIndex: 1
         }}>
-          {sections.map((section, index) => (
-            <LibrarySection
-              key={section.title}
-              title={section.title} 
-              items={section.items}
-              playUri={playUri}
-            />
-          ))}
+          {/* Content container */}
+          <div style={{
+            paddingTop: '120px',
+            paddingBottom: '40px',
+            paddingLeft: '20px',
+            paddingRight: '20px',
+            overflowY: 'auto',
+            height: '100vh',
+            position: 'relative',
+            zIndex: 3,
+            overscrollBehavior: 'none',
+            boxSizing: 'border-box'
+          }}>
+            {sections.map((section, index) => (
+              <LibrarySection
+                key={section.title}
+                title={section.title}
+                items={section.items}
+                playUri={playUri}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
