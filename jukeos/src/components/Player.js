@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useEffect } from "react";
+import {useState, createContext, useContext, useEffect, useCallback} from "react";
 import { SpotifyAuthContext, performPut } from "../contexts/spotify";
 
 
@@ -14,46 +14,50 @@ const Player = ({ children }) => {
 
   //TODO Refactor a lot of this listener logic
   useEffect(() => {
-    if (accessToken && playbackReady && !player) {
+    if (accessToken && playbackReady && !player && window.Spotify) {
       console.log("Constructing player");
 
-      // eslint-disable-next-line no-undef
-      const p = new Spotify.Player({
-        name: "Juke Spotify Player",
-        getOAuthToken: (callback) => callback(accessToken)
-      });
-
-      setPlayer(p);
-
-      p.addListener("ready", ({ device_id }) => {
-        setDeviceId(device_id);
-
-        p.getCurrentState().then((state) => {
-          console.log("Id State", state);
+      try {
+        // eslint-disable-next-line no-undef
+        const p = new Spotify.Player({
+          name: "Juke Spotify Player",
+          getOAuthToken: (callback) => callback(accessToken)
         });
 
-        setOnline(true);
-      });
+        setPlayer(p);
 
-      p.addListener("not_ready", ({ device_id }) => {
-        setDeviceId(device_id);
+        p.addListener("ready", ({ device_id }) => {
+          setDeviceId(device_id);
 
-        setOnline(false);
-      });
+          p.getCurrentState().then((state) => {
+            console.log("Id State", state);
+          });
 
-      p.addListener('initialization_error', ({ message }) => {
-        console.error(message);
-      });
+          setOnline(true);
+        });
 
-      p.addListener('authentication_error', ({ message }) => {
-        console.error(message);
-      });
+        p.addListener("not_ready", ({ device_id }) => {
+          setDeviceId(device_id);
 
-      p.addListener('account_error', ({ message }) => {
-        console.error(message);
-      });
+          setOnline(false);
+        });
 
-      p.connect();
+        p.addListener('initialization_error', ({ message }) => {
+          console.error(message);
+        });
+
+        p.addListener('authentication_error', ({ message }) => {
+          console.error(message);
+        });
+
+        p.addListener('account_error', ({ message }) => {
+          console.error(message);
+        });
+
+        p.connect();
+      } catch (error) {
+        console.error("Error initializing Spotify player:", error);
+      }
     }
   }, [accessToken, playbackReady, player]);
 
@@ -81,11 +85,35 @@ const Player = ({ children }) => {
     };
   }, [player]);
 
-  const togglePlay = () => {
+  //TODO: Do better error catching
+
+  const togglePlay = useCallback(() => {
+    if(player==null){
+      return; // Just catch when its null. Prevents runtime errors
+    }
     player.togglePlay().then(() => {
       console.log("Toggle Play");
     });
-  };
+  }, []);
+
+
+  const nextTrack = useCallback(() => {
+    if(player==null){
+      return; // Just catch when its null. Prevents runtime errors
+    }
+    player.nextTrack().then(() => {
+      console.log('Skipped to next track!');
+    });
+  }, []);
+
+  const prevTrack = useCallback(() => {
+    if(player==null){
+      return; // Just catch when its null. Prevents runtime errors
+    }
+    player.previousTrack().then(() => {
+      console.log('Set to previous track!');
+    });
+  }, []);
 
   const playUri = (uri) => {
     console.log("Play", uri, uri.split(":")[1]);
@@ -118,7 +146,9 @@ const Player = ({ children }) => {
         paused,
         track,
         togglePlay,
-        playUri
+        playUri,
+        nextTrack,
+        prevTrack
       }
     }>
       { children }
@@ -135,5 +165,7 @@ export const PlayerContext = createContext({
   paused: true,
   track: null,
   togglePlay: () => {},
-  playUri: () => {}
+  playUri: () => {},
+  nextTrack: () => {},
+  prevTrack: () => {}
 });

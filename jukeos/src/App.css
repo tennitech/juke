@@ -47,7 +47,7 @@
 
 .navbar {
   position: fixed;
-  top: 40px;
+  top: 25px;
   left: 50%;
   transform: translateX(-50%);
   border-radius: 45px;
