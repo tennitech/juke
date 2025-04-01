@@ -81,30 +81,16 @@ const StartupScreen = ({ isLoading }) => {
         >
             <div style={{
                 position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
+                top: "30%", // Change to move up and down
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 color: "white",
-                width: "80%",
-                maxWidth: "800px",
             }}>
-                <div style={{ 
-                    display: "flex", 
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: "10px",
-                    justifyContent: "center",
-                }}>
+                <div>
                     <motion.img
                         src={jukeIcon}
-                        style={{
-                            width: "clamp(100px, 19vw, 200px)",
-                            height: "auto",
-                            display: "inline-block"
-                        }}
+                        style={{width: "19vw"}}
                         animate={{rotate: 360}}
                         transition={{
                             repeat: Infinity,
@@ -112,28 +98,17 @@ const StartupScreen = ({ isLoading }) => {
                             ease: "linear",
                         }}
                     />
-                    <img 
-                        src={jukeLogo} 
-                        alt="Juke Logo" 
-                        style={{
-                            width: "clamp(150px, 25vw, 300px)",
-                            height: "auto",
-                            display: "inline-block",
-                            marginTop: "-18px",
-                        }}
-                    />
+                    <img src={jukeLogo} alt="Juke Logo" style={{width: "25vw"}}/>
                 </div>
             </div>
 
             <button
                 style={{
-                    backgroundColor: "#1DB954",
+                    backgroundColor: "#1DB954", // Same as Profile login
                     color: "white",
                     padding: "12px 32px",
                     position: "absolute",
-                    bottom: "20%",
-                    left: "50%",
-                    transform: "translateX(-50%)",
+                    bottom: "25%",
                     fontSize: "18px",
                     fontFamily: 'Loubag, sans-serif',
                     borderRadius: "8px",
@@ -145,7 +120,6 @@ const StartupScreen = ({ isLoading }) => {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: "5px",
-                    whiteSpace: "nowrap",
                 }}
                 onClick={() => {
                     setShowStartup(false);
@@ -155,11 +129,7 @@ const StartupScreen = ({ isLoading }) => {
                 <img
                     src={spotifyWhiteLogo}
                     alt="Spotify Logo"
-                    style={{
-                        width: "clamp(20px, 3vw, 24px)", // Responsive icon size
-                        height: "auto",
-                        translate: "-10px"
-                    }}
+                    style={{width: "24px", height: "24px", translate: "-10px"}}
                 />
                 Sign in with Spotify
             </button>
