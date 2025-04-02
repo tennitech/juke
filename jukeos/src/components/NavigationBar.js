@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
 import ColorThief from 'color-thief-browser';
 import AnimatedBlob from './AnimatedBlob';
+import HarmonyStars from './HarmonyStars';
 import {PlayerContext} from "./Player";
 import defaultAlbumArt from "../assets/default-art-placeholder.svg";
 
@@ -119,6 +120,31 @@ const NavigationBar = () => {
     });
   };
 
+  // Custom component to render harmony nav item with stars
+  const HarmonyNavItem = ({ isActive }) => {
+    return (
+      <div style={{ 
+        position: 'relative', 
+        overflow: 'visible',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0',
+        margin: '0'
+      }}>
+        <HarmonyStars 
+          isInNavBar={true}
+          size="small"
+          animateBlob={true}
+        />
+        <span style={{ 
+          position: 'relative', 
+          zIndex: 5,
+          marginLeft: '10px'
+        }}>Harmony</span>
+      </div>
+    );
+  };
+
   return (
     <>
       <nav className="navbar">
@@ -138,18 +164,17 @@ const NavigationBar = () => {
                             : {}
                     }
                 >
-                  {path.replace('/', '') || 'Home'}
+                  {path === '/harmony' ? (
+                    <HarmonyNavItem isActive={location.pathname === '/harmony'} />
+                  ) : (
+                    path.replace('/', '') || 'Home'
+                  )}
                 </NavLink>
             ))}
             <NavLink to="/profile" className="profile-link">Profile</NavLink>
           </div>
         </div>
       </nav>
-      {/*<img*/}
-      {/*  src={spotlightPng}*/}
-      {/*  alt="Spotlight"*/}
-      {/*  className={`spotlight ${isFlickering ? 'flicker' : ''}`}*/}
-      {/*/>*/}
       <div className="user-profile-container">
         <div style={{ position: 'relative' }}>
           <AnimatedBlob colors={dominantColors} />
@@ -164,6 +189,5 @@ const NavigationBar = () => {
     </>
   );
 };
-
 
 export default NavigationBar;

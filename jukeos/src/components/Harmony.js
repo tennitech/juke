@@ -284,8 +284,20 @@ const Harmony = () => {
     }
   };
 
-  const starIdleAnimation = {
+  // Gold star animation - clockwise rotation
+  const goldStarIdleAnimation = {
     rotate: [0, 3, 0, -3, 0],
+    transition: {
+      duration: 6,
+      repeat: Infinity,
+      ease: "easeInOut",
+      times: [0, 0.25, 0.5, 0.75, 1]
+    }
+  };
+
+  // Blue star animation - counterclockwise rotation (opposite of gold star)
+  const blueStarIdleAnimation = {
+    rotate: [0, -3, 0, 3, 0],
     transition: {
       duration: 6,
       repeat: Infinity,
@@ -436,7 +448,7 @@ const Harmony = () => {
         >
           <Star
             src={harmonyGoldStar}
-            animate={uiStage === 'stars' ? starIdleAnimation : undefined}
+            animate={uiStage === 'stars' ? goldStarIdleAnimation : undefined}
             onClick={uiStage === 'stars' ? handleStarClick : undefined}
             style={{
               width: '300px',
@@ -452,14 +464,14 @@ const Harmony = () => {
             variants={smallStarVariants}
             style={{
               position: 'absolute',
-              top: '-20px',
-              left: 'calc(100% - 60px)',
+              top: '-30px',
+              left: 'calc(100% - 80px)',
               zIndex: 11
             }}
           >
             <Star
               src={harmonyBlueStar}
-              animate={uiStage === 'stars' ? starIdleAnimation : undefined}
+              animate={uiStage === 'stars' ? blueStarIdleAnimation : undefined}
               style={{
                 width: '120px',
                 height: 'auto',

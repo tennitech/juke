@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 
-const AnimatedBlob = ({ colors, style = {}, static: isStatic = false }) => {
+const AnimatedBlob = ({ colors, style = {}, static: isStatic = false, speed = 1 }) => {
   const blobRef = useRef(null);
   const [animatedColors, setAnimatedColors] = useState(colors);
 
@@ -11,7 +11,7 @@ const AnimatedBlob = ({ colors, style = {}, static: isStatic = false }) => {
     let time = 0;
 
     const animate = () => {
-      time += 0.02;
+      time += 0.02 * speed;
       const x = Math.sin(time * 0.7) * 5;
       const y = Math.cos(time * 0.7) * 5;
       const scale = 1 + Math.sin(time * 0.3) * 0.05;
@@ -22,7 +22,7 @@ const AnimatedBlob = ({ colors, style = {}, static: isStatic = false }) => {
     };
 
     const animateColors = () => {
-      time += 0.0005;
+      time += 0.0005 * speed;
 
       // Generate slight shifts in colors to create a dynamic effect
       const newColors = colors.map((color, index) => {
@@ -39,7 +39,7 @@ const AnimatedBlob = ({ colors, style = {}, static: isStatic = false }) => {
 
     animateColors();
     animate();
-  }, [isStatic,colors]);
+  }, [isStatic, colors, speed]);
 
   // This is the old
   // radial-gradient(circle at 30% 30%, ${colors[0]} 0%, rgba(255, 255, 255, 0) 70%),
