@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useEffect, useCallback} from "react";
-import { SpotifyAuthContext, performFetch, performPut } from "../contexts/spotify";
+import { SpotifyAuthContext, performFetch, performPost, performPut } from "../contexts/spotify";
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 
 
@@ -7,7 +7,7 @@ const Player = ({ children }) => {
   const { playbackReady, accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
 
   const [player, setPlayer] = useState(null);
-  const [deviceId, setDeviceId] = useState(false);
+  const [deviceId, setDeviceId] = useState("");
   const [online, setOnline] = useState(false);
   const [active, setActive] = useState(false);
   const [track, setTrack] = useState(null);
@@ -142,56 +142,67 @@ const Player = ({ children }) => {
         if (state && state.track_window.current_track) {
           setTrack(state.track_window.current_track);
           console.log("Setting Track: " + JSON.stringify(state.track_window.current_track));
-
-          // console.log(recentlyPlayed);
-
-          // TODO: get the queue
-          // if (queue.length == 0)
-          // TODO: Get 5 similar song recommendations from Harmony
-          // let songs = queryHarmony(state.track_window.current_track, recentlyPlayed);
-          // For now, hard code in the top 5 songs on spotify right now
-          // TODO: Tweak the search query to give the best results
-          let songs = [
-            "Lady Gaga, Bruno Mars - Die With A Smile",
-            "ROSÉ, Bruno Mars - APT.",
-            "Billie Eilish - BIRDS OF A FEATHER",
-            "Doechii - Anxiety",
-            "Alex Warren - Ordinary"
-          ];
-
-          let songPromises = songs.map(async (song) => {
-            let [artist_str, songTitle] = song.split(" - ");
-            let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
-            // console.log(query);
-            try {
-              const response = await performFetch(
-                `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
-                {},
-                accessToken,
-                invalidateAccess
-              );
-
-              if (response.tracks.items.length === 0) {
-                console.error("No results found for query:", query);
-                return "";
-              }
-
-              console.log("URL: ", response.tracks.items[0].external_urls.spotify);
-              console.log("popularity: ", response.tracks.items[0].popularity);
-              return response.tracks.items[0].external_urls.spotify;
-            } catch (err) {
-              console.error("Error getting recommendations:", err);
-              return "";
-            }
-          });
-
-          Promise.all(songPromises).then((songUrls) => {
-            songUrls = songUrls.filter((url) => url !== "");
-            console.log(songUrls);
-            
-          });
+          console.log(state);
           setPaused(state.paused);
           setActive(!!state);
+          
+          // TODO: Find a better way to ensure the tracks only get added once
+          // or get spotify to stop sending 3-4 player state changes for some reason whenever a track starts playing
+          if (state.track_window.next_tracks.length == 0 && (state.loading || state.position == 0)) {
+            // TODO: Get 5 similar song recommendations from Harmony
+            // let songs = queryHarmony(state.track_window.current_track, recentlyPlayed);
+            // For now, hard code in the top 5 songs on spotify right now
+            // TODO: Tweak the search query to give the best results
+            // Seems like spotify only lets us add up to 2 songs at a time without encountering strange bugs
+            let songs = [
+              "Lady Gaga, Bruno Mars - Die With A Smile",
+              // "ROSÉ, Bruno Mars - APT.",
+              "Billie Eilish - BIRDS OF A FEATHER",
+              // "Doechii - Anxiety",
+              // "Alex Warren - Ordinary"
+            ];
+
+            // BUG: Upon app startup, media controls seem to not work until
+            // You comment out the promise code below, save, and then uncomment and save (???)
+            let songPromises = songs.map(async (song) => {
+              let [artist_str, songTitle] = song.split(" - ");
+              let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
+              // console.log(query);
+              try {
+                const response = await performFetch(
+                  `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
+                  {},
+                  accessToken,
+                  invalidateAccess
+                );
+
+                if (response.tracks.items.length === 0) {
+                  console.error("No results found for query:", query);
+                  return "";
+                }
+
+                await performPost(
+                  `https://api.spotify.com/v1/me/player/queue`,
+                  {
+                    "device_id": deviceId,
+                    "uri": response.tracks.items[0].uri
+                  },
+                  null,
+                  accessToken, invalidateAccess
+                );
+                console.log("Added uri " + response.tracks.items[0].uri + " with popularity " + response.tracks.items[0].popularity + " to queue");
+
+                return response.tracks.items[0].uri;
+              } catch (err) {
+                console.error("Error getting recommendations:", err);
+                return "";
+              }
+            });
+
+            // Promise.all(songPromises).then((songUris) => {
+            //   console.log(songUris);
+            // });
+          }
         }
       }).catch((err) => console.error("Error getting player state:", err));
     };
@@ -202,7 +213,7 @@ const Player = ({ children }) => {
     return () => {
       player.removeListener("player_state_changed", syncTrack);
     };
-  }, [player]);
+  }, [player, deviceId]);
 
   //TODO: Do better error catching
 
