@@ -5,6 +5,7 @@ import backgroundPng from '../assets/background.png';
 import cloudsSvg from '../assets/clouds.svg';
 import harmonyGoldStar from '../assets/harmony-gold-star.svg';
 import harmonyBlueStar from '../assets/harmony-blue-star.svg';
+import AnimatedBlob from './AnimatedBlob';
 // Import these or use your own cloud/star assets
 // import largeStarVariants from '../assets/harmony-large.svg';
 // import smallStarVariants from '../assets/star-small.svg';
@@ -170,9 +171,19 @@ const Harmony = () => {
     };
   }, []);
 
-  const handleStarClick = () => {
-    setUiStage('chat');
-  };
+  // Handle star click event to show mode selection
+  useEffect(() => {
+    const handleStarClick = () => {
+      // Show mode selection screen
+      setUiStage('mode-select');
+    };
+    
+    document.addEventListener('harmony-stars-clicked', handleStarClick);
+    
+    return () => {
+      document.removeEventListener('harmony-stars-clicked', handleStarClick);
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -270,7 +281,14 @@ const Harmony = () => {
 
   const chatContainerVariants = {
     initial: { opacity: 0 },
-    chat: { opacity: 1, transition: { delay: 0.2, duration: 0.6 } }
+    chat: { opacity: 1, transition: { delay: 0.2, duration: 0.6 } },
+    'mode-select': { opacity: 1, transition: { delay: 0.2, duration: 0.6 } }
+  };
+
+  // Define fadeInVariants for inner content animation
+  const fadeInVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { delay: 0.3, duration: 0.5 } }
   };
 
   // Lighter-weight idle animations
@@ -316,6 +334,24 @@ const Harmony = () => {
     };
     preloadImages();
   }, []);
+
+  // Function to handle Developer Mode button click
+  const handleDeveloperModeClick = () => {
+    setUiStage('chat');
+  };
+
+  // Function to handle Voice-Only Mode button click
+  const handleVoiceOnlyModeClick = () => {
+    // Do nothing for now, as specified
+    console.log('Voice-Only Mode clicked');
+  };
+
+  // Star container click handler
+  const handleStarContainerClick = () => {
+    if (uiStage === 'stars') {
+      document.dispatchEvent(new CustomEvent('harmony-stars-clicked'));
+    }
+  };
 
   return (
     <div style={{
@@ -438,6 +474,8 @@ const Harmony = () => {
           variants={largeStarVariants}
           style={{
             position: 'relative',
+            width: '300px',
+            height: '300px',
             left: '0px',  // Shift left from center
             marginTop: '100px',
             marginBottom: '80px', // Space between stars and text
@@ -446,16 +484,56 @@ const Harmony = () => {
             zIndex: 10
           }}
         >
-          <Star
-            src={harmonyGoldStar}
-            animate={uiStage === 'stars' ? goldStarIdleAnimation : undefined}
-            onClick={uiStage === 'stars' ? handleStarClick : undefined}
-            style={{
-              width: '300px',
-              height: 'auto',
-              willChange: 'transform'
-            }}
-          />
+          {/* Animated blob gradient behind stars */}
+          <div style={{
+            position: 'absolute',
+            width: '400px',
+            height: '400px',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1
+          }}>
+            <AnimatedBlob
+              colors={[
+                'rgba(166, 104, 255, 1.0)', // Pure purple - full opacity
+                'rgba(151, 225, 251, 1.0)', // Pure light blue - full opacity
+                'rgba(155, 198, 252, 1.0)'  // Pure medium blue - full opacity
+              ]}
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '60% 40% 50% 50% / 50% 50% 60% 40%',
+                filter: 'blur(40px)',
+                boxShadow: '0 0 20px rgba(166, 104, 255, 0.8)',
+                opacity: 0.9,
+                pointerEvents: 'none'
+              }}
+              speed={0.4}
+            />
+          </div>
+          
+          {/* Gold star */}
+          <div style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            zIndex: 2,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <Star
+              src={harmonyGoldStar}
+              animate={uiStage === 'stars' ? goldStarIdleAnimation : undefined}
+              onClick={handleStarContainerClick}
+              style={{
+                width: '300px',
+                height: 'auto',
+                willChange: 'transform'
+              }}
+            />
+          </div>
           
           {/* Blue star (positioned relative to gold star) */}
           <motion.div
@@ -466,7 +544,7 @@ const Harmony = () => {
               position: 'absolute',
               top: '-30px',
               left: 'calc(100% - 80px)',
-              zIndex: 11
+              zIndex: 3
             }}
           >
             <Star
@@ -501,6 +579,169 @@ const Harmony = () => {
           TAP TO ASK HARMONY
         </motion.div>
       </motion.div>
+
+      {/* Mode Selection UI */}
+      {uiStage === 'mode-select' && (
+        <motion.div
+          initial="initial"
+          animate={uiStage}
+          variants={chatContainerVariants}
+          className="mode-select-container"
+          style={{
+            width: '90%',
+            maxWidth: '600px',
+            padding: '40px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid rgba(236, 224, 196, 0.3)',
+            borderRadius: '15px',
+            backgroundColor: 'rgba(20, 20, 30, 0.8)',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 16px rgba(0, 0, 0, 0.3)',
+            zIndex: 20,
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}
+        >
+          <motion.h2
+            variants={fadeInVariants}
+            initial="initial"
+            animate="animate"
+            style={{
+              color: '#ECE0C4',
+              fontSize: '24px',
+              fontWeight: '700',
+              marginBottom: '20px',
+              textAlign: 'center',
+              fontFamily: 'Notable, sans-serif',
+              letterSpacing: '2px'
+            }}
+          >
+            SELECT MODE
+          </motion.h2>
+          
+          <motion.div 
+            variants={fadeInVariants}
+            initial="initial"
+            animate="animate"
+            style={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              flexWrap: 'wrap',
+              gap: '30px',
+              width: '100%'
+            }}
+          >
+            {/* Developer Mode Button */}
+            <button
+              onClick={handleDeveloperModeClick}
+              style={{
+                backgroundColor: 'rgba(155, 198, 252, 0.2)',
+                border: '2px solid rgba(155, 198, 252, 0.6)',
+                borderRadius: '12px',
+                padding: '20px 30px',
+                width: '240px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ECE0C4'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(155, 198, 252, 0.3)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(155, 198, 252, 0.2)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <div style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold',
+                marginBottom: '10px',
+                fontFamily: 'Notable, sans-serif'
+              }}>
+                Developer Mode
+              </div>
+              <div style={{ 
+                fontSize: '0.9rem',
+                opacity: 0.8,
+                textAlign: 'center',
+                fontFamily: 'Loubag, sans-serif'
+              }}>
+                Text-based chat with code assistance
+              </div>
+            </button>
+            
+            {/* Voice-Only Mode Button */}
+            <button 
+              onClick={handleVoiceOnlyModeClick}
+              style={{
+                backgroundColor: 'rgba(166, 104, 255, 0.2)',
+                border: '2px solid rgba(166, 104, 255, 0.6)',
+                borderRadius: '12px',
+                padding: '20px 30px',
+                width: '240px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#ECE0C4',
+                position: 'relative'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(166, 104, 255, 0.3)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(166, 104, 255, 0.2)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <div style={{ 
+                position: 'absolute',
+                top: '-10px',
+                right: '-10px',
+                backgroundColor: '#FFD700',
+                color: '#000',
+                fontSize: '0.7rem',
+                padding: '3px 8px',
+                borderRadius: '10px',
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              }}>
+                Experimental
+              </div>
+              <div style={{ 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold',
+                marginBottom: '10px',
+                fontFamily: 'Notable, sans-serif'
+              }}>
+                Voice-Only Mode
+              </div>
+              <div style={{ 
+                fontSize: '0.9rem',
+                opacity: 0.8,
+                textAlign: 'center',
+                fontFamily: 'Loubag, sans-serif'
+              }}>
+                Hands-free conversation
+              </div>
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
 
       {/* Chat UI */}
       {(uiStage === 'chat' || error) && (
