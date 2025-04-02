@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundPng from '../assets/background.png';
@@ -48,6 +48,33 @@ const ChatMessage = memo(({ role, content }) => (
   </div>
 ));
 
+// Default blob colors for initial stage and stars stage
+const defaultBlobColors = [
+  'rgba(166, 104, 255, 1.0)',
+  'rgba(151, 225, 251, 1.0)',
+  'rgba(155, 198, 252, 1.0)'
+];
+
+// Red blob colors for active listening
+const listeningBlobColors = ['rgb(255, 107, 107)', 'rgb(255, 71, 71)', 'rgb(209, 45, 45)'];
+
+// Pulsing blob colors after listening (white/gray)
+const pulsingBlobColors = ['rgb(255, 255, 255)', 'rgb(224, 224, 224)', 'rgb(204, 204, 204)'];
+
+// Loading messages to display after speech ends
+const loadingMessages = [
+  "SPINNING UP SOME TUNES",
+  "COMING RIGHT UP",
+  "CURATING THE VIBE",
+  "FINDING THE PERFECT BEAT",
+  "MATCHING YOUR MOOD",
+  "HARMONIZING FREQUENCIES",
+  "TUNING THE COSMIC RADIO",
+  "DECODING MUSICAL PATTERNS",
+  "EXPLORING THE SOUNDSCAPE",
+  "CRAFTING YOUR SONIC JOURNEY"
+];
+
 const Harmony = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -64,6 +91,21 @@ const Harmony = () => {
 
   // Add inside your Harmony component to compute a vertical scale based on viewport height
   const [starScale, setStarScale] = useState(1);
+
+  // New state variables
+  const [blobColors, setBlobColors] = useState(defaultBlobColors);
+  const [displayText, setDisplayText] = useState("TAP TO ASK HARMONY");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceLevel, setVoiceLevel] = useState(0);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const microphoneStreamRef = useRef(null);
+  
+  // New state for cycling loading messages and managing voice state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [ellipsisCount, setEllipsisCount] = useState(0);
+  const loadingMessageTimerRef = useRef(null);
+  const ellipsisTimerRef = useRef(null);
 
   useEffect(() => {
     const updateScale = () => {
@@ -138,24 +180,171 @@ const Harmony = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Initialize Web Speech API
+  // Function to start a rotating series of loading messages with animated ellipsis
+  const startLoadingMessageCycle = () => {
+    // Clear any existing timers
+    if (loadingMessageTimerRef.current) {
+      clearInterval(loadingMessageTimerRef.current);
+      loadingMessageTimerRef.current = null;
+    }
+    
+    if (ellipsisTimerRef.current) {
+      clearInterval(ellipsisTimerRef.current);
+      ellipsisTimerRef.current = null;
+    }
+    
+    // Get a random loading message to start
+    const randomMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+    setDisplayText(randomMessage);
+    setEllipsisCount(0);
+    
+    // Create a timer for ellipsis animation (every 400ms)
+    ellipsisTimerRef.current = setInterval(() => {
+      setEllipsisCount(prev => (prev + 1) % 4); // Cycle 0-3 (none, ., .., ...)
+    }, 400);
+    
+    // Create a timer for message cycling (every 5 seconds)
+    loadingMessageTimerRef.current = setInterval(() => {
+      // Get a new message that's different from the current one
+      let newMessage;
+      let currentMessageWithoutEllipsis = displayText.replace(/\.+$/, '');
+      
+      do {
+        newMessage = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+      } while (newMessage === currentMessageWithoutEllipsis && loadingMessages.length > 1);
+      
+      setDisplayText(newMessage);
+      setEllipsisCount(0); // Reset ellipsis animation
+    }, 5000);
+  };
+  
+  // Function to stop the loading message cycle
+  const stopLoadingMessageCycle = () => {
+    if (loadingMessageTimerRef.current) {
+      clearInterval(loadingMessageTimerRef.current);
+      loadingMessageTimerRef.current = null;
+    }
+    
+    if (ellipsisTimerRef.current) {
+      clearInterval(ellipsisTimerRef.current);
+      ellipsisTimerRef.current = null;
+    }
+  };
+  
+  // Effect to handle the full display text with ellipsis
+  useEffect(() => {
+    if (isProcessing && ellipsisCount > 0) {
+      const baseText = displayText.replace(/\.+$/, '');
+      const ellipsis = '.'.repeat(ellipsisCount);
+      setDisplayText(baseText + ellipsis);
+    }
+  }, [ellipsisCount, isProcessing]);
+  
+  // Cleanup timers on component unmount
+  useEffect(() => {
+    return () => {
+      stopLoadingMessageCycle();
+      cleanupAudioContext();
+    };
+  }, []);
+
+  // Initialize Web Speech API and Audio API for voice level detection
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
+      recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = 'en-US';
       
       recognitionRef.current.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        setInputMessage(transcript);
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
+        }
+
+        // Update display text with interim or final results
+        const transcript = finalTranscript || interimTranscript;
+        const maxWords = 15; // Max words to display
+        const words = transcript.trim().split(' ');
+        const truncatedTranscript = words.length > maxWords
+          ? '... ' + words.slice(-maxWords).join(' ')
+          : transcript;
+
+        // Only update if in voice mode and listening (not processing)
+        if (uiStage === 'voice-listening' && !isProcessing) {
+           setDisplayText(truncatedTranscript || 'LISTENING...'); // Show placeholder if empty
+        }
+
+        // If final transcript received, maybe process it?
+        if (finalTranscript) {
+          console.log("Final Transcript:", finalTranscript);
+        }
       };
       
+      recognitionRef.current.onstart = () => {
+        setIsListening(true);
+        setIsProcessing(false);
+        stopLoadingMessageCycle(); // Stop any ongoing message cycle
+        
+        if (uiStage === 'voice-listening') {
+          setDisplayText('LISTENING...'); // Reset text on start
+          setBlobColors(listeningBlobColors); // Ensure red colors on start
+          
+          // Try to setup audio analyzer for voice level detection
+          setupVoiceLevelDetection();
+        }
+      };
+
+      recognitionRef.current.onaudiostart = () => {
+        if (uiStage === 'voice-listening') {
+          setIsSpeaking(true); // User started speaking
+        }
+      };
+
+      recognitionRef.current.onaudioend = () => {
+        if (uiStage === 'voice-listening') {
+          setIsSpeaking(false); // User stopped speaking
+          startProcessingState();
+        }
+      };
+
       recognitionRef.current.onend = () => {
         setIsListening(false);
+        // Check if we are still in voice mode. User might have clicked away.
+        if (uiStage === 'voice-listening') {
+          setIsSpeaking(false); // Ensure speaking state is false
+          
+          // If not already processing, start processing state
+          if (!isProcessing) {
+            startProcessingState();
+          }
+        }
       };
-      
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+        setIsSpeaking(false);
+        
+        // Handle error state if needed, maybe revert UI?
+        if (uiStage === 'voice-listening') {
+          setBlobColors(defaultBlobColors); // Revert colors on error
+          setDisplayText("ERROR - TRY AGAIN");
+          setIsProcessing(false);
+          stopLoadingMessageCycle();
+          
+          // Clean up audio context
+          cleanupAudioContext();
+        }
+      };
+
       setBrowserSupportsSpeechRecognition(true);
     } else {
       setBrowserSupportsSpeechRecognition(false);
@@ -165,11 +354,163 @@ const Harmony = () => {
     // Cleanup
     return () => {
       if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort(); // Stop any ongoing recognition
+        } catch (err) {
+          console.error("Error stopping speech recognition:", err);
+        }
         recognitionRef.current.onresult = null;
+        recognitionRef.current.onstart = null;
+        recognitionRef.current.onaudiostart = null;
+        recognitionRef.current.onaudioend = null;
         recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
       }
+      
+      // Clean up audio context
+      cleanupAudioContext();
+      // Clean up message cycling
+      stopLoadingMessageCycle();
     };
-  }, []);
+  }, [uiStage, isProcessing]);
+  
+  // Function to start the "processing" state (after voice input ends)
+  const startProcessingState = () => {
+    // Set state to processing
+    setIsProcessing(true);
+    
+    // Apply visual changes
+    setBlobColors(pulsingBlobColors);
+    
+    // Start the loading message cycle
+    startLoadingMessageCycle();
+    
+    // Clean up audio context - no longer need mic access
+    cleanupAudioContext();
+  };
+  
+  // Function to restart listening
+  const restartListening = () => {
+    // Stop any ongoing message cycling
+    stopLoadingMessageCycle();
+    
+    // Reset processing state
+    setIsProcessing(false);
+    
+    // Clear any previous recognition that might be happening
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (err) {
+        console.error("Error stopping speech recognition:", err);
+      }
+    }
+    
+    // Change colors back to listening mode
+    setBlobColors(listeningBlobColors);
+    setDisplayText('LISTENING...');
+    
+    // Start the recognition again after a short delay
+    setTimeout(() => {
+      try {
+        recognitionRef.current?.start();
+      } catch (error) {
+        console.error('Speech recognition restart error:', error);
+        setDisplayText("ERROR - TRY AGAIN");
+        setBlobColors(defaultBlobColors);
+        setIsProcessing(false);
+      }
+    }, 100);
+  };
+  
+  // Function to set up voice level detection using Web Audio API
+  const setupVoiceLevelDetection = () => {
+    try {
+      // Only setup once and only if browser supports it
+      if (!audioContextRef.current && window.AudioContext) {
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 256;
+        
+        // Request microphone access
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+          .then(stream => {
+            microphoneStreamRef.current = stream;
+            const microphone = audioContextRef.current.createMediaStreamSource(stream);
+            microphone.connect(analyserRef.current);
+            
+            // Start analyzing audio levels
+            analyzeAudioLevel();
+          })
+          .catch(err => {
+            console.error("Error accessing microphone:", err);
+          });
+      } else if (audioContextRef.current && analyserRef.current) {
+        // If already set up, just restart analysis
+        analyzeAudioLevel();
+      }
+    } catch (err) {
+      console.error("Error setting up audio analysis:", err);
+    }
+  };
+  
+  // Function to analyze audio levels
+  const analyzeAudioLevel = () => {
+    if (!analyserRef.current || uiStage !== 'voice-listening' || !isSpeaking) {
+      return; // Stop if we're not in listening mode or the component unmounted
+    }
+    
+    const dataArray = new Uint8Array(analyserRef.current.fftSize);
+    analyserRef.current.getByteTimeDomainData(dataArray);
+    
+    // Calculate audio level (0-1)
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      // Convert from 0-255 to -128-127
+      const amplitude = Math.abs((dataArray[i] - 128) / 128);
+      sum += amplitude;
+    }
+    const avgAmplitude = sum / dataArray.length;
+    
+    // Smooth the level and apply some scaling to make it more reactive
+    const scaledLevel = Math.min(1, avgAmplitude * 5); // Scale up for visibility
+    setVoiceLevel(scaledLevel);
+    
+    // Continue analysis in animation frame
+    requestAnimationFrame(analyzeAudioLevel);
+  };
+  
+  // Clean up audio context resources - ensure thorough cleanup for cross-browser compatibility
+  const cleanupAudioContext = () => {
+    // Stop microphone stream if active
+    if (microphoneStreamRef.current) {
+      try {
+        microphoneStreamRef.current.getTracks().forEach(track => {
+          track.stop();
+          track.enabled = false;
+        });
+        microphoneStreamRef.current = null;
+      } catch (err) {
+        console.error("Error stopping microphone stream:", err);
+      }
+    }
+    
+    // Close audio context if open
+    if (audioContextRef.current) {
+      try {
+        if (audioContextRef.current.state !== 'closed') {
+          audioContextRef.current.suspend();
+          // Don't actually close it as we might need it again
+          // audioContextRef.current.close();
+        }
+      } catch (err) {
+        console.error("Error suspending audio context:", err);
+      }
+    }
+    
+    // Reset voice level
+    setVoiceLevel(0);
+  };
 
   // Handle star click event to show mode selection
   useEffect(() => {
@@ -245,18 +586,21 @@ const Harmony = () => {
   const leftCloudVariants = {
     initial: { x: -300, opacity: 0 },
     stars: { x: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
+    'voice-listening': { x: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
     chat: { x: -120, opacity: 0.5, transition: { duration: 0.8, ease: "easeOut" } }
   };
 
   const rightCloudVariants = {
     initial: { x: 300, opacity: 0 },
     stars: { x: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
+    'voice-listening': { x: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
     chat: { x: 120, opacity: 0.5, transition: { duration: 0.8, ease: "easeOut" } }
   };
 
   const bottomCloudVariants = {
     initial: { y: 100, opacity: 0 },
     stars: { y: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
+    'voice-listening': { y: 0, opacity: 0.85, transition: { duration: 1, ease: "easeOut" } },
     chat: { y: 50, opacity: 0.5, transition: { duration: 0.8, ease: "easeOut" } }
   };
 
@@ -264,18 +608,21 @@ const Harmony = () => {
   const largeStarVariants = {
     initial: { opacity: 0, scale: 0.5 },
     stars: { opacity: 1, scale: 1, transition: { delay: 0.3, duration: 0.8, ease: "easeOut" } },
+    'voice-listening': { opacity: 1, scale: 1, transition: { delay: 0.3, duration: 0.8, ease: "easeOut" } },
     chat: { opacity: 0, scale: 1.2, transition: { duration: 0.4 } }
   };
 
   const smallStarVariants = {
     initial: { opacity: 0, scale: 0.5 },
     stars: { opacity: 1, scale: 1, transition: { delay: 0.5, duration: 0.8, ease: "easeOut" } },
+    'voice-listening': { opacity: 1, scale: 1, transition: { delay: 0.5, duration: 0.8, ease: "easeOut" } },
     chat: { opacity: 0, scale: 1.2, transition: { duration: 0.4 } }
   };
 
   const textVariants = {
     initial: { opacity: 0, y: 20 },
     stars: { opacity: 1, y: 0, transition: { delay: 0.7, duration: 0.6, ease: "easeOut" } },
+    'voice-listening': { opacity: 1, y: 0, transition: { delay: 0.7, duration: 0.6, ease: "easeOut" } },
     chat: { opacity: 0, y: -20, transition: { duration: 0.4 } }
   };
 
@@ -341,17 +688,99 @@ const Harmony = () => {
   };
 
   // Function to handle Voice-Only Mode button click
-  const handleVoiceOnlyModeClick = () => {
-    // Do nothing for now, as specified
-    console.log('Voice-Only Mode clicked');
-  };
+  const handleVoiceOnlyModeClick = useCallback(() => {
+    if (!browserSupportsSpeechRecognition) {
+      // Handle browsers without support if needed
+      alert("Sorry, your browser doesn't support Speech Recognition.");
+      return;
+    }
+    
+    // Set initial state before transitioning to voice mode
+    setBlobColors(listeningBlobColors); // Set red colors immediately
+    setDisplayText('INITIALIZING...'); // Initial text
+    setIsSpeaking(false); // Reset speaking state
+    
+    // Delay the UI stage change to ensure colors are set first
+    setTimeout(() => {
+      setUiStage('voice-listening');
+      
+      // Start listening with another small delay
+      setTimeout(() => {
+        try {
+          recognitionRef.current?.start();
+          setDisplayText('LISTENING...');
+        } catch (error) {
+          console.error('Speech recognition start error:', error);
+          setDisplayText("ERROR - CAN'T START");
+          setBlobColors(defaultBlobColors);
+          // Maybe revert stage?
+          setTimeout(() => setUiStage('mode-select'), 1500);
+        }
+      }, 100);
+    }, 50);
+  }, [browserSupportsSpeechRecognition]);
 
-  // Star container click handler
-  const handleStarContainerClick = () => {
+  // Star container click handler with updated toggle behavior
+  const handleStarContainerClick = useCallback(() => {
     if (uiStage === 'stars') {
       document.dispatchEvent(new CustomEvent('harmony-stars-clicked'));
+    } else if (uiStage === 'voice-listening') {
+      // Toggle behavior based on current state
+      if (isProcessing) {
+        // If currently processing, restart listening
+        restartListening();
+      } else {
+        // If currently listening, stop and switch to processing
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch (err) {
+            console.error("Error stopping speech recognition:", err);
+          }
+        }
+        setIsListening(false);
+        setIsSpeaking(false);
+        startProcessingState();
+      }
+    }
+  }, [uiStage, isProcessing]);
+
+  // Define dynamic animation for stars based on blobColors and uiStage
+  const useStarAnimation = (baseAnimation, isBlue = false) => {
+    // Add safety check for blobColors
+    if (!blobColors || !Array.isArray(blobColors) || blobColors.length === 0) {
+      return baseAnimation;
+    }
+
+    // Determine if we should be in "pulsing mode" - after speech when colors are white/gray
+    const isPulsingMode = uiStage === 'voice-listening' && 
+                          blobColors[0] === pulsingBlobColors[0] &&
+                          !isSpeaking;
+
+    if (isPulsingMode) {
+      // Return spinning animation when in pulsing mode (after speaking)
+      return {
+        rotate: 360,
+        transition: {
+          rotate: {
+            type: 'spring',
+            stiffness: 60,
+            damping: 10,
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 2
+          }
+        }
+      };
+    } else {
+      // Return the original idle animation for all other cases
+      return baseAnimation;
     }
   };
+
+  // Calculate the dynamic animations based on current state
+  const dynamicGoldStarAnimation = useStarAnimation(goldStarIdleAnimation);
+  const dynamicBlueStarAnimation = useStarAnimation(blueStarIdleAnimation, true);
 
   return (
     <div style={{
@@ -389,7 +818,7 @@ const Harmony = () => {
       >
         <Cloud 
           src={cloudsSvg}
-          animate={uiStage === 'stars' ? cloudIdleAnimation : undefined}
+          animate={(uiStage === 'stars' || uiStage === 'voice-listening') ? cloudIdleAnimation : undefined}
           style={{
             width: '100%',
             filter: 'brightness(0.7) contrast(1.1)',
@@ -416,7 +845,7 @@ const Harmony = () => {
       >
         <Cloud 
           src={cloudsSvg}
-          animate={uiStage === 'stars' ? cloudIdleAnimation : undefined}
+          animate={(uiStage === 'stars' || uiStage === 'voice-listening') ? cloudIdleAnimation : undefined}
           style={{
             width: '100%',
             filter: 'brightness(0.7) contrast(1.1)',
@@ -442,7 +871,7 @@ const Harmony = () => {
       >
         <Cloud 
           src={cloudsSvg}
-          animate={uiStage === 'stars' ? cloudIdleAnimation : undefined}
+          animate={(uiStage === 'stars' || uiStage === 'voice-listening') ? cloudIdleAnimation : undefined}
           style={{
             width: '100%',
             filter: 'brightness(0.7) contrast(1.1)',
@@ -463,7 +892,8 @@ const Harmony = () => {
           alignItems: 'center',
           width: '100%',
           height: 'auto',
-          pointerEvents: 'none',
+          pointerEvents: (uiStage === 'stars' || uiStage === 'voice-listening') ? 'auto' : 'none',
+          cursor: (uiStage === 'stars' || uiStage === 'voice-listening') ? 'pointer' : 'default',
           zIndex: 10
         }}
       >
@@ -479,8 +909,8 @@ const Harmony = () => {
             left: '0px',  // Shift left from center
             marginTop: '100px',
             marginBottom: '80px', // Space between stars and text
-            pointerEvents: 'auto', // Enable clicking
-            cursor: uiStage === 'stars' ? 'pointer' : 'default',
+            pointerEvents: 'auto', // Allow pointer events on the container
+            cursor: (uiStage === 'stars' || uiStage === 'voice-listening') ? 'pointer' : 'default', // Cursor only when interactive
             zIndex: 10
           }}
         >
@@ -495,11 +925,7 @@ const Harmony = () => {
             zIndex: 1
           }}>
             <AnimatedBlob
-              colors={[
-                'rgba(166, 104, 255, 1.0)', // Pure purple - full opacity
-                'rgba(151, 225, 251, 1.0)', // Pure light blue - full opacity
-                'rgba(155, 198, 252, 1.0)'  // Pure medium blue - full opacity
-              ]}
+              colors={blobColors}
               style={{
                 width: '100%',
                 height: '100%',
@@ -507,9 +933,11 @@ const Harmony = () => {
                 filter: 'blur(40px)',
                 boxShadow: '0 0 20px rgba(166, 104, 255, 0.8)',
                 opacity: 0.9,
-                pointerEvents: 'none'
+                pointerEvents: 'none',
+                transition: 'all 1s ease-in-out'
               }}
               speed={0.4}
+              voiceLevel={voiceLevel}
             />
           </div>
           
@@ -525,7 +953,7 @@ const Harmony = () => {
           }}>
             <Star
               src={harmonyGoldStar}
-              animate={uiStage === 'stars' ? goldStarIdleAnimation : undefined}
+              animate={(uiStage === 'stars' || uiStage === 'voice-listening') ? dynamicGoldStarAnimation : undefined}
               onClick={handleStarContainerClick}
               style={{
                 width: '300px',
@@ -549,7 +977,7 @@ const Harmony = () => {
           >
             <Star
               src={harmonyBlueStar}
-              animate={uiStage === 'stars' ? blueStarIdleAnimation : undefined}
+              animate={(uiStage === 'stars' || uiStage === 'voice-listening') ? dynamicBlueStarAnimation : undefined}
               style={{
                 width: '120px',
                 height: 'auto',
@@ -568,15 +996,17 @@ const Harmony = () => {
             textAlign: 'center',
             color: '#f5f5dc',
             fontFamily: 'Notable, sans-serif',
-            fontSize: '3.0rem',
+            fontSize: uiStage === 'voice-listening' ? '2.5rem' : '3.0rem',
             fontWeight: 'bold',
             letterSpacing: '0.3rem',
             textShadow: '0 0 8px rgba(255,255,255,0.4)',
             width: '100%',
-            pointerEvents: 'none'
+            minHeight: '4rem',
+            pointerEvents: 'none',
+            transition: 'font-size 0.3s ease'
           }}
         >
-          TAP TO ASK HARMONY
+          {displayText}
         </motion.div>
       </motion.div>
 
