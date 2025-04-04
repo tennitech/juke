@@ -58,7 +58,7 @@ const StartupScreen = ({ isLoading }) => {
         });
 
 
-    }, [refreshToken,accessToken]);
+    }, [refreshToken,accessToken, invalidateAccess, setAccessToken, setExpires, setRefreshToken]);
 
 
     return (
@@ -105,6 +105,7 @@ const StartupScreen = ({ isLoading }) => {
             </div>
 
             <button
+                className="button-underglow"
                 style={{
                     backgroundColor: "#1DB954", // Same as Profile login
                     color: "white",
@@ -127,6 +128,8 @@ const StartupScreen = ({ isLoading }) => {
                     setShowStartup(false);
                     requestUserAuthorization();
                 }}
+                onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
+                onMouseOut={e => e.target.style.transform = 'scale(1)'}
             >
                 <img
                     src={spotifyWhiteLogo}
@@ -138,6 +141,5 @@ const StartupScreen = ({ isLoading }) => {
         </div>
     );
 };
-
 
 export default StartupScreen;
