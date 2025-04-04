@@ -77,6 +77,32 @@ export async function performFetch(
     }
 }
 
+export async function performPost(
+    url, params, body,
+    accessToken, invalidateAccess
+) {
+    try {
+        const response = await axios.post(url, body, {
+            headers: {
+                "Authorization": "Bearer " + accessToken
+            },
+            params
+        });
+
+        return response?.data;
+    } catch (err) {
+        if (err.response) {
+            if (err.response.status === 401) {
+                return await performPost(
+                    url, params, body, accessToken, await invalidateAccess()
+                );
+            }
+        }
+
+        throw err;
+    }
+}
+
 export async function performPut(
     url, params, body,
     accessToken, invalidateAccess

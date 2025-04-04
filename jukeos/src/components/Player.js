@@ -1,5 +1,5 @@
 import {useState, createContext, useContext, useEffect, useCallback} from "react";
-import { SpotifyAuthContext, performFetch, performPut } from "../contexts/spotify";
+import { SpotifyAuthContext, performFetch, performPost, performPut } from "../contexts/spotify";
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 
 
@@ -7,7 +7,7 @@ const Player = ({ children }) => {
   const { playbackReady, accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
 
   const [player, setPlayer] = useState(null);
-  const [deviceId, setDeviceId] = useState(false);
+  const [deviceId, setDeviceId] = useState("");
   const [online, setOnline] = useState(false);
   const [active, setActive] = useState(false);
   const [track, setTrack] = useState(null);
@@ -133,6 +133,9 @@ const Player = ({ children }) => {
     }
   }, [accessToken]);
 
+  // Mutex to prevent simultaneous player state events from adding to queue multiple times
+  let addingQueue = false;
+
   //Use effect to keep track of the current Track.
   useEffect(() => {
     if (!player) return;
@@ -142,9 +145,70 @@ const Player = ({ children }) => {
         if (state && state.track_window.current_track) {
           setTrack(state.track_window.current_track);
           console.log("Setting Track: " + JSON.stringify(state.track_window.current_track));
-          // console.log(recentlyPlayed);
+          console.log(state);
           setPaused(state.paused);
           setActive(!!state);
+
+          if (state.track_window.next_tracks.length == 0 && !addingQueue) {
+            addingQueue = true;
+            // TODO: Get 2 similar song recommendations from Harmony
+            // let songs = queryHarmony(state.track_window.current_track, recentlyPlayed);
+            // For now, hard code in the top 5 songs on spotify right now
+            // Seems like spotify only lets us add up to 2 songs at a time without encountering strange bugs
+            
+            let songs = [
+              "Lady Gaga, Bruno Mars - Die With A Smile",
+              "ROSÉ, Bruno Mars - APT.",
+              "Billie Eilish - BIRDS OF A FEATHER",
+              "Doechii - Anxiety",
+              "Alex Warren - Ordinary"
+            ];
+
+            var song1 = songs[Math.floor(Math.random() * songs.length)];
+            var song2 = songs[Math.floor(Math.random() * songs.length)];
+            songs = songs.filter((song) => song == song1 || song == song2);
+
+            // BUG: Upon app startup, media controls seem to not work until
+            // You make a change and save the file (?)
+            let songPromises = songs.map(async (song) => {
+              // let [artist_str, songTitle] = song.split(" - ");
+              // let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
+              // console.log(query);
+              try {
+                const response = await performFetch(
+                  `https://api.spotify.com/v1/search?q=${song}&type=track&limit=1`,
+                  {},
+                  accessToken,
+                  invalidateAccess
+                );
+
+                if (response.tracks.items.length === 0) {
+                  console.error("No results found for query:", song);
+                  return "";
+                }
+
+                await performPost(
+                  `https://api.spotify.com/v1/me/player/queue`,
+                  {
+                    "device_id": deviceId,
+                    "uri": response.tracks.items[0].uri
+                  },
+                  null,
+                  accessToken, invalidateAccess
+                );
+                console.log("Added uri " + response.tracks.items[0].uri + " with popularity " + response.tracks.items[0].popularity + " to queue");
+
+                return response.tracks.items[0].uri;
+              } catch (err) {
+                console.error("Error getting recommendations:", err);
+                return "";
+              }
+            });
+
+            Promise.all(songPromises).then(() => {
+              addingQueue = false;
+            });
+          }
         }
       }).catch((err) => console.error("Error getting player state:", err));
     };
@@ -155,7 +219,7 @@ const Player = ({ children }) => {
     return () => {
       player.removeListener("player_state_changed", syncTrack);
     };
-  }, [player]);
+  }, [player, deviceId]);
 
   //TODO: Do better error catching
 
