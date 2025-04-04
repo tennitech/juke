@@ -105,6 +105,7 @@ const StartupScreen = ({ isLoading }) => {
             </div>
 
             <button
+                className="button-underglow"
                 style={{
                     backgroundColor: "#1DB954", // Same as Profile login
                     color: "white",
@@ -140,6 +141,5 @@ const StartupScreen = ({ isLoading }) => {
         </div>
     );
 };
-
 
 export default StartupScreen;

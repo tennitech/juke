@@ -456,3 +456,50 @@ html, body, #root {
   animation: rotate var(--speed) var(--easing) alternate infinite;
   border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
 }
+
+/* Source: https://codepen.io/pugson/pen/eYNXvyN */
+.button-underglow {
+  position: relative;
+  border-radius: 8px;
+  z-index: 1;
+}
+
+.button-underglow::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+  width: 110%;
+  height: 110%;
+  z-index: -1;
+  filter: blur(18px);
+  background: linear-gradient(
+          to left,
+          #0b3d2d,
+          #165a3f,
+          #247c52,
+          #42a36a,
+          #61d77b,
+          #42a36a,
+          #247c52,
+          #165a3f,
+          #0b3d2d
+  );
+  background-size: 200% 200%;
+  animation: animateGlow 4s linear infinite;
+  opacity: 0.5;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+@keyframes animateGlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+
