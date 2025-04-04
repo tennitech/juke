@@ -431,3 +431,28 @@ html, body, #root {
   }
 }
 
+/*
+ * Source: https://codepen.io/wilvander/pen/KKQrGgP
+ * Code for background gradient in startup
+ */
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.startup-gradient {
+  --size: 40vw;
+  --speed: 60s;
+  --easing: cubic-bezier(0.8, 0.2, 0.2, 0.8);
+
+  position: absolute;
+  width: var(--size);
+  height: var(--size);
+  filter: blur(calc(var(--size) / 5));
+  background-image: linear-gradient(#071c39, #527198);
+  animation: rotate var(--speed) var(--easing) alternate infinite;
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+}

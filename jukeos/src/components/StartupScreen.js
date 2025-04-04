@@ -70,15 +70,17 @@ const StartupScreen = ({ isLoading }) => {
                 left: 0,
                 width: "100vw",
                 height: "100vh",
-                background: "radial-gradient(circle, rgba(0,0,0,0.5) 70%, rgba(0,0,0,1) 100%)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
                 zIndex: 9999,
-                backdropFilter: "blur(10px)"
+                backdropFilter: "blur(25px)",
+                backgroundColor: "#071c3960" //Last two digits are opacity (Ex. 60 = 60%)
             }}
         >
+            <div className="startup-gradient"/>
+
             <div style={{
                 position: "absolute",
                 top: "30%", // Change to move up and down
