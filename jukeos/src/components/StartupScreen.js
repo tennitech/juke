@@ -58,7 +58,7 @@ const StartupScreen = ({ isLoading }) => {
         });
 
 
-    }, [refreshToken,accessToken]);
+    }, [refreshToken,accessToken, invalidateAccess, setAccessToken, setExpires, setRefreshToken]);
 
 
     return (
@@ -127,6 +127,8 @@ const StartupScreen = ({ isLoading }) => {
                     setShowStartup(false);
                     requestUserAuthorization();
                 }}
+                onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
+                onMouseOut={e => e.target.style.transform = 'scale(1)'}
             >
                 <img
                     src={spotifyWhiteLogo}
