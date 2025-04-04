@@ -7,7 +7,7 @@ import backgroundPng from '../assets/background.png';
 
 // TODO: Probably a better spot
 // But I want to get this working
-function requestUserAuthorization() {
+export function requestUserAuthorization() {
   const redirectParams = new URLSearchParams({
     scope: [
       "user-read-private",
