@@ -133,6 +133,9 @@ const Player = ({ children }) => {
     }
   }, [accessToken]);
 
+  // Mutex to prevent simultaneous player state events from adding to queue multiple times
+  let addingQueue = false;
+
   //Use effect to keep track of the current Track.
   useEffect(() => {
     if (!player) return;
@@ -145,39 +148,42 @@ const Player = ({ children }) => {
           console.log(state);
           setPaused(state.paused);
           setActive(!!state);
-          
-          // TODO: Find a better way to ensure the tracks only get added once
-          // or get spotify to stop sending 3-4 player state changes for some reason whenever a track starts playing
-          if (state.track_window.next_tracks.length == 0 && (state.loading || state.position == 0)) {
-            // TODO: Get 5 similar song recommendations from Harmony
+
+          if (state.track_window.next_tracks.length == 0 && !addingQueue) {
+            addingQueue = true;
+            // TODO: Get 2 similar song recommendations from Harmony
             // let songs = queryHarmony(state.track_window.current_track, recentlyPlayed);
             // For now, hard code in the top 5 songs on spotify right now
-            // TODO: Tweak the search query to give the best results
             // Seems like spotify only lets us add up to 2 songs at a time without encountering strange bugs
+            
             let songs = [
               "Lady Gaga, Bruno Mars - Die With A Smile",
-              // "ROSÉ, Bruno Mars - APT.",
+              "ROSÉ, Bruno Mars - APT.",
               "Billie Eilish - BIRDS OF A FEATHER",
-              // "Doechii - Anxiety",
-              // "Alex Warren - Ordinary"
+              "Doechii - Anxiety",
+              "Alex Warren - Ordinary"
             ];
 
+            var song1 = songs[Math.floor(Math.random() * songs.length)];
+            var song2 = songs[Math.floor(Math.random() * songs.length)];
+            songs = songs.filter((song) => song == song1 || song == song2);
+
             // BUG: Upon app startup, media controls seem to not work until
-            // You comment out the promise code below, save, and then uncomment and save (???)
+            // You make a change and save the file (?)
             let songPromises = songs.map(async (song) => {
-              let [artist_str, songTitle] = song.split(" - ");
-              let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
+              // let [artist_str, songTitle] = song.split(" - ");
+              // let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
               // console.log(query);
               try {
                 const response = await performFetch(
-                  `https://api.spotify.com/v1/search?q=${query}&type=track&limit=1`,
+                  `https://api.spotify.com/v1/search?q=${song}&type=track&limit=1`,
                   {},
                   accessToken,
                   invalidateAccess
                 );
 
                 if (response.tracks.items.length === 0) {
-                  console.error("No results found for query:", query);
+                  console.error("No results found for query:", song);
                   return "";
                 }
 
@@ -199,9 +205,9 @@ const Player = ({ children }) => {
               }
             });
 
-            // Promise.all(songPromises).then((songUris) => {
-            //   console.log(songUris);
-            // });
+            Promise.all(songPromises).then(() => {
+              addingQueue = false;
+            });
           }
         }
       }).catch((err) => console.error("Error getting player state:", err));
