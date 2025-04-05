@@ -151,15 +151,12 @@ const NavigationBar = () => {
       {/*  className={`spotlight ${isFlickering ? 'flicker' : ''}`}*/}
       {/*/>*/}
       <div className="user-profile-container">
-        <div style={{ position: 'relative' }}>
-          <AnimatedBlob colors={dominantColors} />
           <img
             src={profilePicture}
             alt="User Profile"
             className="user-profile-image"
             onClick={() => navigate('/profile')}
           />
-        </div>
       </div>
     </>
   );
