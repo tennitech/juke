@@ -7,89 +7,205 @@ import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import AnimatedBlob from './AnimatedBlob';
 import { useColorThief } from './Home';
 
+// Constants for album layout
+const ITEM_WIDTH = 150; // Width of album art
+const ITEM_HEIGHT = 150; // Height of album art
+const VIEW_HEIGHT = 350; // Height of the viewing area
+const HORIZONTAL_SPREAD = 0.85; // How much horizontal space to use (0-1)
 
 const ScrollWheel = ({ items, playUri }) => {
+  const [position, setPosition] = useState(0); // Position in the album list (0-1)
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [centerIndex, setCenterIndex] = useState(0);
-  const wheelRef = useRef(null);
-
+  const [startPosition, setStartPosition] = useState(0);
+  const containerRef = useRef(null);
+  
+  // Handle mouse down
   const handleMouseDown = (e) => {
     setIsDragging(true);
-    setStartX(e.pageX - wheelRef.current.offsetLeft);
-    setScrollLeft(wheelRef.current.scrollLeft);
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    // Snap to nearest item
-    if (wheelRef.current) {
-      const itemWidth = 190; // Width + gap
-      const scrollPosition = wheelRef.current.scrollLeft;
-      const newIndex = Math.round(scrollPosition / itemWidth);
-      setCenterIndex(newIndex);
-      wheelRef.current.scrollTo({
-        left: newIndex * itemWidth,
-        behavior: 'smooth'
-      });
+    setStartX(e.clientX);
+    setStartPosition(position);
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
     }
   };
-
+  
+  // Handle mouse up
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grab';
+    }
+    
+    // Snap to nearest item
+    if (items.length > 1) {
+      const itemFraction = 1 / (items.length - 1);
+      const nearestItemPosition = Math.round(position / itemFraction) * itemFraction;
+      setPosition(Math.max(0, Math.min(1, nearestItemPosition)));
+    }
+  };
+  
+  // Handle mouse move
   const handleMouseMove = (e) => {
     if (!isDragging) return;
     e.preventDefault();
-    const x = e.pageX - wheelRef.current.offsetLeft;
-    const walk = (x - startX) * 2;
-    wheelRef.current.scrollLeft = scrollLeft - walk;
     
-    // Update center index while dragging
-    const itemWidth = 190;
-    const currentIndex = Math.round(wheelRef.current.scrollLeft / itemWidth);
-    setCenterIndex(currentIndex);
+    const containerWidth = containerRef.current?.clientWidth || 1000;
+    const deltaX = (startX - e.clientX) / containerWidth;
+    const newPosition = startPosition + deltaX * 1.5; // Adjust sensitivity
+    
+    // Clamp position between 0 and 1
+    setPosition(Math.max(0, Math.min(1, newPosition)));
   };
-
+  
+  // Get visible items (filtering to just what we need to render)
+  const getVisibleItems = () => {
+    if (!items || items.length === 0) return [];
+    
+    // For simplicity, we'll render all items but adjust their visibility/position based on scroll position
+    return items.map((item, index) => {
+      // Calculate where this item should be in the scroll position (0-1)
+      const itemPosition = items.length > 1 ? index / (items.length - 1) : 0.5;
+      
+      // Calculate how far this item is from the current view position
+      const distanceFromCenter = Math.abs(itemPosition - position);
+      
+      // Calculate visibility threshold - items too far from view position aren't rendered
+      const isVisible = distanceFromCenter < 0.4; // Only show items within 40% of the view position
+      
+      // Calculate a factor (0-1) for how centered this item is (used for scaling, opacity)
+      const centeredness = Math.max(0, 1 - distanceFromCenter * 2.5);
+      
+      return {
+        item,
+        index,
+        itemPosition,
+        distanceFromCenter,
+        centeredness,
+        isVisible
+      };
+    }).filter(item => item.isVisible);
+  };
+  
+  // Calculate an item's position and style based on its place in the scroll
+  const getItemStyle = (visibleItem) => {
+    const { itemPosition, centeredness } = visibleItem;
+    const containerWidth = containerRef.current?.clientWidth || 1000;
+    
+    // Basic screen positioning - horizontal spread based on item position
+    // Note we spread items across up to HORIZONTAL_SPREAD (85%) of the container width
+    const relativePosition = itemPosition - position; // -1 to 1, with 0 being centered
+    
+    // Distribute albums horizontally
+    const horizontalSpread = containerWidth * HORIZONTAL_SPREAD;
+    const x = relativePosition * horizontalSpread;
+    
+    // Calculate rotation - albums should be tilted based on position
+    // Negative relativePosition = left side = negative rotation (tilting right)
+    // Positive relativePosition = right side = positive rotation (tilting left)
+    // Center position = no rotation
+    const rotationDegrees = relativePosition * 25; // Maximum ±25° rotation
+    
+    // Calculate scale - center items are bigger
+    const scale = 0.75 + centeredness * 0.45; // Scale from 0.75 to 1.2
+    
+    // Calculate opacity - center items are more opaque
+    const opacity = 0.3 + centeredness * 0.7; // Opacity from 0.3 to 1.0
+    
+    // Calculate z-index - center items are on top
+    const zIndex = Math.round(50 + centeredness * 50); // z-index from 50 to 100
+    
+    // Calculate vertical position - creating slight vertical arc
+    // Items further from center drop down slightly
+    const distanceFromCenterAbs = Math.abs(relativePosition);
+    const y = distanceFromCenterAbs * distanceFromCenterAbs * 120; // Parabolic drop
+    
+    return {
+      transform: `translate(${x}px, ${y}px) rotate(${rotationDegrees}deg) scale(${scale})`,
+      opacity,
+      zIndex
+    };
+  };
+  
+  // Get the central item for potentially highlighting
+  const getCenterIndex = () => {
+    if (items.length === 0) return -1;
+    return Math.round(position * (items.length - 1));
+  };
+  
+  const visibleItems = getVisibleItems();
+  const centerIndex = getCenterIndex();
+  
   return (
-    <div 
-      className="scroll-wheel-container"
-      ref={wheelRef}
+    <div
+      ref={containerRef}
+      className="albums-container"
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: `${VIEW_HEIGHT}px`,
+        overflow: 'hidden',
+        cursor: isDragging ? 'grabbing' : 'grab',
+      }}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onMouseMove={handleMouseMove}
+      onTouchStart={(e) => handleMouseDown({clientX: e.touches[0].clientX})}
+      onTouchEnd={handleMouseUp}
+      onTouchMove={(e) => handleMouseMove({clientX: e.touches[0].clientX, preventDefault: () => e.preventDefault()})}
     >
-      <div className="scroll-wheel-track">
-        {items.map((item, index) => {
-          const distance = Math.abs(index - centerIndex);
-          const scale = Math.max(0.6, 1 - (distance * 0.2));
-          const opacity = Math.max(0.3, 1 - (distance * 0.3));
-          
-          return (
-            <div 
-              key={index} 
-              className="scroll-wheel-item"
+      {visibleItems.map(visibleItem => {
+        const { item, index } = visibleItem;
+        const style = getItemStyle(visibleItem);
+        const isCentered = index === centerIndex;
+        
+        return (
+          <div
+            key={item.uri || index}
+            className="album-item"
+            style={{
+              position: 'absolute',
+              width: `${ITEM_WIDTH}px`,
+              height: `${ITEM_HEIGHT}px`,
+              top: '50%',
+              left: '50%',
+              marginLeft: `-${ITEM_WIDTH/2}px`,
+              marginTop: `-${ITEM_HEIGHT/2}px`,
+              transform: style.transform,
+              opacity: style.opacity,
+              zIndex: style.zIndex,
+              transition: isDragging ? 'none' : 'all 0.3s ease-out',
+            }}
+            onClick={() => {
+              if (isCentered) {
+                // Play if centered
+                playUri(item.uri);
+              } else {
+                // Otherwise scroll to this item
+                const targetPosition = items.length > 1 ? index / (items.length - 1) : 0;
+                setPosition(targetPosition);
+              }
+            }}
+          >
+            <img
+              src={item.imageUrl || defaultAlbumArt}
+              alt={item.title}
               style={{
-                transform: `scale(${scale})`,
-                opacity: opacity,
-                transition: 'all 0.3s ease'
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                boxShadow: `0 ${4 + style.zIndex/25}px ${15}px rgba(0,0,0,${0.3 + (100-style.zIndex)/300})`,
+                userSelect: 'none',
               }}
-            >
-              <img 
-                src={item.imageUrl || defaultAlbumArt}
-                alt={item.title}
-                style={{
-                  width: '150px',
-                  height: '150px',
-                  objectFit: 'cover',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
-                }}
-                onClick={() => playUri(item.uri)}
-              />
-            </div>
-          );
-        })}
-      </div>
+              onDragStart={(e) => e.preventDefault()}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -109,14 +225,51 @@ export function selectBestImage(images) {
 }
 
 const LibrarySection = ({ title, items, playUri }) => {
+  // Ensure items is always an array
+  const validItems = Array.isArray(items) ? items : [];
+
   return (
-    <div className="library-section">
-      <div className="section-title glow">
-        <h2>{title}</h2>
+    <div className="library-section" 
+      style={{ 
+        marginBottom: '120px', 
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      {/* Radial glow effect */}
+      <div style={{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        background: 'radial-gradient(ellipse at center, rgba(255,199,100,0.15) 0%, rgba(255,140,0,0.05) 40%, rgba(0,0,0,0) 70%)',
+        pointerEvents: 'none',
+        zIndex: 1,
+      }} />
+      
+      <div className="section-title" 
+        style={{ 
+          marginBottom: '40px',
+          position: 'relative',
+          zIndex: 5,
+        }}
+      >
+        <h2 style={{
+          fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+          fontFamily: 'Loubag, sans-serif',
+          color: '#FFC764',
+          textShadow: '0 0 20px rgba(255, 199, 100, 0.7)',
+          letterSpacing: '8px',
+          textAlign: 'center',
+          margin: 0,
+          textTransform: 'uppercase',
+        }}>
+          {title}
+        </h2>
       </div>
-      <div className="carousel-container">
-        <ScrollWheel items={items} playUri={playUri} />
-      </div>
+      
+      <ScrollWheel items={validItems} playUri={playUri} />
     </div>
   );
 };
