@@ -342,7 +342,7 @@ const LibraryTesting = () => {
           style={{
             width: '100%', // Back to 100%
             height: '100%',
-            filter: 'blur(70px)', // Back to original blur amount
+            filter: 'blur(100px)', // Was previously 70px, bit better UI now
             opacity: 0.75,
             position: 'absolute',
             top: 0,
