@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
