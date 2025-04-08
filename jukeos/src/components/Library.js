@@ -356,11 +356,6 @@ const LibraryTesting = () => {
       {/* Your existing content */}
       <div style={{ position: 'relative' }}>
         <div style={{
-          backgroundImage: `url(${backgroundPng})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
           minHeight: '100vh',
           padding: '0',
           perspective: '1000px',
