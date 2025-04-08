@@ -15,6 +15,7 @@ const Player = ({ children }) => {
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
   const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [renderSyncTrack, setRenderSyncTrack] = useState(false);
 
   //TODO Refactor a lot of this listener logic
   useEffect(() => {
@@ -199,7 +200,12 @@ const Player = ({ children }) => {
 
             Promise.all(songPromises).then(() => {
               addingQueue = false;
+              setRenderSyncTrack(!renderSyncTrack);
             });
+          }
+
+          if (!addingQueue) {
+            setRenderSyncTrack(!renderSyncTrack);
           }
         }
       }).catch((err) => console.error("Error getting player state:", err));
@@ -211,7 +217,7 @@ const Player = ({ children }) => {
     return () => {
       player.removeListener("player_state_changed", syncTrack);
     };
-  }, [player, track, deviceId]);
+  }, [player, deviceId, renderSyncTrack]);
 
   //TODO: Do better error catching
 
