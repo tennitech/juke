@@ -333,7 +333,6 @@ const LibraryTesting = () => {
         right: 0,
         width: '100%',
         height: '180px',
-        zIndex: 999,
         pointerEvents: 'none',
         margin: 0,
         padding: 0,
