@@ -363,19 +363,6 @@ const LibraryTesting = () => {
           position: 'relative',
           zIndex: 1
         }}>
-          {/* Content container */}
-          <div style={{
-            paddingTop: '120px',
-            paddingBottom: '40px',
-            paddingLeft: '20px',
-            paddingRight: '20px',
-            overflowY: 'auto',
-            height: '100vh',
-            position: 'relative',
-            zIndex: 3,
-            overscrollBehavior: 'none',
-            boxSizing: 'border-box'
-          }}>
             {sections.map((section, index) => (
               <LibrarySection
                 key={section.title}
