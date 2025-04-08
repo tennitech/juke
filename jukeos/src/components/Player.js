@@ -223,7 +223,7 @@ const Player = ({ children }) => {
     player.togglePlay().then(() => {
       console.log("Toggle Play");
     });
-  }, []);
+  }, [player]);
 
 
   const nextTrack = useCallback(() => {
@@ -233,7 +233,7 @@ const Player = ({ children }) => {
     player.nextTrack().then(() => {
       console.log('Skipped to next track!');
     });
-  }, []);
+  }, [player]);
 
   const prevTrack = useCallback(() => {
     if(player==null){
@@ -242,7 +242,7 @@ const Player = ({ children }) => {
     player.previousTrack().then(() => {
       console.log('Set to previous track!');
     });
-  }, []);
+  }, [player]);
 
   const playUri = (uri) => {
     console.log("Play", uri, uri.split(":")[1]);
