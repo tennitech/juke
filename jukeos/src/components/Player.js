@@ -143,7 +143,7 @@ const Player = ({ children }) => {
             fetchRecentlyPlayed();
           }
           setTrack(state.track_window.current_track);
-          console.log("Setting Track: " + JSON.stringify(track));
+          console.log("Setting Track: " + track?.uri);
           setPaused(state.paused);
           setActive(!!state);
 
