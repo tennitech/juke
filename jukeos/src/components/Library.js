@@ -361,7 +361,8 @@ const LibraryTesting = () => {
           perspective: '1000px',
           overflow: 'hidden',
           position: 'relative',
-          zIndex: 1
+          zIndex: 1,
+          paddingTop: '5%' // Will likely need to be tweaked when making this page responsive for desktop + Car Thing (800x480)
         }}>
             {sections.map((section, index) => (
               <LibrarySection
@@ -373,8 +374,7 @@ const LibraryTesting = () => {
             ))}
           </div>
         </div>
-      </div>
-    </>
+    </> 
   );
 };
 
