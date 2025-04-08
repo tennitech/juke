@@ -4,7 +4,7 @@ import axios from "axios";
 export const SpotifyAuthContext = createContext({
     accessToken: null,
     refreshToken: null,
-    invalidateAccess: () => null
+    invalidateAccess: () => null,
 });
 
 function loadFromStorage(setAccessToken, setRefreshToken) {
@@ -41,7 +41,7 @@ function loadFromUrl(setAccessToken, setRefreshToken, setExpires) {
     }
 }
 
-function saveSpotifyTokens(accessToken, refreshToken) {
+export function saveSpotifyTokens(accessToken, refreshToken) {
     if (accessToken && refreshToken) {
         localStorage.setItem("spotify_access_token", accessToken);
         localStorage.setItem("spotify_refresh_token", refreshToken);
@@ -205,7 +205,10 @@ export function ProvideSpotifyAuthContext({ children }) {
                 playbackReady,
                 accessToken,
                 refreshToken,
-                invalidateAccess
+                invalidateAccess,
+                setRefreshToken,
+                setAccessToken,
+                setExpires,
             }
         }>
             { children }
