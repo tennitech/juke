@@ -125,11 +125,6 @@ const Player = ({ children }) => {
   useEffect(() => {
     if (accessToken) {
       fetchRecentlyPlayed();
-
-      // Optional: Set up polling to keep recently played list updated
-      const pollInterval = setInterval(fetchRecentlyPlayed, 30000); // 30 seconds
-
-      return () => clearInterval(pollInterval);
     }
   }, [accessToken]);
 
@@ -143,9 +138,12 @@ const Player = ({ children }) => {
     const syncTrack = () => {
       player.getCurrentState().then((state) => {
         if (state && state.track_window.current_track) {
+          console.log(track?.uri !== state.track_window.current_track.uri);
+          if (track?.uri !== state.track_window.current_track.uri) {
+            fetchRecentlyPlayed();
+          }
           setTrack(state.track_window.current_track);
-          console.log("Setting Track: " + JSON.stringify(state.track_window.current_track));
-          console.log(state);
+          console.log("Setting Track: " + JSON.stringify(track));
           setPaused(state.paused);
           setActive(!!state);
 
@@ -168,12 +166,7 @@ const Player = ({ children }) => {
             var song2 = songs[Math.floor(Math.random() * songs.length)];
             songs = songs.filter((song) => song == song1 || song == song2);
 
-            // BUG: Upon app startup, media controls seem to not work until
-            // You make a change and save the file (?)
             let songPromises = songs.map(async (song) => {
-              // let [artist_str, songTitle] = song.split(" - ");
-              // let query = `${songTitle.toLowerCase()} ${artist_str.toLowerCase().replace(",", "")}`;
-              // console.log(query);
               try {
                 const response = await performFetch(
                   `https://api.spotify.com/v1/search?q=${song}&type=track&limit=1`,
@@ -219,7 +212,7 @@ const Player = ({ children }) => {
     return () => {
       player.removeListener("player_state_changed", syncTrack);
     };
-  }, [player, deviceId]);
+  }, [player, track, deviceId]);
 
   //TODO: Do better error catching
 
