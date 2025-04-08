@@ -138,12 +138,11 @@ const Player = ({ children }) => {
     const syncTrack = () => {
       player.getCurrentState().then((state) => {
         if (state && state.track_window.current_track) {
-          console.log(track?.uri !== state.track_window.current_track.uri);
           if (track?.uri !== state.track_window.current_track.uri) {
             fetchRecentlyPlayed();
           }
           setTrack(state.track_window.current_track);
-          console.log("Setting Track: " + track?.uri);
+          // console.log("Setting Track: " + track?.uri);
           setPaused(state.paused);
           setActive(!!state);
 
