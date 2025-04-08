@@ -5,7 +5,6 @@ import AnimatedBlob from './AnimatedBlob';
 import backgroundPng from '../assets/background.png';
 import spotifyWhiteLogo from "../assets/spotify-white-icon.svg";
 
-
 // TODO: Probably a better spot
 // But I want to get this working
 export function requestUserAuthorization() {
@@ -99,7 +98,8 @@ const Profile = () => {
 
         <h1 style={{ 
           fontSize: '3rem',
-          marginTop: '0px',
+          marginTop: '20px',
+          fontFamily: 'Loubag',
           textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
         }}>
           {profileData.displayName}
@@ -115,17 +115,18 @@ const Profile = () => {
           margin: '30px auto',
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}>
-          <div style={{marginBottom: '10px'}}>
+          <div style={{marginBottom: '10px', fontFamily: 'Loubag, sans-serif',
+          }}>
             <h3 style={{margin: '0 0 5px 0'}}>Email</h3>
             <p style={{margin: 0, opacity: 0.8}}>{profileData.email}</p>
           </div>
 
-          <div style={{marginBottom: '10px'}}>
+          <div style={{marginBottom: '10px', fontFamily: 'Loubag, sans-serif'}}>
             <h3 style={{margin: '0 0 5px 0'}}>Followers</h3>
             <p style={{margin: 0, opacity: 0.8}}>{profileData.followers}</p>
           </div>
 
-          <div style={{marginBottom: '10px'}}>
+          <div style={{marginBottom: '10px', fontFamily: 'Loubag, sans-serif'}}>
             <h3 style={{margin: '0 0 5px 0'}}>Country</h3>
             <p style={{margin: 0, opacity: 0.8}}>{profileData.country}</p>
           </div>
