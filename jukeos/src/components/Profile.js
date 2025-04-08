@@ -1,8 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
-
-import AnimatedBlob from './AnimatedBlob';
-import backgroundPng from '../assets/background.png';
 import spotifyWhiteLogo from "../assets/spotify-white-icon.svg";
 
 
@@ -42,7 +39,6 @@ const Profile = () => {
     spotifyUrl: '',
     country: ''
   });
-  const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
 
   useEffect(() => {
     if (accessToken) {
