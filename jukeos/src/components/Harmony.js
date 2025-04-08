@@ -531,8 +531,8 @@ const Harmony = () => {
     if (!inputMessage.trim() || !model) return;
 
     // Add user message to chat
-    const promptSearch = "\n\nPlease make sure to find more than 3 items and include song name and artist name.";
-    const promptFilter = "\n\nFrom this text above, make sure to filter 3 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\nSong 3\nArtist 3\".";
+    const promptSearch = "\n\nPlease make sure to find more than 3 items and include song name and artist name. If you cannot find, say nothing.";
+    const promptFilter = "\n\nFrom this text above, make sure to filter 3 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\nSong 3\nArtist 3\". If you cannot do it, say nothing.";
     
     const newUserMessage = { role: 'user', content: inputMessage };
     setMessages(prev => [...prev, newUserMessage]);
