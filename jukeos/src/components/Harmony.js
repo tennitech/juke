@@ -533,6 +533,9 @@ const Harmony = () => {
     // Add user message to chat
     const promptSearch = "\n\nPlease make sure to find more than 3 items and include song name and artist name.";
     const promptFilter = "\n\nFrom this text above, make sure to filter 3 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\nSong 3\nArtist 3\".";
+    let responseSearch = '';
+    let responseFilter = '';
+    
     const newUserMessage = { role: 'user', content: inputMessage };
     setMessages(prev => [...prev, newUserMessage]);
     setInputMessage('');
@@ -542,12 +545,12 @@ const Harmony = () => {
       // Gemini searching
       const contentSearch = [{ text: inputMessage + promptSearch }];
       const resultSearch = await model.generateContent({ contents: [{ role: 'user', parts: contentSearch }] });
-      const responseSearch = resultSearch.response.text();
+      responseSearch = resultSearch.response.text();
       
       // Gemini filtering
       const contentFilter = [{ text: responseSearch + promptFilter }];
       const resultFilter = await model.generateContent({ contents: [{ role: 'user', parts: contentFilter }] });
-      const responseFilter = resultFilter.response.text();
+      responseFilter = resultFilter.response.text();
       
       // Add AI response to chat
       setMessages(prev => [...prev, { role: 'ai', content: responseFilter }]);
