@@ -74,7 +74,18 @@ Ensure you have the following installed:
    npm install
    ```
 
-### Step 5: Start the App
+### Step 5: .env Initialization
+1. In the 'jukeos' folder create the .env file
+2. Input 3 values:
+   ````
+   REACT_APP_GEMINI_API_KEY 
+   SPOTIFY_CLIENT_ID
+   SPOTIFY_CLIENT_SECRET
+   ````
+3. These values are needed for Harmony and the Spotify Login to work. Get these keys from Spotify
+and Google Gemini. You will need to create an app on the Spotify Developer Portal as well as the Google AI Studio.
+
+### Step 6: Start the App
 1. Run the app in development mode:
    ```bash
    npm start

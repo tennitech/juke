@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
@@ -66,7 +66,6 @@ const Home = () => {
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
     const position = Math.floor(percentage * currentTrack.duration);
-    
     try {
       await performPut(
         'https://api.spotify.com/v1/me/player/seek',
@@ -91,7 +90,7 @@ const Home = () => {
     const interval = setInterval(async () => {
       try {
         const data = await performFetch('https://api.spotify.com/v1/me/player', {}, accessToken, invalidateAccess);
-        
+
         if (data) {
           setCurrentTrack(prev => ({
             ...prev,
@@ -108,8 +107,8 @@ const Home = () => {
   }, [accessToken]);
 
   return (
-    <div 
-      className="home-viewport" 
+    <div
+      className="home-viewport"
       style={{
         position: 'fixed',
         top: 0,
@@ -127,10 +126,10 @@ const Home = () => {
         isolation: 'isolate'
       }}
     >
-      <img src={cloudsSvg} alt="" className="clouds-main" style={{ 
-        position: 'absolute', 
+      <img src={cloudsSvg} alt="" className="clouds-main" style={{
+        position: 'absolute',
         width: 'min(45vw, 750px)',
-        height: 'auto', 
+        height: 'auto',
         top: 'clamp(10%, 5vh, 15%)',
         left: '0',
         opacity: 0.85,
@@ -138,11 +137,11 @@ const Home = () => {
         zIndex: -1,
         transform: 'translateX(-15%) translateY(clamp(0px, 5vh, 40px))'
       }} />
-      
-      <img src={cloudsSvg} alt="" className="clouds-small" style={{ 
-        position: 'absolute', 
+
+      <img src={cloudsSvg} alt="" className="clouds-small" style={{
+        position: 'absolute',
         width: 'min(35vw, 450px)', // Slightly reduced size
-        height: 'auto', 
+        height: 'auto',
         bottom: '2%', // Better bottom positioning
         right: '5%', // Anchor to right side instead of left
         opacity: 0.7, // More transparent
@@ -150,7 +149,7 @@ const Home = () => {
         zIndex: -1,
         transform: 'rotateY(180deg) scale(0.9)' // Flip and scale down slightly
       }} />
-      
+
       <div className="player-container" style={{
         width: '100%',
         maxWidth: '1200px',
@@ -369,7 +368,7 @@ const Home = () => {
             />
           </div>
         </div>
-        
+
         <div style={{
           width: 'clamp(280px, 40%, 500px)',
           marginTop: '-15px',
@@ -399,7 +398,7 @@ const Home = () => {
             overflow: 'visible',
             marginTop: 'clamp(0px, 0.3vh, 5px)'
           }}>
-            <div className="scroll-wheel-container" style={{ 
+            <div className="scroll-wheel-container" style={{
               height: '100%',
               width: '150%',
               marginTop: '-5px'
@@ -412,14 +411,10 @@ const Home = () => {
                 alignItems: 'center',
                 gap: 'clamp(5px, 1vw, 12px)'
               }}>
-                {isLoadingRecent ? (
-                  <div>Loading recently played...</div>
-                ) : recentlyPlayedError ? (
-                  <div>Error loading recently played tracks</div>
-                ) : (
+                { (
                   recentlyPlayed.map((track, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="scroll-wheel-item"
                       style={{
                         transform: index === 0 ? 'scale(1)' : `scale(${0.9 - index * 0.05})`,
@@ -428,7 +423,7 @@ const Home = () => {
                       }}
                       onClick={() => playUri(track.uri)}
                     >
-                      <img 
+                      <img
                         src={track.imageUrl}
                         alt={`${track.title} by ${track.artist}`}
                         style={{
