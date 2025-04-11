@@ -11,8 +11,6 @@ const NavigationBar = () => {
   const navbarContentRef = useRef(null);
   const location = useLocation();
   const [animationInProgress, setAnimationInProgress] = useState(false);
-  const [isFlickering, setIsFlickering] = useState(false);
-  const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
   const [dominantRGBA,setDominantRGBA] = useState("");
   const {accessToken, invalidateAccess} = useContext(SpotifyAuthContext);
   const [profilePicture, setProfilePicture] = useState(require("../assets/default-user-profile-image.svg").default);
@@ -31,7 +29,6 @@ const NavigationBar = () => {
       const palette = colorThief.getPalette(img, 2);
       //Set two different RGB formats.
       setDominantRGBA(palette.map(color => `rgba(${color[0]}, ${color[1]}, ${color[2]},0.9)`));
-      setDominantColors(palette.map(color => `rgb(${color[0]}, ${color[1]}, ${color[2]})`));
       //TODO Further investigate color scaling so it matches the background better
     };
   };
@@ -45,7 +42,6 @@ const NavigationBar = () => {
       const activeLink = navbarContentRef.current.querySelector('.active');
       if (activeLink) {
         setAnimationInProgress(true);
-        setIsFlickering(true);
         const navbarWidth = navbarContentRef.current.offsetWidth;
         const activeLinkCenter = activeLink.offsetLeft + activeLink.offsetWidth / 2;
         const offset = navbarWidth / 2 - activeLinkCenter;
@@ -55,7 +51,6 @@ const NavigationBar = () => {
 
         setTimeout(() => {
           setAnimationInProgress(false);
-          setIsFlickering(false);
         }, 800);
 
         // Update profile container position
@@ -90,7 +85,7 @@ const NavigationBar = () => {
         });
       }
     }
-  }, [location]);
+  }, [location, animationInProgress]);
 
   useEffect(() => {
     if (accessToken) {
@@ -176,15 +171,12 @@ const NavigationBar = () => {
         </div>
       </nav>
       <div className="user-profile-container">
-        <div style={{ position: 'relative' }}>
-          <AnimatedBlob colors={dominantColors} />
           <img
             src={profilePicture}
             alt="User Profile"
             className="user-profile-image"
             onClick={() => navigate('/profile')}
           />
-        </div>
       </div>
     </>
   );

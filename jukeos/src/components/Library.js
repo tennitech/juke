@@ -3,8 +3,9 @@ import { performFetch, SpotifyAuthContext } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import '../App.css';
 import backgroundPng from '../assets/background.png';
-import mainGradient from '../assets/main-gradient.svg';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
+import AnimatedBlob from './AnimatedBlob';
+import { useColorThief } from './Home';
 
 
 const ScrollWheel = ({ items, playUri }) => {
@@ -123,13 +124,17 @@ const LibrarySection = ({ title, items, playUri }) => {
 
 const LibraryTesting = () => {
   const { accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
-  const { playUri } = useContext(PlayerContext);
+  const { track, playUri } = useContext(PlayerContext);
 
   const [ madeForYou, setMadeForYou ] = useState([]);
   const [ playlists, setPlaylists ] = useState([]);
   const [ podcasts, setPodcasts ] = useState([]);
   const [ albums, setAlbums ] = useState([]);
   const [ artists, setArtists ] = useState([]);
+
+  // Determine album art URL and get colors using the hook
+  const albumArtUrl = track?.album?.images?.[0]?.url || defaultAlbumArt;
+  const colors = useColorThief(albumArtUrl);
 
   // Consider implementing pagination if needed
   const sections = useMemo(() => [
@@ -319,61 +324,57 @@ const LibraryTesting = () => {
   // useEffect(() => { fetch Spotify data here }, [accessToken]);
 
   return (
-    <div style={{ position: 'relative' }}>
-      {/* TODO: Backend - Consider adding loading spinner/state here */}
+    <>
+      {/* Fixed-position gradient that stays at bottom of viewport */}
       <div style={{
-        backgroundImage: `url(${backgroundPng})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundAttachment: 'fixed',
-        minHeight: '100vh',
-        padding: '20px',
-        perspective: '1000px',
-        overflow: 'hidden',
-        position: 'relative',
-        zIndex: 1
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        height: '180px',
+        pointerEvents: 'none',
+        margin: 0,
+        padding: 0,
       }}>
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '200vw',
-          height: 'auto',
-          zIndex: 2,
-          pointerEvents: 'none'
-        }}>
-          <img 
-            src={mainGradient} 
-            alt="gradient" 
-            style={{
-              width: '62%',
-              height: 'auto',
-              display: 'block',
-              margin: '0 auto'
-            }}
-          />
-        </div>
-        <div style={{
-          paddingTop: '120px',
-          paddingBottom: '40px',
-          overflowY: 'auto',
-          height: '100vh',
-          position: 'relative',
-          zIndex: 3
-        }}>
-          {sections.map((section, index) => (
-            <LibrarySection
-              key={section.title}
-              title={section.title} 
-              items={section.items}
-              playUri={playUri}
-            />
-          ))}
-        </div>
+        <AnimatedBlob
+          colors={colors}
+          style={{
+            width: '100%', // Back to 100%
+            height: '100%',
+            filter: 'blur(100px)', // Was previously 70px, bit better UI now
+            opacity: 0.75,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            borderRadius: 0,
+          }}
+          static={false}
+        />
       </div>
-    </div>
+
+      {/* Your existing content */}
+      <div style={{ position: 'relative' }}>
+        <div style={{
+          minHeight: '100vh',
+          padding: '0',
+          perspective: '1000px',
+          overflow: 'hidden',
+          position: 'relative',
+          zIndex: 1,
+          paddingTop: '5%' // Will likely need to be tweaked when making this page responsive for desktop + Car Thing (800x480)
+        }}>
+            {sections.map((section, index) => (
+              <LibrarySection
+                key={section.title}
+                title={section.title}
+                items={section.items}
+                playUri={playUri}
+              />
+            ))}
+          </div>
+        </div>
+    </> 
   );
 };
 

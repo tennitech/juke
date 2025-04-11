@@ -1,13 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SpotifyAuthContext, performFetch } from '../contexts/spotify';
-
-import AnimatedBlob from './AnimatedBlob';
-import backgroundPng from '../assets/background.png';
-
+import spotifyWhiteLogo from "../assets/spotify-white-icon.svg";
 
 // TODO: Probably a better spot
 // But I want to get this working
-function requestUserAuthorization() {
+export function requestUserAuthorization() {
   const redirectParams = new URLSearchParams({
     scope: [
       "user-read-private",
@@ -41,7 +38,6 @@ const Profile = () => {
     spotifyUrl: '',
     country: ''
   });
-  const [dominantColors, setDominantColors] = useState(['#4CAF50', '#2196F3']);
 
   useEffect(() => {
     if (accessToken) {
@@ -77,35 +73,30 @@ const Profile = () => {
 
   return (
     <div style={{
-      backgroundImage: `url(${backgroundPng})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      minHeight: '100vh',
       padding: '20px',
       color: '#ECE0C4',
       textAlign: 'center',
     }}>
-      <div style={{ marginTop: '100px' }}>
-        <div style={{ position: 'relative', width: '200px', height: '200px', margin: '0 auto' }}>
-          <AnimatedBlob colors={dominantColors} />
+      <div style={{
+        overflow: "hidden"
+      }}>
           <img
             src={profileData.profileImage}
             alt="Profile"
             style={{
-              width: '200px',
-              height: '200px',
+              width: '13vw',
               borderRadius: '50%',
               position: 'relative',
               zIndex: 1,
               boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
             }}
           />
-        </div>
 
         <h1 style={{ 
-          fontSize: '4rem', 
+          fontSize: '3rem',
           marginTop: '20px',
-          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)'
+          fontFamily: 'Loubag',
+          textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
         }}>
           {profileData.displayName}
         </h1>
@@ -115,48 +106,56 @@ const Profile = () => {
           backdropFilter: 'blur(10px)',
           borderRadius: '15px',
           padding: '20px',
-          maxWidth: '600px',
+          width: "min-content",
+          minWidth: "40vw",
           margin: '30px auto',
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
         }}>
-          <div style={{ marginBottom: '15px' }}>
-            <h3 style={{ margin: '0 0 5px 0' }}>Email</h3>
-            <p style={{ margin: 0, opacity: 0.8 }}>{profileData.email}</p>
+          <div style={{marginBottom: '10px', fontFamily: 'Loubag, sans-serif',
+          }}>
+            <h3 style={{margin: '0 0 5px 0'}}>Email</h3>
+            <p style={{margin: 0, opacity: 0.8}}>{profileData.email}</p>
           </div>
-          
-          <div style={{ marginBottom: '15px' }}>
-            <h3 style={{ margin: '0 0 5px 0' }}>Followers</h3>
-            <p style={{ margin: 0, opacity: 0.8 }}>{profileData.followers}</p>
+
+          <div style={{marginBottom: '10px', fontFamily: 'Loubag, sans-serif'}}>
+            <h3 style={{margin: '0 0 5px 0'}}>Followers</h3>
+            <p style={{margin: 0, opacity: 0.8}}>{profileData.followers}</p>
           </div>
-          
-          <div style={{ marginBottom: '15px' }}>
-            <h3 style={{ margin: '0 0 5px 0' }}>Country</h3>
-            <p style={{ margin: 0, opacity: 0.8 }}>{profileData.country}</p>
+
+          <div style={{marginBottom: '10px', fontFamily: 'Loubag, sans-serif'}}>
+            <h3 style={{margin: '0 0 5px 0'}}>Country</h3>
+            <p style={{margin: 0, opacity: 0.8}}>{profileData.country}</p>
           </div>
 
           <button
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-block',
-              marginTop: '20px',
-              padding: '10px 20px',
-              background: '#1DB954',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '20px',
-              transition: 'transform 0.2s ease',
-            }}
-            onClick={() => requestUserAuthorization()}
-            onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
-            onMouseOut={e => e.target.style.transform = 'scale(1)'}
+              style={{
+                backgroundColor: "#1DB954", // Same as Profile login
+                color: "white",
+                marginTop: "10px",
+                padding: "8px 26px",
+                fontFamily: 'Loubag, sans-serif',
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                boxShadow: "0 4px 6px rgba(255,255,255,0.2)",
+                transition: "transform 0.2s ease",
+
+              }}
+              onClick={() => {requestUserAuthorization();}}
+              onMouseOver={e => e.target.style.transform = 'scale(1.05)'}
+              onMouseOut={e => e.target.style.transform = 'scale(1)'}
           >
-            Login with Spotify
+            <img
+                src={spotifyWhiteLogo}
+                alt="Spotify Logo"
+                style={{width: "20px", height: "20px", translate: "-10px 2px"}}
+            />
+            Sign in with Spotify
           </button>
         </div>
       </div>
     </div>
   );
 };
-
 
 export default Profile;
