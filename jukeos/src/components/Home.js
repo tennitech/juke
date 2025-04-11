@@ -11,6 +11,7 @@ import ColorThief from "color-thief-browser";
 import nextIcon from "../assets/skip-forward-icon.svg"
 import prevIcon from "../assets/skip-backward-icon.svg"
 import shuffleIcon from "../assets/shuffle-icon.svg";
+import loopIcon from "../assets/loop-icon.svg";
 
 //Move location possibly in the future
 export function useColorThief(imageSrc) {
@@ -52,7 +53,9 @@ const Home = () => {
     progress: 0,
     duration: 1
   });
+
   const [shuffle, setShuffle] = useState(false);
+  const [loop, setLoop] = useState(false)
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -84,13 +87,33 @@ const Home = () => {
     }
   };
 
-
     const toggleShuffle = useCallback(() => {
-        setShuffle(!shuffle);
-        console.log("Shuffle toggled: " + shuffle);
-        performPut("https://api.spotify.com/v1/me/player/shuffle", {shuffle}, null,
-            accessToken, invalidateAccess); //There is no response
-    }, [shuffle]);
+        const newShuffle = !shuffle;
+        setShuffle(newShuffle);
+        performPut(
+            "https://api.spotify.com/v1/me/player/shuffle",
+            { state: newShuffle },
+            null,
+            accessToken,
+            invalidateAccess
+        );
+    }, [shuffle, accessToken, invalidateAccess]);
+
+
+    const toggleLoop = useCallback(() => {
+        const newLoop = !loop;
+        setLoop(newLoop);
+        const loopString = newLoop ? "track" : "off";
+        performPut(
+            "https://api.spotify.com/v1/me/player/repeat",
+            { state: loopString },
+            null,
+            accessToken,
+            invalidateAccess
+        );
+    }, [loop, accessToken, invalidateAccess]);
+
+
   useEffect(() => {
     if (!accessToken) return;
 
@@ -261,7 +284,7 @@ const Home = () => {
                   style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between', // Space out shuffle vs rest
+                      justifyContent: 'space-between',
                       marginTop: 'clamp(2vh, 3vh, 4vh)',
                       marginBottom: 'clamp(4vh, 6vh, 10vh)',
                       maxHeight: '80px',
@@ -371,38 +394,60 @@ const Home = () => {
                       </button>
                   </div>
 
-                  {/* Right Spacer (optional, use if you want symmetry) */}
-                  <div style={{ width: 'clamp(35px, 4vw, 50px)' }}></div>
+                  <button
+                      onClick={toggleLoop}
+                      style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '0',
+                          width: 'clamp(35px, 4vw, 50px)',
+                          height: 'clamp(35px, 4vw, 50px)',
+                      }}
+                  >
+                      <img
+                          src={loopIcon}
+                          alt="Loop"
+                          style={{
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0.8,
+                              filter: loop ? 'none' : 'grayscale(100%) brightness(1.4)',
+                              transition: 'opacity 0.2s ease',
+                          }}
+                      />
+                  </button>
+
               </div>
           </div>
 
-          <div style={{
-            position: 'relative',
-            width: 'clamp(180px, 38%, 420px)',
-            aspectRatio: '1/1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto',
-            flex: '0 1 auto',
-            zIndex: '1'
-          }}>
-            <AnimatedBlob
-              colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
-              style={{
-                width: '100%',
-                height: '100%',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                zIndex: '-1'
-              }}
-              static={false}
-            />
-            <img
-              src={track?.album?.images?.[0]?.url || defaultAlbumArt}
-              alt="Album Art"
-              style={{
-                position: 'absolute',
+            <div style={{
+                position: 'relative',
+                width: 'clamp(180px, 38%, 420px)',
+                aspectRatio: '1/1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                flex: '0 1 auto',
+                zIndex: '1'
+            }}>
+                <AnimatedBlob
+                    colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        zIndex: '-1'
+                    }}
+                    static={false}
+                />
+                <img
+                    src={track?.album?.images?.[0]?.url || defaultAlbumArt}
+                    alt="Album Art"
+                    style={{
+                        position: 'absolute',
                 width: '90%',
                 height: '90%',
                 objectFit: 'cover',
