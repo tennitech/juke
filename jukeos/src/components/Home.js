@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, {useContext, useState, useEffect, useRef, useCallback} from 'react';
 import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
@@ -10,6 +10,7 @@ import pauseIcon from '../assets/pause-icon.svg';
 import ColorThief from "color-thief-browser";
 import nextIcon from "../assets/skip-forward-icon.svg"
 import prevIcon from "../assets/skip-backward-icon.svg"
+import shuffleIcon from "../assets/shuffle-icon.svg";
 
 //Move location possibly in the future
 export function useColorThief(imageSrc) {
@@ -44,6 +45,7 @@ const Home = () => {
     duration: 1
   });
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
+  const [shuffle, setShuffle] = useState(false);
 
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -124,6 +126,14 @@ const Home = () => {
         })
     }
   };
+
+    const toggleShuffle = useCallback(() => {
+        setShuffle(!shuffle);
+        console.log("Shuffle toggled: " + shuffle);
+        performPut("https://api.spotify.com/v1/me/player/shuffle", {shuffle}, null,
+            accessToken, invalidateAccess); //There is no response
+    }, [shuffle]);
+  
 
   useEffect(() => {
     if (accessToken) {
@@ -302,86 +312,123 @@ const Home = () => {
               </div>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '2vw',
-                marginTop: 'clamp(2vh, 3vh, 4vh)',
-                marginBottom: 'clamp(4vh, 6vh, 10vh)',
-                maxHeight: '80px'
-              }}
-            >
-              <button
-                onClick={() => prevTrack()}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: 'clamp(35px, 4vw, 50px)',
-                  height: 'clamp(35px, 4vw, 50px)'
-                }}
-              >
-                <img
-                  src={prevIcon}
-                  alt="Previous"
+              <div
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between', // Space out shuffle vs rest
+                      marginTop: 'clamp(2vh, 3vh, 4vh)',
+                      marginBottom: 'clamp(4vh, 6vh, 10vh)',
+                      maxHeight: '80px',
                   }}
-                />
-              </button>
+              >
 
-              <button
-                onClick={() => togglePlay()}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: 'clamp(45px, 5vw, 70px)',
-                  height: 'clamp(45px, 5vw, 70px)'
-                }}
-              >
-                <img
-                  src={paused ? playIcon : pauseIcon}
-                  alt={paused ? "Play" : "Pause"}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
+                  {/* Left-aligned Shuffle Button */}
+                  <button
+                      onClick={() => toggleShuffle()}
+                      style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '0',
+                          width: 'clamp(35px, 4vw, 50px)',
+                          height: 'clamp(35px, 4vw, 50px)'
+                      }}
+                  >
+                      <img
+                          src={shuffleIcon}
+                          alt="Shuffle"
+                          style={{
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0.8,
+                              filter: shuffle ? 'none' : 'grayscale(100%) brightness(1.4)',
+                              transition: 'opacity 0.2s ease'
+                          }}
+                      />
+                  </button>
 
-              <button
-                onClick={() => nextTrack()}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: 'clamp(35px, 4vw, 50px)',
-                  height: 'clamp(35px, 4vw, 50px)'
-                }}
-              >
-                <img
-                  src={nextIcon}
-                  alt="Next"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
-            </div>
+                  {/* Center-aligned Playback Controls */}
+                  <div
+                      style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '2vw'
+                      }}
+                  >
+                      <button
+                          onClick={() => prevTrack()}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              width: 'clamp(35px, 4vw, 50px)',
+                              height: 'clamp(35px, 4vw, 50px)'
+                          }}
+                      >
+                          <img
+                              src={prevIcon}
+                              alt="Previous"
+                              style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  opacity: 0.8,
+                                  transition: 'opacity 0.2s ease'
+                              }}
+                          />
+                      </button>
+
+                      <button
+                          onClick={() => togglePlay()}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              width: 'clamp(45px, 5vw, 70px)',
+                              height: 'clamp(45px, 5vw, 70px)'
+                          }}
+                      >
+                          <img
+                              src={paused ? playIcon : pauseIcon}
+                              alt={paused ? "Play" : "Pause"}
+                              style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  opacity: 0.8,
+                                  transition: 'opacity 0.2s ease'
+                              }}
+                          />
+                      </button>
+
+                      <button
+                          onClick={() => nextTrack()}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              width: 'clamp(35px, 4vw, 50px)',
+                              height: 'clamp(35px, 4vw, 50px)'
+                          }}
+                      >
+                          <img
+                              src={nextIcon}
+                              alt="Next"
+                              style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  opacity: 0.8,
+                                  transition: 'opacity 0.2s ease'
+                              }}
+                          />
+                      </button>
+                  </div>
+
+                  {/* Right Spacer (optional, use if you want symmetry) */}
+                  <div style={{ width: 'clamp(35px, 4vw, 50px)' }}></div>
+              </div>
           </div>
 
           <div style={{
