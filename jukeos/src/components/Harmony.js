@@ -531,7 +531,7 @@ const Harmony = () => {
     if (!inputMessage.trim() || !model) return;
 
     // Add user message to chat
-    const promptSearch = "\n\nPlease make sure to find more than 3 items and include song name and artist name. If you cannot find, say nothing.";
+    const promptSearch = "\n\nPlease make sure to find more than 3 items and include the song name and the artist name. If you cannot find, say nothing.";
     const promptFilter = "\n\nFrom this text above, make sure to filter 3 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\nSong 3\nArtist 3\". If you cannot do it, say nothing.";
     
     const newUserMessage = { role: 'user', content: inputMessage };
@@ -578,7 +578,7 @@ const Harmony = () => {
       setIsLoading(false);
     }
 
-    const formattedSongs = fetchSongs(responseFilter);
+    const formattedSongs = fetchSongs(searchResult);
   };
 
   const fetchSongs = (responseFilter) => {
@@ -589,16 +589,17 @@ const Harmony = () => {
   
     // Split the responseFilter into lines
     const lines = responseFilter.split('\n');
-    const formattedSongs = [];
+    if (lines.length !== 7) {
+      throw new Error(`Invalid response format: Expected 7 lines, but got ${lines.length}`);
+    }
   
     // Iterate through the lines in pairs (song and artist)
+    const formattedSongs = [];
     for (let i = 0; i < lines.length; i += 2) {
       if (lines[i] && lines[i + 1]) {
         formattedSongs.push(`${lines[i]} - ${lines[i + 1]}`);
       }
     }
-  
-    console.log('Formatted Songs:', formattedSongs);
 
     return formattedSongs;
   };
@@ -1394,5 +1395,48 @@ const Harmony = () => {
     </div>
   );
 };
+
+// I am pretty sure that this should be integrated in `Player.js`, not here.
+export const getNextSongs = async (previousSongs) => {
+  const promptSearch = "Please find me two more songs that are similar to:\n" + previousSongs + "\nmake sure to include the song name and the artist name. If you cannot find, say nothing.";
+  const promptFilter = "\n\nFrom this text above, make sure to filter 3 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\nSong 3\nArtist 3\". If you cannot do it, say nothing.";
+
+  try {
+    // Initialize Gemini API
+    if (!process.env.REACT_APP_GEMINI_API_KEY) {
+      throw new Error("Gemini API key not found. Please add it to your .env file as REACT_APP_GEMINI_API_KEY.");
+    }
+
+    const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+
+    // Gemini searching and filtering.
+    const responseSearch = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: promptSearch,
+    });
+    const responseFilter = await genAI.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: responseSearch + promptFilter,
+    });
+
+    const lines = responseFilter.split('\n');
+    if (lines.length !== 5) {
+      throw new Error(`Invalid response format: Expected 4 lines, but got ${lines.length}`);
+    }
+
+    // Parse responseFilter into song-artist pairs
+    const formattedSongs = [];
+    for (let i = 0; i < lines.length; i += 2) {
+      if (lines[i] && lines[i + 1]) {
+        formattedSongs.push(`${lines[i]} - ${lines[i + 1]}`);
+      }
+    }
+
+    return formattedSongs; // Return the formatted songs
+  } catch (error) {
+    console.error("Error in getNextSongs:", error);
+    return [];
+  }
+}
 
 export default memo(Harmony);
