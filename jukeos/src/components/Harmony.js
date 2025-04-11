@@ -539,6 +539,8 @@ const Harmony = () => {
     setInputMessage('');
     setIsLoading(true);
 
+    let searchResult = "";
+
     try {
       // Gemini searching
       const contentSearch = [{ text: inputMessage + promptSearch }];
@@ -552,6 +554,8 @@ const Harmony = () => {
       
       // Add AI response to chat
       setMessages(prev => [...prev, { role: 'ai', content: responseFilter }]);
+
+      searchResult = responseFilter;
     } catch (error) {
       console.error("Error generating response:", error);
       
@@ -573,6 +577,30 @@ const Harmony = () => {
     } finally {
       setIsLoading(false);
     }
+
+    const formattedSongs = fetchSongs(responseFilter);
+  };
+
+  const fetchSongs = (responseFilter) => {
+    if (!responseFilter) {
+      console.error("No responseFilter provided.");
+      return [];
+    }
+  
+    // Split the responseFilter into lines
+    const lines = responseFilter.split('\n');
+    const formattedSongs = [];
+  
+    // Iterate through the lines in pairs (song and artist)
+    for (let i = 0; i < lines.length; i += 2) {
+      if (lines[i] && lines[i + 1]) {
+        formattedSongs.push(`${lines[i]} - ${lines[i + 1]}`);
+      }
+    }
+  
+    console.log('Formatted Songs:', formattedSongs);
+
+    return formattedSongs;
   };
 
   const toggleListening = () => {
