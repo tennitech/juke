@@ -13,8 +13,6 @@ const Player = ({ children }) => {
   const [track, setTrack] = useState(null);
   const [paused, setPaused] = useState(true);
   const [recentlyPlayed, setRecentlyPlayed] = useState([]);
-  const [recentlyPlayedError, setRecentlyPlayedError] = useState(null);
-  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
   const [renderSyncTrack, setRenderSyncTrack] = useState(false);
 
   //TODO Refactor a lot of this listener logic
@@ -83,51 +81,31 @@ const Player = ({ children }) => {
    * 
    * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
    */
-  const fetchRecentlyPlayed = () => {
-    if (accessToken) {
-      setIsLoadingRecent(true);
-
-      performFetch("https://api.spotify.com/v1/me/player/recently-played", { limit: 10 }, accessToken, invalidateAccess)
-        .then((response) => {
-          console.log("Successfully fetched recently played:", response);
-
-          if (response && response.items) {
-            // Transform the data to match our UI needs
-            const transformedTracks = response.items
-              .filter((item) => item && item.track && item.track.album)
-              .map((item) => ({
-                id: item.track.id,
-                title: item.track.name,
-                artist: item.track.artists[0].name,
-                imageUrl: item.track.album.images[0]?.url || defaultAlbumArt,
-                playedAt: new Date(item.played_at),
-                // Add any additional track data you need
-                albumName: item.track.album.name,
-                duration: item.track.duration_ms,
-                uri: item.track.uri
-              }))
-              .sort((a, b) => b.playedAt.getTime() - a.playedAt.getTime())
-
-            setRecentlyPlayed(transformedTracks);
-          }
-        })
-        .catch((error) => {
-          console.log(setRecentlyPlayed);
-          console.log(typeof(setRecentlyPlayed));
-          console.error("Failed to fetch recently played:", error);
-          setRecentlyPlayedError(error);
-        })
-        .finally(() => {
-          setIsLoadingRecent(false);
-        });
+  const updateRecentlyPlayed = (track) => {
+    if (track) {
+      let mostRecent = {
+        id: track.id,
+        title: track.name,
+        artist: track.artists[0].name,
+        imageUrl: track.album.images[0]?.url || defaultAlbumArt,
+        albumName: track.album.name,
+        duration: track.duration_ms,
+        uri: track.uri
+      };
+      let newRecentlyPlayed;
+      if (recentlyPlayed.length == 10) {
+        newRecentlyPlayed = [mostRecent, ...recentlyPlayed.slice(0, 9)];
+      } else {
+        newRecentlyPlayed = [mostRecent, ...recentlyPlayed];
+      }
+      setRecentlyPlayed(newRecentlyPlayed);
+      localStorage.setItem("recentlyPlayed", JSON.stringify(newRecentlyPlayed));
     }
   };
 
   useEffect(() => {
-    if (accessToken) {
-      fetchRecentlyPlayed();
-    }
-  }, [accessToken]);
+    setRecentlyPlayed(JSON.parse(localStorage.getItem("recentlyPlayed")) || []);
+  }, []);
 
   // Mutex to prevent simultaneous player state events from adding to queue multiple times
   let addingQueue = false;
@@ -140,7 +118,7 @@ const Player = ({ children }) => {
       player.getCurrentState().then((state) => {
         if (state && state.track_window.current_track) {
           if (track?.uri !== state.track_window.current_track.uri) {
-            fetchRecentlyPlayed();
+            updateRecentlyPlayed(track);
           }
           setTrack(state.track_window.current_track);
           // console.log("Setting Track: " + track?.uri);
@@ -284,8 +262,6 @@ const Player = ({ children }) => {
         nextTrack,
         prevTrack,
         recentlyPlayed,
-        recentlyPlayedError,
-        isLoadingRecent
       }
     }>
       { children }
@@ -306,6 +282,4 @@ export const PlayerContext = createContext({
   nextTrack: () => {},
   prevTrack: () => {},
   recentlyPlayed: [],
-  recentlyPlayedError: null,
-  isLoadingRecent: true
 });

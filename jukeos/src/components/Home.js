@@ -46,8 +46,6 @@ const Home = () => {
     nextTrack,
     prevTrack,
     recentlyPlayed,
-    recentlyPlayedError,
-    isLoadingRecent
   } = useContext(PlayerContext);
   const [currentTrack, setCurrentTrack] = useState({
     progress: 0,
@@ -418,7 +416,7 @@ const Home = () => {
                       className="scroll-wheel-item"
                       style={{
                         transform: index === 0 ? 'scale(1)' : `scale(${0.9 - index * 0.05})`,
-                        opacity: index === 0 ? 1 : 1 - index * 0.15,
+                        opacity: 1 - index * 0.06,
                         marginRight: index === recentlyPlayed.length - 1 ? 0 : 'clamp(5px, 1vw, 15px)'
                       }}
                       onClick={() => playUri(track.uri)}
