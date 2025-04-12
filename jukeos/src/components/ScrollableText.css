@@ -1,0 +1,106 @@
+/* The container clips overflowing content and applies a fade on edges */
+.scrollable-text-container {
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  width: 100%;
+  /* Default fade only on right edge */
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+  /* Longer smooth transition between states */
+  transition: -webkit-mask-image 0.8s ease, mask-image 0.8s ease;
+}
+
+/* Apply very subtle fade on left edge when preparing */
+.scrollable-text-container.is-preparing {
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.95) 0%, black 10%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, rgba(0,0,0,0.95) 0%, black 10%, black 95%, transparent 100%);
+}
+
+/* Apply stronger fade on both edges when scrolling */
+.scrollable-text-container.is-scrolling {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* Keep left fade active when text is at scrolled position */
+.scrollable-text-container.is-scrolled {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* Wrapper for the scrolling content - constrains the viewable area */
+.scrolling-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Main scrolling container */
+.scrolling-content {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+/* 
+ * Back-and-forth scrolling text animation
+ */
+.oscillating-text {
+  display: inline-block;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  /* Add subtle opacity transition for smoother state changes */
+  transition: opacity 0.6s ease;
+}
+
+/* Preparing to scroll - slight fade effect */
+.preparing-to-scroll {
+  opacity: 0.97;
+}
+
+/* Title gets slightly slower speed */
+.oscillating-text.title-speed {
+  animation-name: oscillate;
+  animation-duration: 28s;
+}
+
+/* Artist gets slightly faster speed */
+.oscillating-text.artist-speed {
+  animation-name: oscillate;
+  animation-duration: 26s;
+}
+
+/* 
+ * Keyframe animation with back-and-forth movement and pauses
+ */
+@keyframes oscillate {
+  /* Start with a 3-second pause (10% of title animation duration) */
+  0%, 10% {
+    transform: translateX(0);
+  }
+  
+  /* Move left until the end is just visible */
+  40% {
+    transform: translateX(var(--scroll-end));
+  }
+  
+  /* Pause at the left end for 3 seconds */
+  40%, 50% {
+    transform: translateX(var(--scroll-end));
+  }
+  
+  /* Move back to the right */
+  80% {
+    transform: translateX(0);
+  }
+  
+  /* End with the same 3-second pause before restarting */
+  80%, 100% {
+    transform: translateX(0);
+  }
+}
+
+/* Pause animation on hover */
+.oscillating-text:hover {
+  animation-play-state: paused;
+} 

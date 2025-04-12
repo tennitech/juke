@@ -4,6 +4,7 @@ import { PlayerContext } from './Player';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import '../App.css';
 import AnimatedBlob from './AnimatedBlob';
+import ScrollableText from './ScrollableText';
 import cloudsSvg from '../assets/clouds.svg';
 import playIcon from '../assets/play-icon.svg';
 import pauseIcon from '../assets/pause-icon.svg';
@@ -236,32 +237,35 @@ const Home = () => {
             paddingLeft: 'clamp(20px, 4vw, 60px)',
             flex: '1 1 auto'
           }}>
-            <h1 style={{
-              fontFamily: 'Loubag, sans-serif',
-              fontSize: 'clamp(2.2rem, 4vw, 4rem)',
-              margin: '0',
-              textAlign: 'left',
-              color: '#ECE0C4',
-              textShadow: `
-                2px 2px 0 rgba(255,0,0,0.2),
-                -2px -2px 0 rgba(0,0,255,0.2),
-                1px -1px 0 rgba(255,0,255,0.2)
-              `,
-              animation: 'textGlitch 3s infinite'
-            }}>
-              {track?.name || "Unknown"}
-            </h1>
+            <ScrollableText
+              text={track?.name || "Unknown"}
+              speed="title"
+              style={{
+                fontFamily: 'Loubag, sans-serif',
+                fontSize: 'clamp(2.2rem, 4vw, 4rem)',
+                margin: '0',
+                textAlign: 'left',
+                color: '#ECE0C4',
+                textShadow: `
+                  2px 2px 0 rgba(255,0,0,0.2),
+                  -2px -2px 0 rgba(0,0,255,0.2),
+                  1px -1px 0 rgba(255,0,255,0.2)
+                `,
+              }}
+            />
 
-            <h2 style={{
-              fontFamily: 'Notable, sans-serif',
-              fontSize: 'clamp(1.2rem, 2vw, 1.6rem)',
-              margin: '0',
-              opacity: 0.9,
-              letterSpacing: '1px',
-              color: 'white'
-            }}>
-              {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
-            </h2>
+            <ScrollableText
+              text={track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
+              speed="artist"
+              style={{
+                fontFamily: 'Notable, sans-serif',
+                fontSize: 'clamp(1.2rem, 2vw, 1.6rem)',
+                margin: '0',
+                opacity: 0.9,
+                letterSpacing: '1px',
+                color: 'white'
+              }}
+            />
 
             <div style={{
               display: 'flex',
