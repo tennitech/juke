@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from 'react';
+import React, {useContext, useState, useEffect, useRef, useCallback} from 'react';
 import { SpotifyAuthContext, performFetch, performPut } from '../contexts/spotify';
 import { PlayerContext } from './Player';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
@@ -10,6 +10,8 @@ import pauseIcon from '../assets/pause-icon.svg';
 import ColorThief from "color-thief-browser";
 import nextIcon from "../assets/skip-forward-icon.svg"
 import prevIcon from "../assets/skip-backward-icon.svg"
+import shuffleIcon from "../assets/shuffle-icon.svg";
+import loopIcon from "../assets/loop-icon.svg";
 
 //Move location possibly in the future
 export function useColorThief(imageSrc) {
@@ -52,6 +54,9 @@ const Home = () => {
     duration: 1
   });
 
+  const [shuffle, setShuffle] = useState(false);
+  const [loop, setLoop] = useState(false)
+
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
@@ -81,6 +86,33 @@ const Home = () => {
       console.error('Failed to seek:', error);
     }
   };
+
+    const toggleShuffle = useCallback(() => {
+        const newShuffle = !shuffle;
+        setShuffle(newShuffle);
+        performPut(
+            "https://api.spotify.com/v1/me/player/shuffle",
+            { state: newShuffle },
+            null,
+            accessToken,
+            invalidateAccess
+        );
+    }, [shuffle, accessToken, invalidateAccess]);
+
+
+    const toggleLoop = useCallback(() => {
+        const newLoop = !loop;
+        setLoop(newLoop);
+        const loopString = newLoop ? "track" : "off";
+        performPut(
+            "https://api.spotify.com/v1/me/player/repeat",
+            { state: loopString },
+            null,
+            accessToken,
+            invalidateAccess
+        );
+    }, [loop, accessToken, invalidateAccess]);
+
 
   useEffect(() => {
     if (!accessToken) return;
@@ -248,115 +280,174 @@ const Home = () => {
               </div>
             </div>
 
-            <div
-              style={{
+              <div
+                  style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: 'clamp(2vh, 3vh, 4vh)',
+                      marginBottom: 'clamp(4vh, 6vh, 10vh)',
+                      maxHeight: '80px',
+                  }}
+              >
+
+                  {/* Left-aligned Shuffle Button */}
+                  <button
+                      onClick={() => toggleShuffle()}
+                      style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '0',
+                          width: 'clamp(35px, 4vw, 50px)',
+                          height: 'clamp(35px, 4vw, 50px)'
+                      }}
+                  >
+                      <img
+                          src={shuffleIcon}
+                          alt="Shuffle"
+                          style={{
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0.8,
+                              filter: shuffle ? 'none' : 'grayscale(100%) brightness(1.4)',
+                              transition: 'opacity 0.2s ease'
+                          }}
+                      />
+                  </button>
+
+                  {/* Center-aligned Playback Controls */}
+                  <div
+                      style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '2vw'
+                      }}
+                  >
+                      <button
+                          onClick={() => prevTrack()}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              width: 'clamp(35px, 4vw, 50px)',
+                              height: 'clamp(35px, 4vw, 50px)'
+                          }}
+                      >
+                          <img
+                              src={prevIcon}
+                              alt="Previous"
+                              style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  opacity: 0.8,
+                                  transition: 'opacity 0.2s ease'
+                              }}
+                          />
+                      </button>
+
+                      <button
+                          onClick={() => togglePlay()}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              width: 'clamp(45px, 5vw, 70px)',
+                              height: 'clamp(45px, 5vw, 70px)'
+                          }}
+                      >
+                          <img
+                              src={paused ? playIcon : pauseIcon}
+                              alt={paused ? "Play" : "Pause"}
+                              style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  opacity: 0.8,
+                                  transition: 'opacity 0.2s ease'
+                              }}
+                          />
+                      </button>
+
+                      <button
+                          onClick={() => nextTrack()}
+                          style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: '0',
+                              width: 'clamp(35px, 4vw, 50px)',
+                              height: 'clamp(35px, 4vw, 50px)'
+                          }}
+                      >
+                          <img
+                              src={nextIcon}
+                              alt="Next"
+                              style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  opacity: 0.8,
+                                  transition: 'opacity 0.2s ease'
+                              }}
+                          />
+                      </button>
+                  </div>
+
+                  <button
+                      onClick={toggleLoop}
+                      style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '0',
+                          width: 'clamp(35px, 4vw, 50px)',
+                          height: 'clamp(35px, 4vw, 50px)',
+                      }}
+                  >
+                      <img
+                          src={loopIcon}
+                          alt="Loop"
+                          style={{
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0.8,
+                              filter: loop ? 'none' : 'grayscale(100%) brightness(1.4)',
+                              transition: 'opacity 0.2s ease',
+                          }}
+                      />
+                  </button>
+
+              </div>
+          </div>
+
+            <div style={{
+                position: 'relative',
+                width: 'clamp(180px, 38%, 420px)',
+                aspectRatio: '1/1',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '2vw',
-                marginTop: 'clamp(2vh, 3vh, 4vh)',
-                marginBottom: 'clamp(4vh, 6vh, 10vh)',
-                maxHeight: '80px'
-              }}
-            >
-              <button
-                onClick={() => prevTrack()}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: 'clamp(35px, 4vw, 50px)',
-                  height: 'clamp(35px, 4vw, 50px)'
-                }}
-              >
-                <img
-                  src={prevIcon}
-                  alt="Previous"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
+                margin: '0 auto',
+                flex: '0 1 auto',
+                zIndex: '1'
+            }}>
+                <AnimatedBlob
+                    colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        zIndex: '-1'
+                    }}
+                    static={false}
                 />
-              </button>
-
-              <button
-                onClick={() => togglePlay()}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: 'clamp(45px, 5vw, 70px)',
-                  height: 'clamp(45px, 5vw, 70px)'
-                }}
-              >
                 <img
-                  src={paused ? playIcon : pauseIcon}
-                  alt={paused ? "Play" : "Pause"}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
-
-              <button
-                onClick={() => nextTrack()}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '0',
-                  width: 'clamp(35px, 4vw, 50px)',
-                  height: 'clamp(35px, 4vw, 50px)'
-                }}
-              >
-                <img
-                  src={nextIcon}
-                  alt="Next"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    opacity: 0.8,
-                    transition: 'opacity 0.2s ease'
-                  }}
-                />
-              </button>
-            </div>
-          </div>
-
-          <div style={{
-            position: 'relative',
-            width: 'clamp(180px, 38%, 420px)',
-            aspectRatio: '1/1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto',
-            flex: '0 1 auto',
-            zIndex: '1'
-          }}>
-            <AnimatedBlob
-              colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
-              style={{
-                width: '100%',
-                height: '100%',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                zIndex: '-1'
-              }}
-              static={false}
-            />
-            <img
-              src={track?.album?.images?.[0]?.url || defaultAlbumArt}
-              alt="Album Art"
-              style={{
-                position: 'absolute',
+                    src={track?.album?.images?.[0]?.url || defaultAlbumArt}
+                    alt="Album Art"
+                    style={{
+                        position: 'absolute',
                 width: '90%',
                 height: '90%',
                 objectFit: 'cover',
