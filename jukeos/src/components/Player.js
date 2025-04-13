@@ -1,4 +1,5 @@
 import {useState, createContext, useContext, useEffect, useCallback} from "react";
+import { getNextSongs } from "./Harmony";
 import { SpotifyAuthContext, performFetch, performPost, performPut } from "../contexts/spotify";
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 

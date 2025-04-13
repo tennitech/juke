@@ -1398,8 +1398,8 @@ const Harmony = () => {
 
 // I am pretty sure that this should be integrated in `Player.js`, not here.
 export const getNextSongs = async (previousSongs) => {
-  const promptSearch = "Please find me two more songs that are similar to:\n" + previousSongs + "\nmake sure to include the song name and the artist name. If you cannot find, say nothing.";
-  const promptFilter = "\n\nFrom this text above, make sure to filter 3 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\nSong 3\nArtist 3\". If you cannot do it, say nothing.";
+  const promptSearch = "Please find me two more songs that are similar to:\n" + previousSongs + "\nmake sure to include the song name and the artist name. DO NOT add any songs in this list. If you cannot find, say nothing.";
+  const promptFilter = "\n\nFrom this text above, make sure to filter 2 songs and their corressponding artists separated by newlines, without any other information and output in a format such that \"Song 1\nArtist 1\nSong 2\nArtist 2\". If you cannot do it, say nothing.";
 
   try {
     // Initialize Gemini API
@@ -1410,14 +1410,49 @@ export const getNextSongs = async (previousSongs) => {
     const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
 
     // Gemini searching and filtering.
-    const responseSearch = await genAI.models.generateContent({
+
+    let model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash",
-      contents: promptSearch,
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 1024,
+      },
+      safetySettings: [
+        {
+          category: "HARM_CATEGORY_HARASSMENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_HATE_SPEECH",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        },
+        {
+          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+          threshold: "BLOCK_MEDIUM_AND_ABOVE"
+        }
+      ]
     });
-    const responseFilter = await genAI.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: responseSearch + promptFilter,
+
+    // Gemini searching
+    console.log("HERE", promptSearch);
+    const contentSearch = [{ text: promptSearch }];
+    const resultSearch = await model.generateContent({
+      contents: [{ role: 'user', parts: contentSearch }]
     });
+    const responseSearch = resultSearch.response.text();
+
+    // Gemini filtering
+    const contentFilter = [{ text: responseSearch + promptFilter }];
+    const resultFilter = await model.generateContent({
+      contents: [{ role: 'user', parts: contentFilter }]
+    });
+    const responseFilter = resultFilter.response.text();
 
     const lines = responseFilter.split('\n');
     if (lines.length !== 5) {
