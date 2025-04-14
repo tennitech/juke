@@ -65,6 +65,9 @@ const Player = ({ children }) => {
     }
   }, [accessToken, playbackReady, player]);
 
+  // Mutex to prevent simultaneous player state events from adding to queue multiple times
+  let addingQueue = false;
+
   /**
    * Backend Requirements for Recently Played Tracks:
    * 
@@ -82,6 +85,7 @@ const Player = ({ children }) => {
    * 
    * Relevant Documentation: https://developer.spotify.com/documentation/web-api/reference/get-recently-played
    */
+
   const updateRecentlyPlayed = (track) => {
     if (track) {
       let mostRecent = {
@@ -101,15 +105,15 @@ const Player = ({ children }) => {
       }
       setRecentlyPlayed(newRecentlyPlayed);
       localStorage.setItem("recentlyPlayed", JSON.stringify(newRecentlyPlayed));
+      // if (!addingQueue) {
+      //   setRenderSyncTrack(!renderSyncTrack);
+      // }
     }
   };
 
   useEffect(() => {
     setRecentlyPlayed(JSON.parse(localStorage.getItem("recentlyPlayed")) || []);
   }, []);
-
-  // Mutex to prevent simultaneous player state events from adding to queue multiple times
-  let addingQueue = false;
 
   //Use effect to keep track of the current Track.
   useEffect(() => {
@@ -128,58 +132,50 @@ const Player = ({ children }) => {
 
           if (state.track_window.next_tracks.length == 0 && !addingQueue) {
             addingQueue = true;
-            // TODO: Get 2 similar song recommendations from Harmony
-            // let songs = queryHarmony(state.track_window.current_track, recentlyPlayed);
-            // For now, hard code in the top 5 songs on spotify right now
-            // Seems like spotify only lets us add up to 2 songs at a time without encountering strange bugs
-            
-            let songs = [
-              "Lady Gaga, Bruno Mars - Die With A Smile",
-              "ROSÉ, Bruno Mars - APT.",
-              "Billie Eilish - BIRDS OF A FEATHER",
-              "Doechii - Anxiety",
-              "Alex Warren - Ordinary"
-            ];
+            let previousSongs = `${state.track_window.current_track.name} by ${state.track_window.current_track.artists[0].name}\n`;
+            // TODO: use recentlyPlayed instead of getting from local storage (renderSyncTrack needs to be changed when recentlyPlayed is updated)
+            // However, somehow the mutex fails), and it tries to add to queue twice
+            let upToDateRecent = JSON.parse(localStorage.getItem("recentlyPlayed")) || [];
+            upToDateRecent.slice(0, 9).forEach((song) => {
+              previousSongs += `${song.title} by ${song.artist}\n`;
+            })
 
-            var song1 = songs[Math.floor(Math.random() * songs.length)];
-            var song2 = songs[Math.floor(Math.random() * songs.length)];
-            songs = songs.filter((song) => song == song1 || song == song2);
-
-            let songPromises = songs.map(async (song) => {
-              try {
-                const response = await performFetch(
-                  `https://api.spotify.com/v1/search?q=${song}&type=track&limit=1`,
-                  {},
-                  accessToken,
-                  invalidateAccess
-                );
-
-                if (response.tracks.items.length === 0) {
-                  console.error("No results found for query:", song);
+            getNextSongs(previousSongs).then((songs) => {
+              let songPromises = songs.map(async (song) => {
+                try {
+                  const response = await performFetch(
+                    `https://api.spotify.com/v1/search?q=${song}&type=track&limit=1`,
+                    {},
+                    accessToken,
+                    invalidateAccess
+                  );
+  
+                  if (response.tracks.items.length === 0) {
+                    console.error("No results found for query:", song);
+                    return "";
+                  }
+  
+                  await performPost(
+                    `https://api.spotify.com/v1/me/player/queue`,
+                    {
+                      "device_id": deviceId,
+                      "uri": response.tracks.items[0].uri
+                    },
+                    null,
+                    accessToken, invalidateAccess
+                  );
+                  console.log(`Added uri ${response.tracks.items[0].name} by ${response.tracks.items[0].artists[0].name} with popularity ${response.tracks.items[0].popularity} to queue`);
+  
+                  return response.tracks.items[0].uri;
+                } catch (err) {
+                  console.error("Error getting recommendations:", err);
                   return "";
                 }
-
-                await performPost(
-                  `https://api.spotify.com/v1/me/player/queue`,
-                  {
-                    "device_id": deviceId,
-                    "uri": response.tracks.items[0].uri
-                  },
-                  null,
-                  accessToken, invalidateAccess
-                );
-                console.log("Added uri " + response.tracks.items[0].uri + " with popularity " + response.tracks.items[0].popularity + " to queue");
-
-                return response.tracks.items[0].uri;
-              } catch (err) {
-                console.error("Error getting recommendations:", err);
-                return "";
-              }
-            });
-
-            Promise.all(songPromises).then(() => {
-              addingQueue = false;
-              setRenderSyncTrack(!renderSyncTrack);
+              });
+  
+              Promise.all(songPromises).then(() => {
+                addingQueue = false;
+              });
             });
           }
 
