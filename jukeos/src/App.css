@@ -52,17 +52,19 @@
   transform: translateX(-50%);
   border-radius: 45px;
   padding: 20px;
-  overflow: visible;
+  overflow: visible !important;
   z-index: 1000;
   width: 90%;
   max-width: none;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }
 
 .navbar-blur-container {
   position: relative;
-  overflow: visible;
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  overflow: visible !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
   width: 150%;
   left: -25%;
   position: relative;
@@ -429,6 +431,15 @@ html, body, #root {
     width: 50vw;
     max-width: 250px;
   }
+}
+
+/* Ensure navbar elements don't clip the Harmony blob */
+.navbar,
+.navbar-blur-container,
+.navbar-content,
+.navbar a,
+.navbar a div {
+  overflow: visible !important;
 }
 
 /*

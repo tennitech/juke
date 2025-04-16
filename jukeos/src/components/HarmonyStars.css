@@ -1,0 +1,103 @@
+/* Animated Blob Gradient for HarmonyStars */
+/* Keeping this file for future additional styling */
+
+@keyframes blob-animation {
+  0% {
+    transform: scale(1) translate(0, 0);
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  }
+  25% {
+    transform: scale(1.05) translate(5px, -5px);
+    border-radius: 30% 70% 50% 50% / 50% 60% 40% 60%;
+  }
+  50% {
+    transform: scale(1) translate(-5px, 5px);
+    border-radius: 60% 40% 30% 70% / 50% 40% 60% 50%;
+  }
+  75% {
+    transform: scale(1.05) translate(-5px, -5px);
+    border-radius: 50% 50% 70% 30% / 60% 50% 40% 50%;
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+    border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+  }
+}
+
+.harmony-gradient-blob {
+  position: absolute;
+  /* Base styles, size will slightly override */
+  width: 100%; 
+  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Center the blob */
+  background: linear-gradient(135deg, 
+    rgba(120, 80, 200, 0.4) 0%,  /* Purple */
+    rgba(80, 120, 220, 0.4) 50%, /* Blue */
+    rgba(180, 100, 180, 0.4) 100% /* Pinkish */
+  );
+  opacity: 0.8;
+  z-index: 1;
+  /* Base blob shape */
+  border-radius: 45% 55% 60% 40% / 50% 60% 45% 55%; 
+  transition: filter 0.5s ease, width 0.5s ease, height 0.5s ease;
+}
+
+/* Size-specific styles */
+.harmony-gradient-blob-small {
+  width: 140%; /* Wider than tall */
+  height: 110%;
+  filter: blur(10px); 
+}
+
+.harmony-gradient-blob-large {
+  width: 120%; /* Slightly larger than container */
+  height: 120%;
+  filter: blur(25px);
+}
+
+.harmony-gradient-blob.animated {
+  animation: blob-animation 12s ease-in-out infinite;
+}
+
+/* Additional styling for the harmony blob */
+.harmony-blob {
+  /* Used in combination with AnimatedBlob for better shape control */
+  filter: blur(20px) !important;
+  border-radius: 60% 40% 50% 50% / 50% 50% 60% 40% !important;
+  background-size: 300% 300% !important;
+  transform: rotate(-5deg) !important;
+  box-shadow: 0 0 20px rgba(166, 104, 255, 0.3) !important;
+}
+
+/* Adjust the blob for different sizes */
+.harmony-blob-small {
+  width: 75px !important;
+  height: 55px !important;
+  /* Extra offset for small size to better surround both stars */
+  transform: translate(-5px, -2px) !important;
+}
+
+.harmony-blob-large {
+  filter: blur(30px) !important;
+}
+
+/* Ensure the blob can extend beyond container edges */
+.harmony-stars-container {
+  overflow: visible !important;
+}
+
+.navbar a {
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+}
+
+/* Remove any clipping effects on any parent element */
+.navbar *,
+.navbar-blur-container *,
+.navbar-content * {
+  overflow: visible !important;
+  -webkit-mask-image: none !important;
+  mask-image: none !important;
+} 
