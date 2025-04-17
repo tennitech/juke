@@ -6,137 +6,285 @@ const Player = ({ children }) => {
   const { playbackReady, accessToken, invalidateAccess } = useContext(SpotifyAuthContext);
 
   const [player, setPlayer] = useState(null);
-  const [deviceId, setDeviceId] = useState(false);
+  const [deviceId, setDeviceId] = useState(null);
   const [online, setOnline] = useState(false);
   const [active, setActive] = useState(false);
   const [track, setTrack] = useState(null);
   const [paused, setPaused] = useState(true);
+  const [sdkReady, setSdkReady] = useState(false);
+  const [deviceActivated, setDeviceActivated] = useState(false);
+  const [playerReady, setPlayerReady] = useState(false);
+  const [playingUri, setPlayingUri] = useState(null);
+  const [currentPlaybackState, setCurrentPlaybackState] = useState(null);
+  const [activationAttempts, setActivationAttempts] = useState(0);
+  const [isInitializing, setIsInitializing] = useState(false);
 
-  //TODO Refactor a lot of this listener logic
+  // Initialize Spotify SDK
   useEffect(() => {
-    if (accessToken && playbackReady && !player && window.Spotify) {
-      console.log("Constructing player");
+    if (!playbackReady || sdkReady) return;
 
-      try {
-        // eslint-disable-next-line no-undef
-        const p = new Spotify.Player({
-          name: "Juke Spotify Player",
-          getOAuthToken: (callback) => callback(accessToken)
-        });
+    const script = document.createElement("script");
+    script.src = "https://sdk.scdn.co/spotify-player.js";
+    script.async = true;
 
-        setPlayer(p);
+    document.body.appendChild(script);
 
-        p.addListener("ready", ({ device_id }) => {
-          setDeviceId(device_id);
-
-          p.getCurrentState().then((state) => {
-            console.log("Id State", state);
-          });
-
-          setOnline(true);
-        });
-
-        p.addListener("not_ready", ({ device_id }) => {
-          setDeviceId(device_id);
-
-          setOnline(false);
-        });
-
-        p.addListener('initialization_error', ({ message }) => {
-          console.error(message);
-        });
-
-        p.addListener('authentication_error', ({ message }) => {
-          console.error(message);
-        });
-
-        p.addListener('account_error', ({ message }) => {
-          console.error(message);
-        });
-
-        p.connect();
-      } catch (error) {
-        console.error("Error initializing Spotify player:", error);
-      }
-    }
-  }, [accessToken, playbackReady, player]);
-
-
-  //Use effect to keep track of the current Track.
-  useEffect(() => {
-    if (!player) return;
-
-    const syncTrack = () => {
-      player.getCurrentState().then((state) => {
-        if (state && state.track_window.current_track) {
-          setTrack(state.track_window.current_track);
-          console.log("Setting Track: " + JSON.stringify(track));
-          setPaused(state.paused);
-          setActive(!!state);
-        }
-      }).catch((err) => console.error("Error getting player state:", err));
+    window.onSpotifyWebPlaybackSDKReady = () => {
+      setSdkReady(true);
     };
-
-    // Sync track on player state change
-    player.addListener("player_state_changed", syncTrack);
 
     return () => {
-      player.removeListener("player_state_changed", syncTrack);
+      document.body.removeChild(script);
     };
-  }, [player]);
+  }, [playbackReady, sdkReady]);
 
-  //TODO: Do better error catching
+  // Initialize player when SDK is ready
+  useEffect(() => {
+    if (!sdkReady || !accessToken || player) return;
+
+    const newPlayer = new window.Spotify.Player({
+      name: 'JukeOS Player',
+      getOAuthToken: cb => { cb(accessToken); },
+      volume: 0.5
+    });
+
+    // Error handling
+    newPlayer.addListener('initialization_error', ({ message }) => {
+      console.error('Failed to initialize:', message);
+      setPlayerReady(false);
+    });
+
+    newPlayer.addListener('authentication_error', ({ message }) => {
+      console.error('Failed to authenticate:', message);
+      setPlayerReady(false);
+    });
+
+    newPlayer.addListener('account_error', ({ message }) => {
+      console.error('Failed to validate Spotify account:', message);
+      setPlayerReady(false);
+    });
+
+    newPlayer.addListener('playback_error', ({ message }) => {
+      console.error('Failed to perform playback:', message);
+    });
+
+    // Playback status updates
+    newPlayer.addListener('player_state_changed', state => {
+      if (!state) return;
+      setCurrentPlaybackState(state);
+      setTrack(state.track_window.current_track);
+      setPaused(state.paused);
+    });
+
+    // Ready
+    newPlayer.addListener('ready', ({ device_id }) => {
+      console.log('Ready with Device ID', device_id);
+      setDeviceId(device_id);
+      setPlayerReady(true);
+      setOnline(true);
+    });
+
+    // Not Ready
+    newPlayer.addListener('not_ready', ({ device_id }) => {
+      console.log('Device ID has gone offline', device_id);
+      setOnline(false);
+      setPlayerReady(false);
+    });
+
+    // Connect to the player
+    newPlayer.connect().then(success => {
+      if (success) {
+        console.log('Successfully connected to Spotify!');
+        setPlayer(newPlayer);
+      }
+    });
+
+    return () => {
+      if (newPlayer) {
+        newPlayer.disconnect();
+      }
+    };
+  }, [sdkReady, accessToken]);
+
+  // Activate the device when player is ready
+  useEffect(() => {
+    let isMounted = true;
+    let retryTimeout;
+
+    const activateDevice = async () => {
+      if (!deviceId || !accessToken || !playerReady || activationAttempts >= 3 || isInitializing) return;
+      
+      setIsInitializing(true);
+      try {
+        // Transfer playback to our device
+        await performPut(
+          'https://api.spotify.com/v1/me/player',
+          {},
+          {
+            device_ids: [deviceId],
+            play: false
+          },
+          accessToken,
+          invalidateAccess
+        );
+        
+        if (isMounted) {
+          console.log("Device activated");
+          setDeviceActivated(true);
+          setActivationAttempts(0);
+          setIsInitializing(false);
+
+          // If we have a current playback state, restore it
+          if (currentPlaybackState && !currentPlaybackState.paused) {
+            try {
+              await performPut(
+                `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+                {},
+                {
+                  uris: [currentPlaybackState.track_window.current_track.uri],
+                  position_ms: currentPlaybackState.position
+                },
+                accessToken,
+                invalidateAccess
+              );
+              console.log("Playback restored");
+            } catch (playbackError) {
+              console.error("Failed to restore playback:", playbackError);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to activate device:", error);
+        if (isMounted) {
+          setDeviceActivated(false);
+          setIsInitializing(false);
+          // Only retry on rate limiting or server errors
+          if (error.response?.status === 429 || error.response?.status === 500) {
+            setActivationAttempts(prev => prev + 1);
+            // Exponential backoff for retries
+            retryTimeout = setTimeout(() => {
+              if (isMounted) {
+                activateDevice();
+              }
+            }, Math.min(1000 * Math.pow(2, activationAttempts), 8000));
+          }
+        }
+      }
+    };
+
+    activateDevice();
+
+    return () => {
+      isMounted = false;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
+  }, [deviceId, accessToken, playerReady, invalidateAccess, currentPlaybackState, activationAttempts, isInitializing]);
+
+  const playUri = async (uri) => {
+    if (!deviceId || !playerReady) {
+      console.error("Device not ready for playback", { deviceId, deviceActivated, playerReady });
+      return;
+    }
+
+    console.log("Attempting to play:", uri);
+    setPlayingUri(uri);
+
+    try {
+      // If device isn't activated, try to activate it first
+      if (!deviceActivated) {
+        console.log("Device not activated, attempting to activate...");
+        await performPut(
+          'https://api.spotify.com/v1/me/player',
+          {},
+          {
+            device_ids: [deviceId],
+            play: false
+          },
+          accessToken,
+          invalidateAccess
+        );
+        setDeviceActivated(true);
+      }
+
+      // Then start playback
+      const body = uri.startsWith("spotify:track:")
+        ? { "uris": [uri] }
+        : { "context_uri": uri };
+
+      await performPut(
+        `https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`,
+        {},
+        body,
+        accessToken,
+        invalidateAccess
+      );
+
+      console.log("Playback started");
+      
+      // Finally, ensure the player is playing
+      if (player) {
+        await player.resume();
+      }
+    } catch (error) {
+      console.error("Playback error:", error);
+      if (error.response?.status === 404) {
+        console.log("Device not found, attempting to reconnect");
+        setDeviceActivated(false);
+        if (player) {
+          try {
+            const connected = await player.connect();
+            if (connected) {
+              setPlayerReady(true);
+              // Wait a moment for the device to be ready
+              setTimeout(() => playUri(uri), 1000);
+            }
+          } catch (reconnectError) {
+            console.error("Reconnection failed:", reconnectError);
+          }
+        }
+      }
+    }
+  };
 
   const togglePlay = useCallback(() => {
-    if(player==null){
-      return; // Just catch when its null. Prevents runtime errors
-    }
-    player.togglePlay().then(() => {
-      console.log("Toggle Play");
-    });
-  }, []);
+    if (!player) return;
 
+    player.togglePlay().then(() => {
+      player.getCurrentState().then(state => {
+        if (state) {
+          setPaused(state.paused);
+        }
+      });
+    });
+  }, [player]);
 
   const nextTrack = useCallback(() => {
-    if(player==null){
-      return; // Just catch when its null. Prevents runtime errors
-    }
+    if (!player) return;
+
     player.nextTrack().then(() => {
-      console.log('Skipped to next track!');
+      player.getCurrentState().then(state => {
+        if (state) {
+          setTrack(state.track_window.current_track);
+          setPaused(state.paused);
+        }
+      });
     });
-  }, []);
+  }, [player]);
 
   const prevTrack = useCallback(() => {
-    if(player==null){
-      return; // Just catch when its null. Prevents runtime errors
-    }
+    if (!player) return;
+
     player.previousTrack().then(() => {
-      console.log('Set to previous track!');
+      player.getCurrentState().then(state => {
+        if (state) {
+          setTrack(state.track_window.current_track);
+          setPaused(state.paused);
+        }
+      });
     });
-  }, []);
-
-  const playUri = (uri) => {
-    console.log("Play", uri, uri.split(":")[1]);
-
-    // context_uri: albums, artists, playlists
-    // uris: track uri
-
-    const body =
-      uri.startsWith("spotify:track:")
-        ? { "uris": [uri] }
-        : { "context_uri": uri }
-
-    performPut(
-      `https://api.spotify.com/v1/me/player/play`, // TODO: Device id
-      {
-        "device_id": deviceId
-      },
-      body,
-      accessToken, invalidateAccess
-    ).then(() => {
-      console.log("Playing");
-    });
-  };
+  }, [player]);
 
   return (
     <PlayerContext.Provider value={
@@ -148,7 +296,9 @@ const Player = ({ children }) => {
         togglePlay,
         playUri,
         nextTrack,
-        prevTrack
+        prevTrack,
+        deviceReady: deviceActivated && playerReady,
+        playingUri
       }
     }>
       { children }
@@ -167,5 +317,7 @@ export const PlayerContext = createContext({
   togglePlay: () => {},
   playUri: () => {},
   nextTrack: () => {},
-  prevTrack: () => {}
+  prevTrack: () => {},
+  deviceReady: false,
+  playingUri: null
 });
