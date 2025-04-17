@@ -1,14 +1,9 @@
 /* The container clips overflowing content and applies a fade on edges */
 .scrollable-text-container {
-  overflow: hidden;
-  white-space: nowrap;
   position: relative;
   width: 100%;
-  /* Default fade only on right edge */
-  -webkit-mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
-  mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
-  /* Longer smooth transition between states */
-  transition: -webkit-mask-image 0.8s ease, mask-image 0.8s ease;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 /* Apply very subtle fade on left edge when preparing */
@@ -38,69 +33,86 @@
 
 /* Main scrolling container */
 .scrolling-content {
+  position: relative;
   display: inline-block;
+  width: 100%;
+}
+
+/* Scrollable text element - controlled by JavaScript for animation */
+.scrollable-text {
+  display: inline-block;
+  position: relative;
   white-space: nowrap;
+  will-change: transform;
 }
 
-/* 
- * Back-and-forth scrolling text animation
- */
-.oscillating-text {
-  display: inline-block;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  /* Add subtle opacity transition for smoother state changes */
-  transition: opacity 0.6s ease;
+/* Fade masks - only show on the side where text is moving away from */
+.scrollable-text-container::before,
+.scrollable-text-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s ease;
 }
 
-/* Preparing to scroll - slight fade effect */
-.preparing-to-scroll {
-  opacity: 0.97;
+/* Left fade - visible when scrolling right or at start */
+.scrollable-text-container::before {
+  left: 0;
+  background: linear-gradient(to right, var(--background-color) 0%, transparent 100%);
+  opacity: 0;
 }
 
-/* Title gets slightly slower speed */
-.oscillating-text.title-speed {
-  animation-name: oscillate;
-  animation-duration: 28s;
+/* Right fade - visible when scrolling left or at end */
+.scrollable-text-container::after {
+  right: 0;
+  background: linear-gradient(to left, var(--background-color) 0%, transparent 100%);
+  opacity: 0;
 }
 
-/* Artist gets slightly faster speed */
-.oscillating-text.artist-speed {
-  animation-name: oscillate;
-  animation-duration: 26s;
+/* Default state - no fade */
+.scrollable-text-container {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
-/* 
- * Keyframe animation with back-and-forth movement and pauses
- */
-@keyframes oscillate {
-  /* Start with a 3-second pause (10% of title animation duration) */
-  0%, 10% {
-    transform: translateX(0);
-  }
-  
-  /* Move left until the end is just visible */
-  40% {
-    transform: translateX(var(--scroll-end));
-  }
-  
-  /* Pause at the left end for 3 seconds */
-  40%, 50% {
-    transform: translateX(var(--scroll-end));
-  }
-  
-  /* Move back to the right */
-  80% {
-    transform: translateX(0);
-  }
-  
-  /* End with the same 3-second pause before restarting */
-  80%, 100% {
-    transform: translateX(0);
-  }
+/* When scrolling - both fades active */
+.scrollable-text-container.is-scrolling {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
 }
 
-/* Pause animation on hover */
-.oscillating-text:hover {
-  animation-play-state: paused;
+/* When at start - only right fade */
+.scrollable-text-container[data-phase="pause-start"] {
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+}
+
+/* When at end - only left fade */
+.scrollable-text-container[data-phase="pause-end"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
+}
+
+/* Show left fade when scrolling right */
+.scrollable-text-container.is-scrolling[data-direction="1"]::before {
+  opacity: 1;
+}
+
+/* Show right fade when scrolling left */
+.scrollable-text-container.is-scrolling[data-direction="-1"]::after {
+  opacity: 1;
+}
+
+/* Keep left fade when at start position */
+.scrollable-text-container[data-phase="pause-start"]::before {
+  opacity: 1;
+}
+
+/* Keep right fade when at end position */
+.scrollable-text-container[data-phase="pause-end"]::after {
+  opacity: 1;
 } 

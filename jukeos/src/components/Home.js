@@ -238,7 +238,7 @@ const Home = () => {
             flex: '1 1 auto'
           }}>
             <ScrollableText
-              text={track?.name || "Sign-In Required"}
+              text={track?.name || "Welcome to JukeWelcome to JukeWelcome to Juke"}
               speed="title"
               style={{
                 fontFamily: 'Loubag, sans-serif',
@@ -255,7 +255,7 @@ const Home = () => {
             />
 
             <ScrollableText
-              text={track?.artists?.map(artist => artist.name)?.join(", ") || "Sign-In Required"}
+              text={track?.artists?.map(artist => artist.name)?.join(", ") || "Your Music, ReimaginedWelcome to Juke"}
               speed="artist"
               style={{
                 fontFamily: 'Notable, sans-serif',
