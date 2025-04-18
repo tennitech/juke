@@ -10,6 +10,9 @@ const ScrollableText = ({ text, style, className = '', speed = 'title' }) => {
   const [direction, setDirection] = useState(1);
   const [phase, setPhase] = useState('initial-pause');
   const [maxScroll, setMaxScroll] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const lastTimestampRef = useRef(null);
+  const phaseStartTimeRef = useRef(null);
   
   // Constants for animation speed
   const PIXELS_PER_SECOND = speed === 'title' ? 80 : 40;
@@ -34,12 +37,94 @@ const ScrollableText = ({ text, style, className = '', speed = 'title' }) => {
       setPosition(0);
     }
   };
+
+  // Handle hover events
+  const handleMouseEnter = () => {
+    if (shouldScroll) {
+      setIsHovered(true);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (shouldScroll) {
+      setIsHovered(false);
+      lastTimestampRef.current = null;
+      phaseStartTimeRef.current = null;
+      startAnimation();
+    }
+  };
+
+  const startAnimation = () => {
+    if (!shouldScroll || isHovered) return;
+
+    const animate = (timestamp) => {
+      if (!lastTimestampRef.current) {
+        lastTimestampRef.current = timestamp;
+        phaseStartTimeRef.current = timestamp;
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      const elapsed = timestamp - lastTimestampRef.current;
+      lastTimestampRef.current = timestamp;
+
+      switch (phase) {
+        case 'initial-pause':
+          if (timestamp - phaseStartTimeRef.current >= PAUSE_DURATION) {
+            setPhase('scrolling');
+            phaseStartTimeRef.current = timestamp;
+          }
+          break;
+
+        case 'scrolling':
+          let newPos = position + (direction * PIXELS_PER_SECOND * elapsed / 1000);
+
+          if (direction > 0 && newPos >= maxScroll) {
+            newPos = maxScroll;
+            setPhase('pause-end');
+            phaseStartTimeRef.current = timestamp;
+          } else if (direction < 0 && newPos <= 0) {
+            newPos = 0;
+            setPhase('pause-start');
+            phaseStartTimeRef.current = timestamp;
+          }
+
+          setPosition(newPos);
+          break;
+
+        case 'pause-end':
+          if (timestamp - phaseStartTimeRef.current >= PAUSE_DURATION) {
+            setDirection(-1);
+            setPhase('scrolling');
+            phaseStartTimeRef.current = timestamp;
+          }
+          break;
+
+        case 'pause-start':
+          if (timestamp - phaseStartTimeRef.current >= PAUSE_DURATION) {
+            setDirection(1);
+            setPhase('scrolling');
+            phaseStartTimeRef.current = timestamp;
+          }
+          break;
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+  };
   
   // Handle animation lifecycle
   useEffect(() => {
     setPosition(0);
     setDirection(1);
     setPhase('initial-pause');
+    lastTimestampRef.current = null;
+    phaseStartTimeRef.current = null;
     
     checkOverflow();
     
@@ -72,94 +157,36 @@ const ScrollableText = ({ text, style, className = '', speed = 'title' }) => {
   
   // Main animation loop
   useEffect(() => {
-    if (!shouldScroll) {
+    if (!shouldScroll || isHovered) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
-      setPhase('initial-pause');
       return;
     }
     
-    let lastTimestamp = null;
-    let phaseStartTime = null;
-    
-    const animate = (timestamp) => {
-      if (!lastTimestamp) {
-        lastTimestamp = timestamp;
-        phaseStartTime = timestamp;
-        animationRef.current = requestAnimationFrame(animate);
-        return;
-      }
-      
-      const elapsed = timestamp - lastTimestamp;
-      lastTimestamp = timestamp;
-      
-      switch (phase) {
-        case 'initial-pause':
-          if (timestamp - phaseStartTime >= PAUSE_DURATION) {
-            setPhase('scrolling');
-            phaseStartTime = timestamp;
-          }
-          break;
-          
-        case 'scrolling':
-          let newPos = position + (direction * PIXELS_PER_SECOND * elapsed / 1000);
-          
-          if (direction > 0 && newPos >= maxScroll) {
-            newPos = maxScroll;
-            setPhase('pause-end');
-            phaseStartTime = timestamp;
-          } else if (direction < 0 && newPos <= 0) {
-            newPos = 0;
-            setPhase('pause-start');
-            phaseStartTime = timestamp;
-          }
-          
-          setPosition(newPos);
-          break;
-          
-        case 'pause-end':
-          if (timestamp - phaseStartTime >= PAUSE_DURATION) {
-            setDirection(-1);
-            setPhase('scrolling');
-            phaseStartTime = timestamp;
-          }
-          break;
-          
-        case 'pause-start':
-          if (timestamp - phaseStartTime >= PAUSE_DURATION) {
-            setDirection(1);
-            setPhase('scrolling');
-            phaseStartTime = timestamp;
-          }
-          break;
-      }
-      
-      animationRef.current = requestAnimationFrame(animate);
-    };
-    
-    animationRef.current = requestAnimationFrame(animate);
+    startAnimation();
     
     return () => {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [shouldScroll, position, direction, phase, maxScroll]);
+  }, [shouldScroll, position, direction, phase, maxScroll, isHovered]);
   
   // Determine CSS classes based on current animation phase
-  const isScrolling = phase === 'scrolling';
-  const isPaused = phase === 'pause-end' || phase === 'pause-start' || phase === 'initial-pause';
+  const isScrolling = phase === 'scrolling' && !isHovered;
+  const isPaused = phase === 'pause-end' || phase === 'pause-start' || phase === 'initial-pause' || isHovered;
   
   // Build class names based on current state
   const containerClass = `scrollable-text-container ${className} 
     ${isScrolling ? 'is-scrolling' : ''} 
-    ${isPaused ? 'is-paused' : ''}`.replace(/\s+/g, ' ').trim();
+    ${isPaused ? 'is-paused' : ''}
+    ${isHovered ? 'is-hovered' : ''}`.replace(/\s+/g, ' ').trim();
   
   // Apply inline transform for precise positioning
   const textStyle = shouldScroll ? {
     transform: `translateX(${-position}px)`,
-    transition: 'none'
+    transition: isHovered ? 'transform 0.3s ease-out' : 'none'
   } : {};
   
   return React.createElement(
@@ -169,7 +196,11 @@ const ScrollableText = ({ text, style, className = '', speed = 'title' }) => {
       ref: containerRef,
       style: style,
       'data-direction': direction,
-      'data-phase': phase
+      'data-phase': phase,
+      onMouseEnter: handleMouseEnter,
+      onMouseLeave: handleMouseLeave,
+      onTouchStart: handleMouseEnter,
+      onTouchEnd: handleMouseLeave
     },
     shouldScroll
       ? React.createElement(
