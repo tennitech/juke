@@ -6,6 +6,7 @@ import backgroundPng from '../assets/background.png';
 import defaultAlbumArt from '../assets/default-art-placeholder.svg';
 import AnimatedBlob from './AnimatedBlob';
 import { useColorThief } from './Home';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // --- Responsive Constants using clamp() ---
 // Sizes based on viewport width (vw) and height (vh)
@@ -140,6 +141,33 @@ const ScrollWheel = ({ items, playUri }) => {
       setIsSnapping(false);
       playUri(uri);
     }, 300);
+  };
+
+  // Add navigation functions
+  const navigatePrev = () => {
+    if (centerIndex > 0) {
+      setIsSnapping(true);
+      velocityRef.current = 0;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      setCenterIndex(prevIndex => Math.max(0, Math.floor(prevIndex) - 1));
+      setTimeout(() => setIsSnapping(false), 300);
+    }
+  };
+
+  const navigateNext = () => {
+    if (centerIndex < items.length - 1) {
+      setIsSnapping(true);
+      velocityRef.current = 0;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      setCenterIndex(prevIndex => Math.min(items.length - 1, Math.floor(prevIndex) + 1));
+      setTimeout(() => setIsSnapping(false), 300);
+    }
   };
 
   // --- Responsive Calculations based on containerWidth ---
@@ -368,6 +396,40 @@ const ScrollWheel = ({ items, playUri }) => {
           .button-underglow:hover::after {
             opacity: 0.6;
           }
+
+          .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: clamp(35px, 4vw, 50px);
+            height: clamp(35px, 4vw, 50px);
+            z-index: 1000;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+            pointer-events: auto;
+          }
+
+          .nav-arrow:hover {
+            opacity: 1;
+          }
+
+          .nav-arrow.prev {
+            left: calc(50% - clamp(95px, 10vw, 120px));
+          }
+
+          .nav-arrow.next {
+            right: calc(50% - clamp(95px, 10vw, 120px));
+          }
+
+          .nav-arrow svg {
+            width: 100%;
+            height: 100%;
+            fill: #ECE0C4;
+          }
         `}
       </style>
 
@@ -385,57 +447,29 @@ const ScrollWheel = ({ items, playUri }) => {
         onMouseDown={handleMouseDown}
         onWheel={handleWheel}
       >
-        {/* Left arrow */}
-        <div
+        <button 
+          className="nav-arrow prev" 
+          onClick={navigatePrev}
           style={{
-            position: 'absolute',
-            left: '10%',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1001,
-            cursor: 'pointer',
-            opacity: 0.3,
-            transition: 'opacity 0.2s ease',
-            pointerEvents: 'auto',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.6'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.3'}
-          onClick={() => {
-            if (centerIndex > 0) {
-              setCenterIndex(centerIndex - 1);
-            }
+            display: centerIndex > 0 ? 'block' : 'none'
           }}
         >
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg viewBox="0 0 24 24">
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
           </svg>
-        </div>
+        </button>
 
-        {/* Right arrow */}
-        <div
+        <button 
+          className="nav-arrow next" 
+          onClick={navigateNext}
           style={{
-            position: 'absolute',
-            right: '10%',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1001,
-            cursor: 'pointer',
-            opacity: 0.3,
-            transition: 'opacity 0.2s ease',
-            pointerEvents: 'auto',
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.6'}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = '0.3'}
-          onClick={() => {
-            if (centerIndex < items.length - 1) {
-              setCenterIndex(centerIndex + 1);
-            }
+            display: centerIndex < (items?.length - 1) ? 'block' : 'none'
           }}
         >
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 18L15 12L9 6" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg viewBox="0 0 24 24">
+            <path d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/>
           </svg>
-        </div>
+        </button>
 
         {displayedItems.map((itemData) => {
           const { item, index } = itemData;
@@ -796,33 +830,42 @@ const LibraryTesting = () => {
   return (
     <>
       {/* Fixed-position gradient */}
-      <div style={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        width: '100%',
-        height: '180px',
-        zIndex: 5,
-        pointerEvents: 'none',
-        margin: 0,
-        padding: 0,
-      }}>
-        <AnimatedBlob
-          colors={colors}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={track?.album?.images?.[0]?.url || "default"}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           style={{
-            width: '100%',
-            height: '100%',
-            filter: 'blur(70px)',
-            opacity: 0.75,
-            position: 'absolute',
-            top: 0,
+            position: 'fixed',
+            bottom: 0,
             left: 0,
-            borderRadius: 0,
+            right: 0,
+            width: '100%',
+            height: '180px',
+            zIndex: 5,
+            pointerEvents: 'none',
+            margin: 0,
+            padding: 0,
           }}
-          static={false}
-        />
-      </div>
+        >
+          <AnimatedBlob
+            colors={colors}
+            style={{
+              width: '100%',
+              height: '100%',
+              filter: 'blur(70px)',
+              opacity: 0.75,
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              borderRadius: 0,
+            }}
+            static={false}
+          />
+        </motion.div>
+      </AnimatePresence>
 
       {/* Main container */}
       <div style={{ 
@@ -846,7 +889,7 @@ const LibraryTesting = () => {
           {/* Content container with continuous flow */}
           <div style={{
             position: 'relative',
-            paddingTop: '10vh', // Initial top padding
+            paddingTop: '5vh', // Reduced from 10vh
             overflow: 'visible',
             zIndex: 900,
           }}>
@@ -864,6 +907,5 @@ const LibraryTesting = () => {
     </>
   );
 };
-
 
 export default LibraryTesting;

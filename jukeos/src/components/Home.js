@@ -10,6 +10,7 @@ import pauseIcon from '../assets/pause-icon.svg';
 import ColorThief from "color-thief-browser";
 import nextIcon from "../assets/skip-forward-icon.svg"
 import prevIcon from "../assets/skip-backward-icon.svg"
+import { motion, AnimatePresence } from 'framer-motion';
 
 //Move location possibly in the future
 export function useColorThief(imageSrc) {
@@ -244,32 +245,50 @@ const Home = () => {
             paddingLeft: 'clamp(20px, 4vw, 60px)',
             flex: '1 1 auto'
           }}>
-            <h1 style={{
-              fontFamily: 'Loubag, sans-serif',
-              fontSize: 'clamp(2.2rem, 4vw, 4rem)',
-              margin: '0',
-              textAlign: 'left',
-              color: '#ECE0C4',
-              textShadow: `
-                2px 2px 0 rgba(255,0,0,0.2),
-                -2px -2px 0 rgba(0,0,255,0.2),
-                1px -1px 0 rgba(255,0,255,0.2)
-              `,
-              animation: 'textGlitch 3s infinite'
-            }}>
-              {track?.name || "Unknown"}
-            </h1>
+            <AnimatePresence mode="wait">
+              <motion.h1
+                key={track?.name || "Unknown"}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                style={{
+                  fontFamily: 'Loubag, sans-serif',
+                  fontSize: 'clamp(2.2rem, 4vw, 4rem)',
+                  margin: '0',
+                  textAlign: 'left',
+                  color: '#ECE0C4',
+                  textShadow: `
+                    2px 2px 0 rgba(255,0,0,0.2),
+                    -2px -2px 0 rgba(0,0,255,0.2),
+                    1px -1px 0 rgba(255,0,255,0.2)
+                  `,
+                  animation: 'textGlitch 3s infinite'
+                }}
+              >
+                {track?.name || "Unknown"}
+              </motion.h1>
+            </AnimatePresence>
 
-            <h2 style={{
-              fontFamily: 'Notable, sans-serif',
-              fontSize: 'clamp(1.2rem, 2vw, 1.6rem)',
-              margin: '0',
-              opacity: 0.9,
-              letterSpacing: '1px',
-              color: 'white'
-            }}>
-              {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
-            </h2>
+            <AnimatePresence mode="wait">
+              <motion.h2
+                key={track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+                style={{
+                  fontFamily: 'Notable, sans-serif',
+                  fontSize: 'clamp(1.2rem, 2vw, 1.6rem)',
+                  margin: '0',
+                  opacity: 0.9,
+                  letterSpacing: '1px',
+                  color: 'white'
+                }}
+              >
+                {track?.artists?.map(artist => artist.name)?.join(", ") || "Unknown"}
+              </motion.h2>
+            </AnimatePresence>
 
             <div style={{
               display: 'flex',
@@ -278,7 +297,8 @@ const Home = () => {
               fontSize: 'clamp(0.7rem, 1vw, 0.9rem)',
               color: '#ECE0C4',
               opacity: 0.8,
-              marginTop: '0.5vh'
+              marginTop: '0.5vh',
+              fontFamily: 'Loubag, sans-serif'
             }}>
               <span>{formatTime(currentTrack.progress)}</span>
               <span>{formatTime(currentTrack.duration)}</span>
@@ -288,25 +308,13 @@ const Home = () => {
               width: '100%',
               marginTop: '1vh'
             }}>
-              <div
-                style={{
-                  width: '100%',
-                  height: '4px',
-                  backgroundColor: 'rgba(236, 224, 196, 0.2)',
-                  borderRadius: '2px',
-                  position: 'relative',
-                  cursor: 'pointer'
-                }}
-                onClick={handleProgressClick}
-              >
-                <div style={{
-                  width: `${(currentTrack.progress / currentTrack.duration) * 100}%`,
-                  height: '100%',
-                  backgroundColor: '#ECE0C4',
-                  borderRadius: '2px',
-                  position: 'absolute',
-                  transition: 'width 0.1s linear'
-                }}/>
+              <div className="progress-bar" onClick={handleProgressClick}>
+                <div 
+                  className="progress-indicator"
+                  style={{
+                    width: `${(currentTrack.progress / currentTrack.duration) * 100}%`
+                  }}
+                />
               </div>
             </div>
 
@@ -392,41 +400,67 @@ const Home = () => {
             </div>
           </div>
 
-          <div style={{
-            position: 'relative',
-            width: 'clamp(180px, 38%, 420px)',
-            aspectRatio: '1/1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto',
-            flex: '0 1 auto',
-            zIndex: '1'
-          }}>
-            <AnimatedBlob
-              colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={track?.album?.images?.[0]?.url || "default"}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               style={{
-                width: '100%',
-                height: '100%',
-                maxWidth: '100%',
-                maxHeight: '100%',
-                zIndex: '-1'
+                position: 'relative',
+                width: 'clamp(180px, 38%, 420px)',
+                aspectRatio: '1/1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto',
+                flex: '0 1 auto',
+                zIndex: '1'
               }}
-              static={false}
-            />
-            <img
-              src={track?.album?.images?.[0]?.url || defaultAlbumArt}
-              alt="Album Art"
-              style={{
-                position: 'absolute',
-                width: '90%',
-                height: '90%',
-                objectFit: 'cover',
-                borderRadius: '8px',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
-              }}
-            />
-          </div>
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`blob-${track?.album?.images?.[0]?.url || "default"}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: "easeOut" }}
+                  style={{ position: 'absolute', width: '100%', height: '100%', zIndex: -1 }}
+                >
+                  <AnimatedBlob
+                    colors={useColorThief(track?.album?.images?.[0]?.url || defaultAlbumArt)}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      zIndex: '-1'
+                    }}
+                    static={false}
+                  />
+                </motion.div>
+              </AnimatePresence>
+
+              <motion.img
+                key={`img-${track?.album?.images?.[0]?.url || "default"}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                src={track?.album?.images?.[0]?.url || defaultAlbumArt}
+                alt="Album Art"
+                style={{
+                  position: 'absolute',
+                  width: '90%',
+                  height: '90%',
+                  objectFit: 'cover',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                }}
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
         
         <div style={{
@@ -506,6 +540,57 @@ const Home = () => {
           </div>
         </div>
       </div>
+
+      <style>
+        {`
+          @keyframes progressShimmer {
+            0% {
+              background-position: -200% center;
+            }
+            100% {
+              background-position: 200% center;
+            }
+          }
+
+          .progress-bar {
+            position: relative;
+            width: 100%;
+            height: 8px;
+            background-color: rgba(236, 224, 196, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            overflow: hidden;
+          }
+
+          .progress-indicator {
+            position: absolute;
+            height: 100%;
+            background-color: #ECE0C4;
+            border-radius: 4px;
+            transition: width 0.1s linear;
+            overflow: hidden;
+          }
+
+          .progress-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(
+              90deg, 
+              transparent,
+              rgba(255, 255, 255, 0.2),
+              transparent
+            );
+            background-size: 200% 100%;
+            animation: progressShimmer 2s infinite;
+            pointer-events: none;
+            z-index: 1;
+          }
+        `}
+      </style>
     </div>
   );
 };
