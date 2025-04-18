@@ -1,0 +1,153 @@
+/* The container clips overflowing content and applies a fade on edges */
+.scrollable-text-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* Apply very subtle fade on left edge when preparing */
+.scrollable-text-container.is-preparing {
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0.95) 0%, black 10%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, rgba(0,0,0,0.95) 0%, black 10%, black 95%, transparent 100%);
+}
+
+/* Apply stronger fade on both edges when scrolling */
+.scrollable-text-container.is-scrolling {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* Keep left fade active when text is at scrolled position */
+.scrollable-text-container.is-scrolled {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* Wrapper for the scrolling content - constrains the viewable area */
+.scrolling-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Main scrolling container */
+.scrolling-content {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Scrollable text element - controlled by JavaScript for animation */
+.scrollable-text {
+  display: inline-block;
+  position: relative;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* Fade masks - only show on the side where text is moving away from */
+.scrollable-text-container::before,
+.scrollable-text-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Left fade - visible when scrolling right or at start */
+.scrollable-text-container::before {
+  left: 0;
+  background: linear-gradient(to right, var(--background-color) 0%, transparent 100%);
+  opacity: 0;
+}
+
+/* Right fade - visible when scrolling left or at end */
+.scrollable-text-container::after {
+  right: 0;
+  background: linear-gradient(to left, var(--background-color) 0%, transparent 100%);
+  opacity: 0;
+}
+
+/* Default state - no fade */
+.scrollable-text-container {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* When scrolling - both fades active */
+.scrollable-text-container.is-scrolling {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* When at start - only right fade */
+.scrollable-text-container[data-phase="pause-start"] {
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+}
+
+/* When at end - only left fade */
+.scrollable-text-container[data-phase="pause-end"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
+}
+
+/* Show fade during initial pause */
+.scrollable-text-container[data-phase="initial-pause"] {
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+}
+
+/* Show left fade when scrolling right */
+.scrollable-text-container.is-scrolling[data-direction="1"]::before {
+  opacity: 1;
+}
+
+/* Show right fade when scrolling left */
+.scrollable-text-container.is-scrolling[data-direction="-1"]::after {
+  opacity: 1;
+}
+
+/* Keep left fade when at start position */
+.scrollable-text-container[data-phase="pause-start"]::before {
+  opacity: 1;
+}
+
+/* Keep right fade when at end position */
+.scrollable-text-container[data-phase="pause-end"]::after {
+  opacity: 1;
+}
+
+/* Hover state styles */
+.scrollable-text-container.is-hovered {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+/* When hovering at start position */
+.scrollable-text-container.is-hovered[data-phase="pause-start"] {
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+  mask-image: linear-gradient(to right, black 0%, black 95%, transparent 100%);
+}
+
+/* When hovering at end position */
+.scrollable-text-container.is-hovered[data-phase="pause-end"] {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 100%);
+}
+
+.scrollable-text-container.is-hovered .scrollable-text {
+  transition: transform 0.3s ease-out;
+}
+
+/* Touch device styles */
+@media (hover: none) {
+  .scrollable-text-container {
+    cursor: pointer;
+  }
+} 
